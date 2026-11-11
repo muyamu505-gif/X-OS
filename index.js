@@ -668,6 +668,8 @@
     catch(error){addNotification('记账','备份失败',String(error?.message||error).slice(0,100));}persistState();
   }
   function handleChange(event){
+    const setting=event.target.closest('[data-setting]');
+    if(setting){const key=setting.dataset.setting;if(setting.type==='checkbox')systemSettings[key]=setting.checked;else if(['contextMessages','temperature','maxTokens'].includes(key))systemSettings[key]=Number(setting.value);else systemSettings[key]=setting.value;saveSystemSettings();if(key==='apiMode')renderScreen();}
     const input=event.target.closest('[data-wallet-restore-file]');if(!input)return;
     const file=input.files?.[0];input.value='';if(!file)return;
     if(file.size>2*1024*1024){addNotification('记账','恢复失败','备份文件不能超过 2 MB。');renderScreen();return;}
