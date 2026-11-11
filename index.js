@@ -41,6 +41,8 @@
     walletTransactions: [],
     walletViewMonth: '',
     walletTypeFilter: 'all',
+    walletCategoryFilter: 'all',
+    walletSearchQuery: '',
     notes: '这里可以记录临时备忘。',
     browserUrl: '',
     browserQuery: '',
@@ -133,7 +135,7 @@
     const arrayKeys = ['stack', 'notifications', 'moments', 'contacts', 'weiboPosts', 'redPosts', 'liveMessages', 'importedLiveRooms', 'browserResults', 'photos', 'calendar', 'walletTransactions', 'xPosts'];
     const stringArrayKeys = ['weiboFollowing', 'redFollowing', 'xFollowing', 'followedLiveRooms'];
     const objectKeys = ['chats'];
-    const stringKeys = ['page', 'wechatTab', 'weiboTab', 'redTab', 'xTab', 'activeLiveId', 'selectedContact', 'notes', 'browserUrl', 'browserQuery', 'selectedAlbum', 'calendarView', 'walletViewMonth', 'walletTypeFilter'];
+    const stringKeys = ['page', 'wechatTab', 'weiboTab', 'redTab', 'xTab', 'activeLiveId', 'selectedContact', 'notes', 'browserUrl', 'browserQuery', 'selectedAlbum', 'calendarView', 'walletViewMonth', 'walletTypeFilter', 'walletCategoryFilter', 'walletSearchQuery'];
     const booleanKeys = [];
     const numberKeys = ['liveViewers', 'liveHeat', 'wallet', 'giftsSent'];
     for (const key of arrayKeys) {
@@ -545,6 +547,49 @@
     return `<section class="xp-page xp-live-room"><div class="xp-live-video"><span class="xp-live-tag">● LIVE</span><span class="xp-live-video-label">${escapeHtml(room.title)}</span><small>${escapeHtml(room.description||'直播画面以当前剧情描述为准')}</small></div><div class="xp-live-room-info"><div><strong>${escapeHtml(room.title)}</strong><small>${escapeHtml(room.name)}　·　${escapeHtml(room.category)}　·　${viewers}</small></div><button data-action="follow" class="xp-follow ${isRoomFollowed?'following':''}">${isRoomFollowed?'已关注':'＋ 关注'}</button></div><div class="xp-live-metrics"><span>热度 <b>${heat}</b></span><span>本地模拟礼物 <b>${state.giftsSent}</b></span><span>余额 <b>${state.wallet}</b> 钻石</span></div><div class="xp-barrage-list">${lines||'<div class="xp-empty">暂无剧情弹幕，发送一条参与互动吧</div>'}</div><form class="xp-live-compose" data-form="barrage"><input name="message" autocomplete="off" placeholder="和主播聊两句…" maxlength="100"><button type="submit">发送</button><button type="button" data-action="gift">礼物</button></form></section>`;
   }
 
+  function walletRowMatchesFilters(row, page) {
+    const type = page?.querySelector('[data-wallet-filter].active')?.dataset.walletFilter || state.walletTypeFilter || 'all';
+    const category = page?.querySelector('[data-wallet-category-filter]')?.value || state.walletCategoryFilter || 'all';
+    const amount = Number(row.dataset.amount)||0;
+    return (type==='all'||(type==='income'?amount>0:amount<0)) && (category==='all'||row.dataset.category===category);
+  }
+
+  function exportWalletCsv() {
+    const month = String(state.walletViewMonth || '');
+    const type = state.walletTypeFilter || 'all';
+    const category = state.walletCategoryFilter || 'all';
+    const query = String(state.walletSearchQuery || '').trim().toLocaleLowerCase();
+    const all = state.walletTransactions || [];
+    const getMonth = item => typeof item.month==='string'&&/^\\d{4}-\\d{2}$/.test(item.month)?item.month:(typeof item.date==='string'&&/^\\d{4}-\\d{2}-\\d{2}/.test(item.date)?item.date.slice(0,7):'');
+    const matches = all.filter(item => {
+      const itemMonth=getMonth(item), amount=Number(item.amount)||0;
+      const typeOk=type==='all'||(type==='income'?amount>0:amount<0);
+      const categoryOk=category==='all'||String(item.category||'其他')===category;
+      const searchOk=!query||[item.title,item.category,item.time,item.date,item.month].join(' ').toLocaleLowerCase().includes(query);
+      return typeOk&&categoryOk&&searchOk&&(itemMonth===month||!itemMonth);
+    });
+    const quote = value => {
+      let text=String(value??'');
+      if (/^[=+@\\-\\t\\r]/.test(text)) text="'"+text;
+      return '"'+text.replace(/"/g,'""')+'"';
+    };
+    const rows=[['日期','时间','项目','类型','分类','金额（钻）'],...matches.map(item=>[item.date||'未记录',item.time||'未记录',item.title||'未命名记录',Number(item.amount)>0?'收入':'支出',item.category||'其他',Number(item.amount)||0])];
+    const csv='\\uFEFF'+rows.map(row=>row.map(quote).join(',')).join('\\r\\n');
+    try {
+      const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+      const url=URL.createObjectURL(blob);
+      const link=document.createElement('a');
+      const safeMonth=/^\\d{4}-\\d{2}$/.test(month)?month:'账单';
+      link.href=url;link.download='X-OS-账单-'+safeMonth+'.csv';link.style.display='none';
+      document.body.appendChild(link);link.click();link.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),1000);
+      addNotification('记账','导出已开始','已导出 '+matches.length+' 笔符合筛选条件的账单。');
+    } catch(error) {
+      addNotification('记账','导出失败',String(error?.message||error).slice(0,100));
+    }
+    persistState();
+  }
+
   function renderWallet() {
     const now = new Date();
     const validMonth = /^\d{4}-\d{2}$/.test(state.walletViewMonth || '');
@@ -567,13 +612,25 @@
     const categories = Object.entries(categoryTotals).sort((a,b)=>b[1]-a[1]).slice(0,4).map(([name,total])=>'<div class="xp-wallet-category"><span>'+escapeHtml(name)+'</span><b>'+total.toLocaleString('zh-CN')+' 钻</b></div>').join('');
     const filter = ['all','income','expense'].includes(state.walletTypeFilter) ? state.walletTypeFilter : 'all';
     state.walletTypeFilter = filter;
-    const filtered = monthTransactions.filter(item => filter === 'all' || (filter === 'income' ? Number(item.amount)>0 : Number(item.amount)<0));
+    const categoryFilter = state.walletCategoryFilter || 'all';
+    const searchQuery = String(state.walletSearchQuery || '').trim().toLocaleLowerCase();
+    const categoryOptions = [...new Set([...monthTransactions,...legacyTransactions].map(x=>String(x.category||'其他')))].sort((a,b)=>a.localeCompare(b,'zh-CN'));
+    const matches = item => {
+      const amount=Number(item.amount)||0, category=String(item.category||'其他');
+      const typeOk=filter==='all'||(filter==='income'?amount>0:amount<0);
+      const categoryOk=categoryFilter==='all'||category===categoryFilter;
+      const searchOk=!searchQuery||[item.title,item.category,item.time,item.date,item.month].join(' ').toLocaleLowerCase().includes(searchQuery);
+      return typeOk&&categoryOk&&searchOk;
+    };
+    const filtered = monthTransactions.filter(matches);
     transactions.forEach((item,index)=>{if(!item.id)item.id='legacy-'+index+'-'+String(item.amount||0);});
-    const renderRecord = item => '<div class="xp-ios-ledger-row"><span class="xp-ledger-icon">'+(Number(item.amount)<0?'↗':'＋')+'</span><span class="xp-ledger-main"><b>'+escapeHtml(item.title||'未命名记录')+'</b><small>'+escapeHtml(item.category||'其他')+' · '+escapeHtml(item.time||'时间未记录')+'</small></span><strong class="'+(Number(item.amount)<0?'is-minus':'is-plus')+'">'+(Number(item.amount)>0?'+':'')+(Number(item.amount)||0).toLocaleString('zh-CN')+'</strong><span class="xp-ledger-controls"><button type="button" data-wallet-edit="'+escapeHtml(item.id)+'" aria-label="编辑账单">编辑</button><button type="button" data-wallet-delete="'+escapeHtml(item.id)+'" aria-label="删除账单">删除</button></span></div>';
+    const renderRecord = item => '<div class="xp-ios-ledger-row" data-wallet-record data-category="'+escapeHtml(item.category||'其他')+'" data-amount="'+(Number(item.amount)||0)+'" data-search="'+escapeHtml([item.title,item.category,item.time,item.date,item.month].join(' '))+'"><span class="xp-ledger-icon">'+(Number(item.amount)<0?'↗':'＋')+'</span><span class="xp-ledger-main"><b>'+escapeHtml(item.title||'未命名记录')+'</b><small>'+escapeHtml(item.category||'其他')+' · '+escapeHtml(item.time||'时间未记录')+'</small></span><strong class="'+(Number(item.amount)<0?'is-minus':'is-plus')+'">'+(Number(item.amount)>0?'+':'')+(Number(item.amount)||0).toLocaleString('zh-CN')+'</strong><span class="xp-ledger-controls"><button type="button" data-wallet-edit="'+escapeHtml(item.id)+'" aria-label="编辑账单">编辑</button><button type="button" data-wallet-delete="'+escapeHtml(item.id)+'" aria-label="删除账单">删除</button></span></div>';
     const records = filtered.slice(0,50).map(renderRecord).join('');
-    const legacy = legacyTransactions.length ? '<div class="xp-wallet-legacy"><strong>未标记日期的旧账单</strong><small>这些记录缺少日期，暂不计入月份统计</small>'+legacyTransactions.slice(0,20).map(renderRecord).join('')+'</div>' : '';
+    const filteredLegacy = legacyTransactions.filter(matches);
+    const legacy = filteredLegacy.length ? '<div class="xp-wallet-legacy"><strong>未标记日期的旧账单</strong><small>这些记录缺少日期，暂不计入月份统计</small>'+filteredLegacy.slice(0,20).map(renderRecord).join('')+'</div>' : '';
+    const categorySelect = '<select data-wallet-category-filter aria-label="按分类筛选"><option value="all">全部分类</option>'+categoryOptions.map(x=>'<option value="'+escapeHtml(x)+'" '+(categoryFilter===x?'selected':'')+'>'+escapeHtml(x)+'</option>').join('')+'</select>';
     const filterButtons = [['all','全部'],['income','收入'],['expense','支出']].map(([key,label])=>'<button type="button" data-wallet-filter="'+key+'" class="'+(filter===key?'active':'')+'" aria-pressed="'+(filter===key)+'">'+label+'</button>').join('');
-    return '<section class="xp-page xp-wallet"><div class="xp-ios-ledger-head"><div><span class="xp-ios-eyebrow">WALLET & LEDGER</span><h2>记账</h2></div><button type="button" data-action="wallet-record">全部账单</button></div><div class="xp-wallet-card"><small>当前余额</small><strong>'+Number(state.wallet).toLocaleString('zh-CN')+' <em>钻石</em></strong><span>本地模拟账户 · 不涉及真实支付</span></div><div class="xp-wallet-month-nav"><button type="button" data-action="wallet-prev" aria-label="上个月">‹</button><strong>'+monthLabel+'</strong><button type="button" data-action="wallet-next" aria-label="下个月">›</button><button type="button" data-action="wallet-today">本月</button></div><div class="xp-ledger-summary"><div><small>'+viewYear+'年'+viewMonth+'月收入</small><b>+'+income.toLocaleString('zh-CN')+'</b></div><div><small>'+viewYear+'年'+viewMonth+'月支出</small><b>−'+expense.toLocaleString('zh-CN')+'</b></div></div><div class="xp-wallet-month"><strong>'+monthLabel+'支出分类</strong>'+(categories || '<small>本月暂无支出记录</small>')+'</div><div class="xp-wallet-actions"><button type="button" data-action="wallet-add">＋ 记一笔</button><button type="button" data-action="wallet-recharge">模拟充值说明</button></div><div class="xp-ios-agenda-head"><strong>账单明细</strong><small>'+filtered.length+' 笔</small></div><div class="xp-wallet-filter">'+filterButtons+'</div><div class="xp-wallet-records">'+(records || '<div class="xp-empty">这个月份暂无符合条件的账单</div>')+'</div>'+legacy+'<p class="xp-muted">礼物、手动记账等操作会记录在这里。</p></section>';
+    return '<section class="xp-page xp-wallet"><div class="xp-ios-ledger-head"><div><span class="xp-ios-eyebrow">WALLET & LEDGER</span><h2>记账</h2></div><button type="button" data-action="wallet-record">全部账单</button></div><div class="xp-wallet-card"><small>当前余额</small><strong>'+Number(state.wallet).toLocaleString('zh-CN')+' <em>钻石</em></strong><span>本地模拟账户 · 不涉及真实支付</span></div><div class="xp-wallet-month-nav"><button type="button" data-action="wallet-prev" aria-label="上个月">‹</button><strong>'+monthLabel+'</strong><button type="button" data-action="wallet-next" aria-label="下个月">›</button><button type="button" data-action="wallet-today">本月</button></div><div class="xp-ledger-summary"><div><small>'+viewYear+'年'+viewMonth+'月收入</small><b>+'+income.toLocaleString('zh-CN')+'</b></div><div><small>'+viewYear+'年'+viewMonth+'月支出</small><b>−'+expense.toLocaleString('zh-CN')+'</b></div></div><div class="xp-wallet-month"><strong>'+monthLabel+'支出分类</strong>'+(categories || '<small>本月暂无支出记录</small>')+'</div><div class="xp-wallet-actions"><button type="button" data-action="wallet-add">＋ 记一笔</button><button type="button" data-action="wallet-recharge">模拟充值说明</button></div><div class="xp-ios-agenda-head"><strong>账单明细</strong><small class="xp-wallet-visible-count">'+filtered.length+' 笔</small></div><div class="xp-wallet-filter">'+filterButtons+'</div><div class="xp-wallet-search"><input type="search" data-wallet-search placeholder="搜索项目名称、分类或日期" value="'+escapeHtml(state.walletSearchQuery||'')+'">'+categorySelect+'</div><div class="xp-wallet-export"><button type="button" data-action="wallet-export">导出当前筛选账单 CSV</button><small>导出当前月份、类型、分类和关键词匹配的记录</small></div><div class="xp-wallet-records">'+(records || '<div class="xp-empty">这个月份暂无符合条件的账单</div>')+'</div>'+legacy+'<p class="xp-muted">礼物、手动记账等操作会记录在这里。</p></section>';
   }
 
   function renderPhotos() {
@@ -729,6 +786,8 @@
     if (favoritePhoto) { const p = state.photos.find(x => x.id === favoritePhoto.dataset.favoritePhoto); if (p) p.favorite = !p.favorite; renderScreen(); persistState(); return; }
     const deletePhoto = event.target.closest('[data-delete-photo]');
     if (deletePhoto) { state.photos = state.photos.filter(p => p.id !== deletePhoto.dataset.deletePhoto); renderScreen(); persistState(); return; }
+    const walletExport = event.target.closest('[data-action="wallet-export"]');
+    if (walletExport) { exportWalletCsv(); return; }
     const walletEdit = event.target.closest('[data-wallet-edit]');
     if (walletEdit) { openActionDialog('wallet-edit','编辑账单','修改金额会同步调整模拟余额',inlineHost,'',walletEdit.dataset.walletEdit); return; }
     const walletDelete = event.target.closest('[data-wallet-delete]');
@@ -943,6 +1002,18 @@
       saveSystemSettings();
     }
 
+    if (event.target.matches('[data-wallet-search]')) {
+      state.walletSearchQuery = event.target.value;
+      const query = state.walletSearchQuery.trim().toLocaleLowerCase();
+      const page = event.target.closest('.xp-wallet');
+      let visible = 0;
+      page?.querySelectorAll('[data-wallet-record]').forEach(row => { row.hidden = !row.dataset.search.toLocaleLowerCase().includes(query) || !walletRowMatchesFilters(row, page); if (!row.hidden) visible++; });
+      const count = page?.querySelector('.xp-wallet-visible-count'); if (count) count.textContent = visible+' 笔';
+    }
+    if (event.target.matches('[data-wallet-category-filter]')) {
+      state.walletCategoryFilter = event.target.value || 'all';
+      renderScreen(); persistState();
+    }
     if (event.target.matches('[data-notes]')) {
       state.notes = event.target.value;
       const count = event.target.closest('.xp-notes-page')?.querySelector('[data-notes-count]');
