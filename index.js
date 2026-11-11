@@ -510,15 +510,112 @@
   function nowTime() { return new Intl.DateTimeFormat('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date()); }
 
   function createEntryButtons() {
-    if (!document.getElementById('xphone-floating-entry')) {
-      const floating = document.createElement('button');
-      floating.id = 'xphone-floating-entry'; floating.className = 'xphone-floating-entry'; floating.type = 'button'; floating.title = '打开手机模拟器'; floating.innerHTML = '<span>▣</span><small>手机</small>';
-      floating.addEventListener('click', () => openPhone()); document.body.appendChild(floating);
+    // The entry is portaled to the host document and placed above SillyTavern UI layers.
+    let floating = document.getElementById('xphone-floating-entry');
+    if (!floating) {
+      floating = document.createElement('button');
+      floating.id = 'xphone-floating-entry';
+      floating.type = 'button';
+      floating.setAttribute('aria-label', '打开 X 手机模拟器');
+      floating.title = 'X 手机 · 点击打开，拖动移动位置';
+      floating.innerHTML = '<span class="xphone-fab-mark">X</span><span class="xphone-fab-caption">手机</span>';
+      document.body.appendChild(floating);
+      const positionKey = `${EXT_ID}:floatingPosition`;
+      const getViewport = () => {
+        const vv = window.visualViewport;
+        const width = Math.max(1, Math.min(window.innerWidth || document.documentElement.clientWidth || 360, document.documentElement.clientWidth || window.innerWidth || 360));
+        const height = Math.max(1, Math.min(window.innerHeight || document.documentElement.clientHeight || 640, document.documentElement.clientHeight || window.innerHeight || 640));
+        const left = Math.max(0, Math.min(vv?.offsetLeft || 0, width - Math.min(width, vv?.width || width)));
+        const top = Math.max(0, Math.min(vv?.offsetTop || 0, height - Math.min(height, vv?.height || height)));
+        const visibleWidth = Math.min(width, vv?.width || width);
+        const visibleHeight = Math.min(height, vv?.height || height);
+        return { left, top, right: left + visibleWidth, bottom: top + visibleHeight, width: visibleWidth, height: visibleHeight };
+      };
+      let saved = null;
+      try { saved = JSON.parse(localStorage.getItem(positionKey) || 'null'); } catch { /* ignore invalid saved position */ }
+      let point = {
+        x: Number.isFinite(saved?.x) ? saved.x : 1,
+        y: Number.isFinite(saved?.y) ? saved.y : 0.78,
+        edge: saved?.edge === 'left' ? 'left' : saved?.edge === 'right' ? 'right' : 'none'
+      };
+      let current = { x: 0, y: 0 }, drag = null, suppressClick = false;
+      const size = 54, margin = 10;
+      const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+      const render = () => {
+        const v = getViewport();
+        const maxX = Math.max(v.left + margin, v.right - size - margin);
+        const maxY = Math.max(v.top + margin, v.bottom - size - margin);
+        current.x = point.edge === 'left' ? v.left + margin : point.edge === 'right' ? maxX : v.left + margin + clamp(point.x, 0, 1) * Math.max(0, maxX - v.left - margin);
+        current.y = v.top + margin + clamp(point.y, 0, 1) * Math.max(0, maxY - v.top - margin);
+        floating.style.setProperty('position', 'fixed', 'important');
+        floating.style.setProperty('left', current.x + 'px', 'important');
+        floating.style.setProperty('top', current.y + 'px', 'important');
+        floating.style.setProperty('right', 'auto', 'important');
+        floating.style.setProperty('bottom', 'auto', 'important');
+        floating.style.setProperty('z-index', '2147483646', 'important');
+      };
+      const save = () => {
+        const v = getViewport();
+        const maxX = Math.max(v.left + margin, v.right - size - margin);
+        const maxY = Math.max(v.top + margin, v.bottom - size - margin);
+        point.x = (current.x - v.left - margin) / Math.max(1, maxX - v.left - margin);
+        point.y = (current.y - v.top - margin) / Math.max(1, maxY - v.top - margin);
+        try { localStorage.setItem(positionKey, JSON.stringify(point)); } catch { /* storage may be disabled */ }
+      };
+      floating.addEventListener('pointerdown', event => {
+        if (event.button !== undefined && event.button !== 0) return;
+        drag = { id: event.pointerId, sx: event.clientX, sy: event.clientY, x: current.x, y: current.y, moved: false };
+        try { floating.setPointerCapture(event.pointerId); } catch { /* document listeners remain available */ }
+      });
+      floating.addEventListener('pointermove', event => {
+        if (!drag || event.pointerId !== drag.id) return;
+        const dx = event.clientX - drag.sx, dy = event.clientY - drag.sy;
+        if (!drag.moved && Math.hypot(dx, dy) < 6) return;
+        drag.moved = true;
+        event.preventDefault();
+        const v = getViewport();
+        current.x = clamp(drag.x + dx, v.left + margin, v.right - size - margin);
+        current.y = clamp(drag.y + dy, v.top + margin, v.bottom - size - margin);
+        point = { x: 0, y: 0, edge: 'none' };
+        floating.classList.add('is-dragging');
+        floating.style.setProperty('left', current.x + 'px', 'important');
+        floating.style.setProperty('top', current.y + 'px', 'important');
+      });
+      const finishDrag = event => {
+        if (!drag || (event.pointerId !== undefined && event.pointerId !== drag.id)) return;
+        if (drag.moved) {
+          const v = getViewport();
+          const maxX = Math.max(v.left + margin, v.right - size - margin);
+          point.edge = Math.abs(current.x - (v.left + margin)) < Math.abs(current.x - maxX) ? 'left' : 'right';
+          save();
+          suppressClick = true;
+          window.setTimeout(() => { suppressClick = false; }, 350);
+        }
+        drag = null;
+        floating.classList.remove('is-dragging');
+        render();
+      };
+      floating.addEventListener('pointerup', finishDrag);
+      floating.addEventListener('pointercancel', finishDrag);
+      floating.addEventListener('click', event => {
+        if (suppressClick) { event.preventDefault(); event.stopImmediatePropagation(); return; }
+        openPhone();
+      });
+      const onViewportChange = () => render();
+      window.addEventListener('resize', onViewportChange);
+      window.visualViewport?.addEventListener('resize', onViewportChange);
+      window.visualViewport?.addEventListener('scroll', onViewportChange);
+      render();
     }
     const topbar = document.querySelector('#top-bar, #top-settings-holder');
     if (topbar && !document.getElementById('xphone-topbar-entry')) {
-      const btn = document.createElement('div'); btn.id = 'xphone-topbar-entry'; btn.className = 'xphone-topbar-entry menu_button'; btn.title = '打开手机模拟器'; btn.innerHTML = '<i class="fa-solid fa-mobile-screen-button"></i><span>手机</span>';
-      btn.addEventListener('click', () => openPhone()); topbar.appendChild(btn);
+      const btn = document.createElement('div');
+      btn.id = 'xphone-topbar-entry';
+      btn.className = 'xphone-topbar-entry menu_button';
+      btn.title = '打开手机模拟器';
+      btn.innerHTML = '<i class="fa-solid fa-mobile-screen-button"></i><span>手机</span>';
+      btn.addEventListener('click', () => openPhone());
+      topbar.appendChild(btn);
     }
   }
 
