@@ -412,3 +412,25 @@ html #xphone-overlay .xphone-resize-handle{background:transparent!important;bord
 .xp-wallet-export small{max-width:46%;color:#9aa5b1;font-size:9px;line-height:1.4;text-align:right}
 .xp-wallet-records [data-wallet-record][hidden],.xp-wallet-legacy [data-wallet-record][hidden]{display:none!important}
 @media(max-width:380px){.xp-wallet-search{gap:5px}.xp-wallet-search input,.xp-wallet-search select{font-size:10px;padding:0 7px}.xp-wallet-export{align-items:flex-start;flex-direction:column}.xp-wallet-export small{max-width:100%;text-align:left}}
+
+
+/* Wallet six-month trend and full backup controls */
+.xp-wallet-trend{margin:12px 0;padding:12px;border:1px solid rgba(130,145,160,.14);border-radius:13px;background:rgba(255,255,255,.76)}
+.xp-wallet-trend-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.xp-wallet-trend-head strong{font-size:12px;color:#536477}
+.xp-wallet-trend-head small{font-size:9px;color:#9aa5b1}
+.xp-wallet-trend-bars{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;align-items:end;margin-top:12px}
+.xp-wallet-trend-month{display:flex;flex-direction:column;align-items:center;gap:5px;min-width:0}
+.xp-wallet-trend-pair{height:82px;display:flex;align-items:end;justify-content:center;gap:3px;width:100%;border-bottom:1px solid #e7ecf1}
+.xp-wallet-trend-pair span{display:block;width:9px;max-width:35%;min-height:2px;border-radius:4px 4px 0 0}
+.xp-wallet-trend-pair .income,.xp-wallet-trend-legend .income{background:#91b6d4}
+.xp-wallet-trend-pair .expense,.xp-wallet-trend-legend .expense{background:#d9a6a1}
+.xp-wallet-trend-month small{font-size:9px;color:#8b97a5}
+.xp-wallet-trend-legend{display:flex;justify-content:center;gap:16px;margin-top:8px}
+.xp-wallet-trend-legend span{display:flex;align-items:center;gap:5px;font-size:9px;color:#8491a0}
+.xp-wallet-trend-legend i{display:inline-block;width:7px;height:7px;border-radius:2px}
+.xp-wallet-backup{display:flex;flex-wrap:wrap;gap:7px;margin:8px 0 12px}
+.xp-wallet-backup button{flex:1 1 42%;min-height:34px;border:1px solid #dfe7ee;border-radius:9px;background:#f7fafc;color:#607d98;padding:7px 9px;font-size:10px}
+.xp-wallet-backup button:active{background:#eaf1f7}
+.xp-wallet-backup small{flex-basis:100%;font-size:9px;line-height:1.5;color:#9aa5b1}
+@media(max-width:380px){.xp-wallet-trend{padding:10px}.xp-wallet-trend-bars{gap:4px}.xp-wallet-trend-pair{gap:2px}.xp-wallet-trend-pair span{width:7px}.xp-wallet-backup{gap:5px}}
