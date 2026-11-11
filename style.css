@@ -144,3 +144,12 @@ html #xphone-overlay #xphone-screen{background:#f6f8fa!important}
 .xp-wallet-record>strong{font-size:13px;font-variant-numeric:tabular-nums}
 .xp-wallet-record .is-minus{color:#d46b65}
 .xp-wallet-record .is-plus{color:#329b75}
+
+
+/* X-OS 1.1.21 WeChat message management */
+.xp-chat-title{display:flex!important;align-items:center;gap:9px!important}
+.xp-chat-title>button{flex:0 0 30px;width:30px;height:30px;border:0;border-radius:9px;background:#fff;color:#65717c;font-size:22px;line-height:1}
+.xp-chat-title>span{display:flex;flex-direction:column;gap:3px;min-width:0}
+.xp-chat-row{position:relative;padding-right:22px!important}
+.xp-chat-delete{position:absolute;right:0;top:50%;transform:translateY(-50%);width:20px;height:24px;border:0;border-radius:7px;background:transparent;color:#a3abb3;font-size:17px;opacity:.65}
+.xp-chat-delete:active{background:#edf0f2;color:#c45e63}
