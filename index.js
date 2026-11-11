@@ -34,8 +34,8 @@
     liveMessages: [],
     importedLiveRooms: [],
     activeLiveId: 'main',
-    liveViewers: 128436,
-    liveHeat: 865200,
+    liveViewers: null,
+    liveHeat: null,
     wallet: 8888,
     giftsSent: 0,
     walletTransactions: [],
@@ -495,8 +495,8 @@
     const room=rooms.find(item=>item.id===roomId)||rooms[0];
     const roomMessages=state.liveMessages.filter(message=>!message.roomId||message.roomId===room.id);
     const lines=roomMessages.slice(-30).map(message=>`<div class="xp-barrage"><b>${escapeHtml(message.user)}：</b>${escapeHtml(message.text)}</div>`).join('');
-    const viewers=Number.isFinite(Number(room.viewers))?Number(room.viewers).toLocaleString('zh-CN')+' 人在线':'人数未记录';
-    const heat=Number.isFinite(Number(room.heat))?Number(room.heat).toLocaleString('zh-CN'):'未记录';
+    const viewers=Number.isFinite(room.viewers)?room.viewers.toLocaleString('zh-CN')+' 人在线':'人数未记录';
+    const heat=Number.isFinite(room.heat)?room.heat.toLocaleString('zh-CN'):'未记录';
     return `<section class="xp-page xp-live-room"><div class="xp-live-video"><span class="xp-live-tag">● LIVE</span><span class="xp-live-video-label">${escapeHtml(room.title)}</span><small>${escapeHtml(room.description||'直播画面以当前剧情描述为准')}</small></div><div class="xp-live-room-info"><div><strong>${escapeHtml(room.title)}</strong><small>${escapeHtml(room.name)}　·　${escapeHtml(room.category)}　·　${viewers}</small></div><button data-action="follow" class="xp-follow ${state.followed?'following':''}">${state.followed?'已关注':'＋ 关注'}</button></div><div class="xp-live-metrics"><span>热度 <b>${heat}</b></span><span>本地模拟礼物 <b>${state.giftsSent}</b></span><span>余额 <b>${state.wallet}</b> 钻石</span></div><div class="xp-barrage-list">${lines||'<div class="xp-empty">暂无剧情弹幕，发送一条参与互动吧</div>'}</div><form class="xp-live-compose" data-form="barrage"><input name="message" autocomplete="off" placeholder="和主播聊两句…" maxlength="100"><button type="submit">发送</button><button type="button" data-action="gift">礼物</button></form></section>`;
   }
 
