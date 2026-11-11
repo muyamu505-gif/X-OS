@@ -87,10 +87,32 @@
 
   function mergeDefaults(saved) {
     const base = structuredCloneSafe(DEFAULT_STATE);
-    if (!saved || typeof saved !== 'object') return base;
-    for (const key of Object.keys(base)) {
-      if (saved[key] !== undefined) base[key] = saved[key];
+    if (!saved || typeof saved !== 'object' || Array.isArray(saved)) return base;
+    const arrayKeys = ['stack', 'notifications', 'contacts', 'weiboPosts', 'redPosts', 'liveMessages', 'browserResults', 'photos', 'calendar'];
+    const objectKeys = ['chats'];
+    const stringKeys = ['page', 'selectedContact', 'notes', 'browserUrl', 'browserQuery', 'selectedAlbum'];
+    const booleanKeys = ['followed'];
+    const numberKeys = ['liveViewers', 'liveHeat', 'wallet', 'giftsSent'];
+    for (const key of arrayKeys) {
+      if (Array.isArray(saved[key])) base[key] = saved[key].filter(item => item && typeof item === 'object' && !Array.isArray(item));
     }
+    for (const key of stringKeys) if (typeof saved[key] === 'string' || saved[key] === null && key === 'selectedContact') base[key] = saved[key];
+    for (const key of booleanKeys) if (typeof saved[key] === 'boolean') base[key] = saved[key];
+    for (const key of numberKeys) if (Number.isFinite(saved[key])) base[key] = saved[key];
+    for (const key of objectKeys) {
+      if (saved[key] && typeof saved[key] === 'object' && !Array.isArray(saved[key])) {
+        base[key] = Object.fromEntries(Object.entries(saved[key]).filter(([, messages]) => Array.isArray(messages)).map(([id, messages]) => [id, messages.filter(message => message && typeof message === 'object' && !Array.isArray(message))]));
+      }
+    }
+    const pages = new Set(['home', 'notifications', 'wechat', 'chat', 'weibo', 'red', 'xplatform', 'live', 'wallet', 'photos', 'browser', 'calendar', 'notes']);
+    if (!pages.has(base.page)) base.page = 'home';
+    const contactIds = new Set(base.contacts.map(contact => String(contact.id)));
+    if (!contactIds.has(base.selectedContact)) base.selectedContact = base.contacts[0]?.id || null;
+    base.stack = base.stack.filter(entry => entry && typeof entry.page === 'string' && pages.has(entry.page)).map(entry => ({
+      page: entry.page,
+      app: typeof entry.app === 'string' ? entry.app : null,
+      selectedContact: typeof entry.selectedContact === 'string' ? entry.selectedContact : null
+    }));
     return base;
   }
 
