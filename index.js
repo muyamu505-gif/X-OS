@@ -39,6 +39,8 @@
     wallet: 8888,
     giftsSent: 0,
     walletTransactions: [],
+    walletViewMonth: '',
+    walletTypeFilter: 'all',
     notes: '这里可以记录临时备忘。',
     browserUrl: '',
     browserQuery: '',
@@ -131,7 +133,7 @@
     const arrayKeys = ['stack', 'notifications', 'moments', 'contacts', 'weiboPosts', 'redPosts', 'liveMessages', 'importedLiveRooms', 'browserResults', 'photos', 'calendar', 'walletTransactions', 'xPosts'];
     const stringArrayKeys = ['weiboFollowing', 'redFollowing', 'xFollowing', 'followedLiveRooms'];
     const objectKeys = ['chats'];
-    const stringKeys = ['page', 'wechatTab', 'weiboTab', 'redTab', 'xTab', 'activeLiveId', 'selectedContact', 'notes', 'browserUrl', 'browserQuery', 'selectedAlbum', 'calendarView'];
+    const stringKeys = ['page', 'wechatTab', 'weiboTab', 'redTab', 'xTab', 'activeLiveId', 'selectedContact', 'notes', 'browserUrl', 'browserQuery', 'selectedAlbum', 'calendarView', 'walletViewMonth', 'walletTypeFilter'];
     const booleanKeys = [];
     const numberKeys = ['liveViewers', 'liveHeat', 'wallet', 'giftsSent'];
     for (const key of arrayKeys) {
@@ -545,17 +547,34 @@
 
   function renderWallet() {
     const now = new Date();
-    const monthKey = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+    const validMonth = /^\d{4}-\d{2}$/.test(state.walletViewMonth || '');
+    const monthKey = validMonth ? state.walletViewMonth : String(now.getFullYear()) + '-' + String(now.getMonth()+1).padStart(2,'0');
+    state.walletViewMonth = monthKey;
+    const parts = monthKey.split('-').map(Number);
+    const viewYear = parts[0], viewMonth = parts[1];
+    const monthLabel = viewYear + '年 ' + viewMonth + '月';
     const transactions = state.walletTransactions || [];
-    const currentMonth = transactions.filter(item => item.month ? item.month === monthKey : (item.date || '').startsWith(monthKey));
-    const income = currentMonth.filter(x=>Number(x.amount)>0).reduce((n,x)=>n+Number(x.amount),0);
-    const expense = currentMonth.filter(x=>Number(x.amount)<0).reduce((n,x)=>n+Math.abs(Number(x.amount)),0);
+    const getMonth = item => {
+      if (typeof item.month === 'string' && /^\d{4}-\d{2}$/.test(item.month)) return item.month;
+      return typeof item.date === 'string' && /^\d{4}-\d{2}-\d{2}/.test(item.date) ? item.date.slice(0,7) : '';
+    };
+    const monthTransactions = transactions.filter(item => getMonth(item) === monthKey);
+    const legacyTransactions = transactions.filter(item => !getMonth(item));
+    const income = monthTransactions.filter(x=>Number(x.amount)>0).reduce((n,x)=>n+Number(x.amount),0);
+    const expense = monthTransactions.filter(x=>Number(x.amount)<0).reduce((n,x)=>n+Math.abs(Number(x.amount)),0);
     const categoryTotals = {};
-    currentMonth.filter(x=>Number(x.amount)<0).forEach(x=>{const key=x.category||'其他';categoryTotals[key]=(categoryTotals[key]||0)+Math.abs(Number(x.amount));});
-    const categories = Object.entries(categoryTotals).sort((a,b)=>b[1]-a[1]).slice(0,4).map(([name,total])=>`<div class="xp-wallet-category"><span>${escapeHtml(name)}</span><b>${total.toLocaleString('zh-CN')} 钻</b></div>`).join('');
-    const records = transactions.slice(0,30).map(item => `<div class="xp-ios-ledger-row"><span class="xp-ledger-icon">${Number(item.amount)<0?'↗':'＋'}</span><span class="xp-ledger-main"><b>${escapeHtml(item.title)}</b><small>${escapeHtml(item.category||'其他')} · ${escapeHtml(item.time||'')}</small></span><strong class="${item.amount < 0 ? 'is-minus' : 'is-plus'}">${item.amount > 0 ? '+' : ''}${Number(item.amount).toLocaleString('zh-CN')}</strong></div>`).join('');
-    return `<section class="xp-page xp-wallet"><div class="xp-ios-ledger-head"><div><span class="xp-ios-eyebrow">WALLET & LEDGER</span><h2>记账</h2></div><button type="button" data-action="wallet-record">全部账单</button></div><div class="xp-wallet-card"><small>当前余额</small><strong>${Number(state.wallet).toLocaleString('zh-CN')} <em>钻石</em></strong><span>本地模拟账户 · 不涉及真实支付</span></div><div class="xp-ledger-summary"><div><small>本月收入</small><b>+${income.toLocaleString('zh-CN')}</b></div><div><small>本月支出</small><b>−${expense.toLocaleString('zh-CN')}</b></div></div><div class="xp-wallet-month"><strong>${now.getFullYear()}年 ${now.getMonth()+1}月支出分类</strong>${categories || '<small>本月暂无支出记录</small>'}</div><div class="xp-wallet-actions"><button type="button" data-action="wallet-add">＋ 记一笔</button><button type="button" data-action="wallet-recharge">模拟充值说明</button></div><div class="xp-ios-agenda-head"><strong>最近交易</strong><small>${transactions.length} 笔</small></div><div class="xp-wallet-records">${records || '<div class="xp-empty">暂无账单记录</div>'}</div><p class="xp-muted">礼物、手动记账等操作会记录在这里。</p></section>`;
+    monthTransactions.filter(x=>Number(x.amount)<0).forEach(x=>{const key=x.category||'其他';categoryTotals[key]=(categoryTotals[key]||0)+Math.abs(Number(x.amount));});
+    const categories = Object.entries(categoryTotals).sort((a,b)=>b[1]-a[1]).slice(0,4).map(([name,total])=>'<div class="xp-wallet-category"><span>'+escapeHtml(name)+'</span><b>'+total.toLocaleString('zh-CN')+' 钻</b></div>').join('');
+    const filter = ['all','income','expense'].includes(state.walletTypeFilter) ? state.walletTypeFilter : 'all';
+    state.walletTypeFilter = filter;
+    const filtered = monthTransactions.filter(item => filter === 'all' || (filter === 'income' ? Number(item.amount)>0 : Number(item.amount)<0));
+    const renderRecord = item => '<div class="xp-ios-ledger-row"><span class="xp-ledger-icon">'+(Number(item.amount)<0?'↗':'＋')+'</span><span class="xp-ledger-main"><b>'+escapeHtml(item.title||'未命名记录')+'</b><small>'+escapeHtml(item.category||'其他')+' · '+escapeHtml(item.time||'时间未记录')+'</small></span><strong class="'+(Number(item.amount)<0?'is-minus':'is-plus')+'">'+(Number(item.amount)>0?'+':'')+(Number(item.amount)||0).toLocaleString('zh-CN')+'</strong></div>';
+    const records = filtered.slice(0,50).map(renderRecord).join('');
+    const legacy = legacyTransactions.length ? '<div class="xp-wallet-legacy"><strong>未标记日期的旧账单</strong><small>这些记录缺少日期，暂不计入月份统计</small>'+legacyTransactions.slice(0,20).map(renderRecord).join('')+'</div>' : '';
+    const filterButtons = [['all','全部'],['income','收入'],['expense','支出']].map(([key,label])=>'<button type="button" data-wallet-filter="'+key+'" class="'+(filter===key?'active':'')+'" aria-pressed="'+(filter===key)+'">'+label+'</button>').join('');
+    return '<section class="xp-page xp-wallet"><div class="xp-ios-ledger-head"><div><span class="xp-ios-eyebrow">WALLET & LEDGER</span><h2>记账</h2></div><button type="button" data-action="wallet-record">全部账单</button></div><div class="xp-wallet-card"><small>当前余额</small><strong>'+Number(state.wallet).toLocaleString('zh-CN')+' <em>钻石</em></strong><span>本地模拟账户 · 不涉及真实支付</span></div><div class="xp-wallet-month-nav"><button type="button" data-action="wallet-prev" aria-label="上个月">‹</button><strong>'+monthLabel+'</strong><button type="button" data-action="wallet-next" aria-label="下个月">›</button><button type="button" data-action="wallet-today">本月</button></div><div class="xp-ledger-summary"><div><small>'+viewYear+'年'+viewMonth+'月收入</small><b>+'+income.toLocaleString('zh-CN')+'</b></div><div><small>'+viewYear+'年'+viewMonth+'月支出</small><b>−'+expense.toLocaleString('zh-CN')+'</b></div></div><div class="xp-wallet-month"><strong>'+monthLabel+'支出分类</strong>'+(categories || '<small>本月暂无支出记录</small>')+'</div><div class="xp-wallet-actions"><button type="button" data-action="wallet-add">＋ 记一笔</button><button type="button" data-action="wallet-recharge">模拟充值说明</button></div><div class="xp-ios-agenda-head"><strong>账单明细</strong><small>'+filtered.length+' 笔</small></div><div class="xp-wallet-filter">'+filterButtons+'</div><div class="xp-wallet-records">'+(records || '<div class="xp-empty">这个月份暂无符合条件的账单</div>')+'</div>'+legacy+'<p class="xp-muted">礼物、手动记账等操作会记录在这里。</p></section>';
   }
+
   function renderPhotos() {
     const albums = ['最近项目', '收藏', '截图', '下载', '直播素材', '其他'];
     const current = state.selectedAlbum || '最近项目';
@@ -709,6 +728,8 @@
     if (favoritePhoto) { const p = state.photos.find(x => x.id === favoritePhoto.dataset.favoritePhoto); if (p) p.favorite = !p.favorite; renderScreen(); persistState(); return; }
     const deletePhoto = event.target.closest('[data-delete-photo]');
     if (deletePhoto) { state.photos = state.photos.filter(p => p.id !== deletePhoto.dataset.deletePhoto); renderScreen(); persistState(); return; }
+    const walletFilter = event.target.closest('[data-wallet-filter]');
+    if (walletFilter) { state.walletTypeFilter = walletFilter.dataset.walletFilter; renderScreen(); persistState(); return; }
     const calendarDay = event.target.closest('[data-calendar-day]');
     if (calendarDay) {
       const p = /^([0-9]{4})-([0-9]{2})$/.exec(state.calendarView || '');
@@ -773,6 +794,9 @@
       }
       case 'share': addNotification('微博', '转发成功', '这条动态已加入本地模拟分享记录。'); renderScreen(); persistState(); break;
       case 'wallet-record': openInfoDialog('账单记录', (state.walletTransactions || []).map(t => `${t.title}：${t.amount > 0 ? '+' : ''}${t.amount}钻（${t.time}）`).join('\n') || '暂无账单记录。', inlineHost); break;
+      case 'wallet-prev': { const p=/^(\d{4})-(\d{2})$/.exec(state.walletViewMonth||''); const d=p?new Date(Number(p[1]),Number(p[2])-2,1):new Date(new Date().getFullYear(),new Date().getMonth()-1,1); state.walletViewMonth=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); renderScreen(); persistState(); break; }
+      case 'wallet-next': { const p=/^(\d{4})-(\d{2})$/.exec(state.walletViewMonth||''); const d=p?new Date(Number(p[1]),Number(p[2]),1):new Date(new Date().getFullYear(),new Date().getMonth()+1,1); state.walletViewMonth=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); renderScreen(); persistState(); break; }
+      case 'wallet-today': { const n=new Date(); state.walletViewMonth=n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0'); state.walletTypeFilter='all'; renderScreen(); persistState(); break; }
       case 'wallet-add': openActionDialog('wallet-add','记一笔','记录一笔模拟收入或支出',inlineHost); break;
       case 'wallet-recharge': openInfoDialog('模拟充值', '此演示版不接入真实充值或支付渠道。', inlineHost); break;
     }
