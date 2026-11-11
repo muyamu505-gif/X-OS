@@ -32,7 +32,7 @@
 
 ## 版本
 
-当前版本：**1.1.34**
+当前版本：**1.1.35**
 
 扩展源文件：`index.js`、`style.css`、`manifest.json`。
 
@@ -182,3 +182,7 @@
 
 ### 1.1.34
 - Expand X platform with recommendation/following/category feeds, local dynamic publishing, likes, comments, creator following, multiple live-room entries, and a local profile summary.
+
+
+### 1.1.35
+- Replace hard-coded user identity with `{{user}}` and main-character references with `{{char}}`; remove character-card-specific naming from default X platform content for cross-card reuse.
