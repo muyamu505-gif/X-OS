@@ -1,4 +1,4 @@
-- **v1.1.97**：补齐此前遗漏的 `canGenerateText()` 生成能力判断函数，修复点击剧情同步时在预检阶段触发 `ReferenceError`、导致同步流程根本未启动的问题；独立 API 模式检查地址、Key、模型，酒馆模式检查可用生成接口。
+- **v1.1.98**：补齐此前遗漏的 `canGenerateText()` 生成能力判断函数，修复点击剧情同步时在预检阶段触发 `ReferenceError`、导致同步流程根本未启动的问题；独立 API 模式检查地址、Key、模型，酒馆模式检查可用生成接口。
 
 - **v1.1.95**：修复 AI 中心与系统设置中的剧情同步按钮被预检条件禁用、看起来点击无反应的问题；兼容读取当前角色卡记录，并在同步完成或失败后恢复按钮状态。
 
@@ -44,7 +44,7 @@
 
 ## 版本
 
-当前版本：**1.1.97**
+当前版本：**1.1.98**
 
 ### 1.1.90
 - Add a dedicated AI Center app on the phone home screen with visible model test, story sync, connection status and a direct route to API settings.
