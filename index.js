@@ -443,7 +443,8 @@
   }
 
   function completeDialog(event, data) {
-    if (!pendingDialog) return;
+    const formRoot = event.target.closest('.xphone-shell, .xp-inline-device');
+    if (!pendingDialog || pendingDialog.root !== formRoot) return;
     const { kind, extra, root } = pendingDialog;
     const value = String(data.get('value') || '').trim();
     root?.querySelector('.xp-action-dialog')?.remove();
