@@ -1182,9 +1182,56 @@
     }
   }
 
+
+  async function generateWechatGroupReply(groupId, userText, chatIdAtSend) {
+    const context=currentContext(),group=state.contacts.find(c=>c.id===groupId&&c.isGroup);
+    if(!group)return;
+    const members=(Array.isArray(group.members)?group.members:[]).map(id=>state.contacts.find(c=>c.id===id)).filter(Boolean).slice(0,12);
+    if(!members.length){addNotification('微信','群聊暂无可发言成员','请先将已有好友加入群聊。');renderScreen();persistState();return;}
+    if(!context||typeof context.generateRaw!=='function'){addNotification('微信','暂时无法生成群聊回复','当前酒馆没有可用的文本生成接口；你的消息已保存。');renderScreen();persistState();return;}
+    state.chatTypingContact=groupId;renderScreen();persistState();
+    const profile=(state.importedProfile&&state.importedProfile.characters)||[];
+    const memberProfiles=members.map(c=>{const p=profile.find(x=>x.name===c.name);return {name:c.name,note:c.note||'',description:p&&p.description||'',relation:p&&p.relation||''};});
+    const history=(state.chats[groupId]||[]).slice(-24).map(m=>(m.from==='me'?'我':String(m.user||'群成员'))+'：'+String(m.text||'')).join('\n');
+    const prompt=[
+      '你正在生成 X-OS 微信群聊中的角色发言。群名：'+group.name,
+      '群成员资料（只能由这些成员发言）：'+JSON.stringify(memberProfiles),
+      '最近群聊记录：\n'+history,
+      '用户刚刚发送：'+userText,
+      '请判断哪些成员此刻自然会回应。最多生成3条，至少1条。每条必须有speaker（成员姓名）和text（消息正文）。不同成员必须保持各自性格、关系、语言习惯，不要把所有人写成同一种声音。不要替用户发言，不要编造群成员资料之外的身份，不要输出旁白。',
+      '只输出 JSON 对象，格式为 {"messages":[{"speaker":"成员姓名","text":"消息正文"}]}。speaker 必须严格使用成员资料中的姓名。'
+    ].join('\n\n');
+    try{
+      const result=await context.generateRaw({prompt:prompt,systemPrompt:'你是多人角色扮演微信群聊引擎。仅让给定群成员分别发言，遵守各自人物设定和群聊上下文，不控制用户，不输出解释，只输出符合指定结构的 JSON。'});
+      const active=currentContext();if(!active||active.chatId!==chatIdAtSend||active.chatMetadata!==context.chatMetadata)return;
+      const raw=typeof result==='string'?result:(result&&(result.content||result.text))||'';
+      const parsed=parseGeneratedJson(String(raw));
+      const allowed=new Map(members.map(c=>[c.name,c]));
+      const messages=(Array.isArray(parsed.messages)?parsed.messages:[]).slice(0,3);
+      const arr=state.chats[groupId]||(state.chats[groupId]=[]);
+      let added=0;
+      for(const item of messages){
+        const speaker=String(item&&item.speaker||'').trim(),body=String(item&&item.text||'').trim().slice(0,1200),member=allowed.get(speaker);
+        if(!member||!body)continue;
+        arr.push({from:'them',user:member.name,avatar:member.avatar,text:body,kind:'text',time:nowTime(),status:'received'});
+        added++;
+      }
+      if(!added)throw new Error('模型没有返回有效的群成员发言');
+      if(arr.length>200)arr.splice(0,arr.length-200);
+      const viewing=state.page==='chat'&&state.selectedContact===groupId;
+      if(viewing)group.unread=0;
+      else{group.unread=(Number(group.unread)||0)+added;addNotification('微信',group.name+' 有新消息',messages.filter(m=>allowed.has(String(m.speaker||'').trim())).map(m=>String(m.text||'').trim()).filter(Boolean).join(' / ').slice(0,100));}
+      group.online=true;state.chatTypingContact='';if(viewing)renderScreen();persistState();
+    }catch(error){
+      const active=currentContext();if(!active||active.chatId!==chatIdAtSend)return;
+      state.chatTypingContact='';addNotification('微信','群聊消息已发送，暂时没有回复',String(error&&error.message||error).slice(0,100));renderScreen();persistState();
+    }
+  }
+
   async function generateWechatReply(contactId, userText, chatIdAtSend) {
     const context=currentContext(), contact=state.contacts.find(c=>c.id===contactId);
-    if(!contact||contact.isGroup)return;
+    if(!contact)return;
+    if(contact.isGroup){generateWechatGroupReply(contactId,userText,chatIdAtSend);return;}
     if(!context||typeof context.generateRaw!=='function'){addNotification('微信','暂时无法自动回复','当前酒馆没有可用的文本生成接口；消息已发送并保存。');renderScreen();persistState();return;}
     state.chatTypingContact=contactId;renderScreen();persistState();
     const character=context.characters&&context.characters[context.characterId]||null;
