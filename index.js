@@ -848,12 +848,18 @@
         addNotification('记账','记录无效','请填写有效的正整数金额和项目名称。');
       } else {
         const signedAmount = walletDirection === 'income' ? walletAmount : -walletAmount;
-        const now = new Date();
-        state.walletTransactions = state.walletTransactions || [];
-        state.walletTransactions.unshift({id:`tx${Date.now()}`,title:walletTitle,amount:signedAmount,category:walletCategory||'其他',time:nowTime(),date:new Date(now.getTime()-now.getTimezoneOffset()*60000).toISOString().slice(0,10),month:new Date(now.getTime()-now.getTimezoneOffset()*60000).toISOString().slice(0,7)});
-        state.walletTransactions = state.walletTransactions.slice(0,200);
-        state.wallet = Math.max(0, Number(state.wallet)||0) + signedAmount;
-        addNotification('记账',walletDirection==='income'?'收入已记录':'支出已记录',`${walletTitle}：${signedAmount>0?'+':''}${signedAmount}钻`);
+        const currentBalance = Math.max(0, Number(state.wallet)||0);
+        if (signedAmount < 0 && walletAmount > currentBalance) {
+          addNotification('记账','余额不足','支出金额不能超过当前模拟余额。');
+        } else {
+          const now = new Date();
+          const localDate = new Date(now.getTime()-now.getTimezoneOffset()*60000).toISOString().slice(0,10);
+          state.walletTransactions = state.walletTransactions || [];
+          state.walletTransactions.unshift({id:`tx${Date.now()}`,title:walletTitle,amount:signedAmount,balanceDelta:signedAmount,category:walletCategory||'其他',time:nowTime(),date:localDate,month:localDate.slice(0,7)});
+          state.walletTransactions = state.walletTransactions.slice(0,200);
+          state.wallet = currentBalance + signedAmount;
+          addNotification('记账',walletDirection==='income'?'收入已记录':'支出已记录',`${walletTitle}：${signedAmount>0?'+':''}${signedAmount}钻`);
+        }
       }
     } else if (kind === 'wallet-edit') {
       const tx=(state.walletTransactions||[]).find(x=>String(x.id)===String(extra));
@@ -863,11 +869,11 @@
         const direction=String(data.get('direction')||'expense');
         const category=String(data.get('category')||'其他').trim()||'其他';
         if(!Number.isSafeInteger(amount)||amount<=0||amount>999999999||!title){addNotification('记账','修改失败','请填写有效的正整数金额和项目名称。');}
-        else {const nextAmount=direction==='income'?amount:-amount;const nextBalance=(Number(state.wallet)||0)+(nextAmount-(Number(tx.amount)||0));if(nextBalance<0){addNotification('记账','余额不足','这次修改会使模拟余额变成负数，未修改账单。');}else{state.wallet=nextBalance;tx.amount=nextAmount;tx.title=title;tx.category=category;addNotification('记账','账单已更新',title+'：'+(nextAmount>0?'+':'')+nextAmount+'钻');}}
+        else {const nextAmount=direction==='income'?amount:-amount;const oldDelta=Number.isFinite(Number(tx.balanceDelta))?Number(tx.balanceDelta):(Number(tx.amount)||0);const nextBalance=(Number(state.wallet)||0)-oldDelta+nextAmount;if(nextBalance<0){addNotification('记账','余额不足','这次修改会使模拟余额变成负数，未修改账单。');}else{state.wallet=nextBalance;tx.amount=nextAmount;tx.balanceDelta=nextAmount;tx.title=title;tx.category=category;addNotification('记账','账单已更新',title+'：'+(nextAmount>0?'+':'')+nextAmount+'钻');}}
       }else addNotification('记账','修改失败','找不到这笔账单，可能已被移除。');
     } else if (kind === 'wallet-delete' && value === 'confirm') {
       const index=(state.walletTransactions||[]).findIndex(x=>String(x.id)===String(extra));
-      if(index>=0){const tx=state.walletTransactions[index];const nextBalance=(Number(state.wallet)||0)-(Number(tx.amount)||0);if(nextBalance<0){addNotification('记账','无法删除','回滚这笔收入会导致余额为负数，账单已保留。');}else{state.wallet=nextBalance;state.walletTransactions.splice(index,1);addNotification('记账','账单已删除','已删除：'+(tx.title||'未命名记录'));}}
+      if(index>=0){const tx=state.walletTransactions[index];const oldDelta=Number.isFinite(Number(tx.balanceDelta))?Number(tx.balanceDelta):(Number(tx.amount)||0);const nextBalance=(Number(state.wallet)||0)-oldDelta;if(nextBalance<0){addNotification('记账','无法删除','回滚这笔收入会导致余额为负数，账单已保留。');}else{state.wallet=nextBalance;state.walletTransactions.splice(index,1);addNotification('记账','账单已删除','已删除：'+(tx.title||'未命名记录'));}}
       else addNotification('记账','删除失败','找不到这笔账单，可能已被移除。');
     } else if (kind === 'clear-chat' && value === 'confirm') {
       if (state.selectedContact) state.chats[state.selectedContact] = [];
@@ -916,7 +922,7 @@
         state.wallet -= price;
         state.giftsSent += 1;
         const localDate = new Date(Date.now() - new Date().getTimezoneOffset()*60000).toISOString().slice(0,10);
-        state.walletTransactions.unshift({ id: `tx${Date.now()}`, title: `赠送礼物：${value}`, amount: -price, category: '礼物', time: nowTime(), date: localDate, month: localDate.slice(0,7) });
+        state.walletTransactions.unshift({ id: `tx${Date.now()}`, title: `赠送礼物：${value}`, amount: -price, balanceDelta: -price, category: '礼物', time: nowTime(), date: localDate, month: localDate.slice(0,7) });
         state.walletTransactions = state.walletTransactions.slice(0, 100);
         state.liveMessages.push({ user: '系统', text: `你送出了 ${value} ×1`, roomId: state.activeLiveId || 'main' });
         state.liveMessages = state.liveMessages.slice(-200);
