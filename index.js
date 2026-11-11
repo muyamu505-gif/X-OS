@@ -580,7 +580,7 @@
   }
 
   function renderNotes() {
-    return `<section class="xp-page xp-notes-page"><div class="xp-ios-notes-head"><div><span class="xp-ios-eyebrow">NOTES</span><h2>备忘录</h2></div><span class="xp-notes-saved"><span data-notes-count>${String(state.notes || '').length}</span> 字 · 已自动保存</span></div><div class="xp-notes-paper"><div class="xp-notes-date">${new Intl.DateTimeFormat('zh-CN',{dateStyle:'full'}).format(new Date())}</div><textarea class="xp-notes" data-notes placeholder="开始书写……">${escapeHtml(state.notes)}</textarea></div><div class="xp-notes-footer"><span>Aa</span><span>☑</span><span>▦</span><span>✎</span><small>仅保存在当前聊天</small></div></section>`;
+    return `<section class="xp-page xp-notes-page"><div class="xp-ios-notes-head"><div><span class="xp-ios-eyebrow">NOTES</span><h2>备忘录</h2></div><span class="xp-notes-saved"><span data-notes-count>${String(state.notes || '').length}</span> 字 · 已自动保存</span></div><div class="xp-notes-paper"><div class="xp-notes-date">${new Intl.DateTimeFormat('zh-CN',{dateStyle:'full'}).format(new Date())}</div><textarea class="xp-notes" data-notes placeholder="开始书写……">${escapeHtml(state.notes)}</textarea></div><div class="xp-notes-footer"><button type="button" data-notes-tool="heading" aria-label="插入标题">Aa</button><button type="button" data-notes-tool="checklist" aria-label="插入待办事项">☑</button><button type="button" data-notes-tool="date" aria-label="插入日期">▦</button><small>仅保存在当前聊天</small></div></section>`;
   }
 
   function renderScreen() {
@@ -609,6 +609,25 @@
       if (settingAction.dataset.action === 'context-import') { importCurrentStoryContext(); return; }
       if (settingAction.dataset.action === 'settings-save') { saveSystemSettings(); addNotification('设置','保存成功','X-OS 系统设置已保存在本机。'); renderScreen(); return; }
       if (settingAction.dataset.action === 'settings-test') { testApiConnection(); return; }
+    }
+
+    const notesTool = event.target.closest('[data-notes-tool]');
+    if (notesTool) {
+      const area = notesTool.closest('.xp-notes-page')?.querySelector('[data-notes]');
+      if (!area) return;
+      const start = area.selectionStart ?? area.value.length;
+      const end = area.selectionEnd ?? start;
+      const inserts = {
+        heading: '\\n\n—— 标题 ——\\n',
+        checklist: '\\n☐ ',
+        date: new Intl.DateTimeFormat('zh-CN', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' }).format(new Date()) + '\\n'
+      };
+      const value = inserts[notesTool.dataset.notesTool];
+      if (value === undefined) return;
+      area.setRangeText(value, start, end, 'end');
+      area.focus();
+      area.dispatchEvent(new Event('input', { bubbles: true }));
+      return;
     }
 
     const inlineHost = event.target.closest('.xphone-inline-host');
