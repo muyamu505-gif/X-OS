@@ -512,7 +512,8 @@
     const q=String(state.friendSearchQuery||'').trim().toLocaleLowerCase();
     const directory=(state.wechatDirectory||[]).filter(p=>!q||[p.name,p.note,p.account].some(v=>String(v||'').toLocaleLowerCase().includes(q)));
     const results=directory.map(p=>{const exists=state.contacts.some(c=>c.id===p.id)||state.friendRequests.some(r=>r.personId===p.id&&r.status==='pending');return `<article class="xp-friend-directory-row"><span class="xp-friend-avatar">${escapeHtml(p.avatar||p.name?.slice(0,1)||'友')}</span><div><strong>${escapeHtml(p.name)}</strong><small>${escapeHtml(p.note||'X-OS 用户')}</small></div><button data-friend-send="${escapeHtml(p.id)}" ${exists?'disabled':''}>${state.contacts.some(c=>c.id===p.id)?'已添加':exists?'已申请':'添加'}</button></article>`}).join('');
-    return `<section class="xp-page xp-wechat-add-friend"><header class="xp-wechat-subhead"><button data-action="wechat-list">‹</button><strong>添加朋友</strong><span></span></header><label class="xp-friend-search">⌕ <input type="search" data-friend-search value="${escapeHtml(state.friendSearchQuery||'')}" placeholder="搜索昵称或微信号"></label><div class="xp-friend-directory">${results||'<div class="xp-empty">没有找到可添加的用户。先从当前剧情识别人物，人物会出现在这里。</div>'}</div></section>`;
+    const context=currentContext(),canImport=!!context&&typeof context.generateRaw==='function'&&!!(context.characters&&context.characters[context.characterId]);
+    return `<section class="xp-page xp-wechat-add-friend"><header class="xp-wechat-subhead"><button data-action="wechat-list">‹</button><strong>添加朋友</strong><button data-action="wechat-friend-refresh" title="识别当前剧情人物">↻</button></header><div class="xp-friend-import-bar"><div><b>当前可添加的人物</b><small>${directory.length} 位 · 来自当前角色卡、世界书与剧情</small></div><button data-action="wechat-friend-refresh" ${canImport?'':'disabled'}>${directory.length?'更新人物列表':'识别当前剧情'}</button></div><header class="xp-wechat-subhead"><button data-action="wechat-list">‹</button><strong>添加朋友</strong><span></span></header><label class="xp-friend-search">⌕ <input type="search" data-friend-search value="${escapeHtml(state.friendSearchQuery||'')}" placeholder="搜索昵称或微信号"></label><div class="xp-friend-directory">${results||'<div class="xp-empty">暂时没有可添加的人物。点击上方“识别当前剧情”，从当前角色卡、已选世界书和近期聊天中提取真实出现的人物；不会凭空生成联系人。</div>'}</div></section>`;
   }
 
   function renderWechatFavorites() {
@@ -987,6 +988,7 @@
       case 'follow': { const id=state.activeLiveId||'main'; state.followedLiveRooms=state.followedLiveRooms||[]; state.followedLiveRooms=state.followedLiveRooms.includes(id)?state.followedLiveRooms.filter(roomId=>roomId!==id):[...state.followedLiveRooms,id]; renderScreen(); persistState(); break; }
       case 'gift': openActionDialog('gift', '赠送礼物', '选择一份礼物支持主播。将扣除模拟钻石，不涉及真实支付。', inlineHost); break;
       case 'wechat-add': setPage('wechat-add-friend','wechat'); break;
+      case 'wechat-friend-refresh': importCurrentStoryContext(); break;
       case 'wechat-new-friends': state.friendRequestTab='received'; setPage('wechat-new-friends','wechat'); break;
       case 'wechat-group-create': openActionDialog('wechat-group-create','发起群聊','创建群聊并邀请当前通讯录中的联系人（本地模拟）',inlineHost,'输入群聊名称……'); break;
       case 'wechat-chat-info': { const c=state.contacts.find(x=>x.id===state.selectedContact); const members=(c?.members||[]).map(id=>state.contacts.find(x=>x.id===id)?.name).filter(Boolean); if(c?.isGroup){openInfoDialog('群聊信息',`群名称：${c.name}\n群成员：我、${members.join('、')||'暂无'}\n成员人数：${members.length+1}`,inlineHost);}else{openActionDialog('wechat-contact-edit','编辑联系人资料','修改昵称与备注（仅保存在本地）',inlineHost,'',c?.id||'');} break; }
@@ -1396,7 +1398,7 @@
     const character = context.characters?.[context.characterId];
     if (!character) { addNotification('上下文导入','未选择角色卡','请先打开一张角色卡并进入对应聊天。'); renderScreen(); return; }
     const chatIdAtStart = context.chatId, metadataAtStart = context.chatMetadata;
-    const button = phoneScreen?.querySelector('[data-action="context-import"]');
+    const button = document.querySelector('[data-action="context-import"],[data-action="wechat-friend-refresh"]');
     if (button) { button.disabled = true; button.textContent = '正在识别当前剧情…'; }
     try {
       const chat = Array.isArray(context.chat) ? context.chat : [];
