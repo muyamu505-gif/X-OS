@@ -136,7 +136,7 @@
     if (!saved || typeof saved !== 'object' || Array.isArray(saved)) return base;
     const arrayKeys = ['stack', 'notifications', 'moments', 'contacts', 'weiboPosts', 'redPosts', 'liveMessages', 'importedLiveRooms', 'browserResults', 'photos', 'calendar', 'walletTransactions', 'xPosts'];
     const stringArrayKeys = ['weiboFollowing', 'redFollowing', 'xFollowing', 'followedLiveRooms'];
-    const objectKeys = ['chats', 'walletBudgets'];
+    const objectKeys = ['chats'];
     const stringKeys = ['page', 'wechatTab', 'weiboTab', 'redTab', 'xTab', 'activeLiveId', 'selectedContact', 'notes', 'browserUrl', 'browserQuery', 'selectedAlbum', 'calendarView', 'walletViewMonth', 'walletTypeFilter', 'walletCategoryFilter', 'walletSearchQuery'];
     const booleanKeys = [];
     const numberKeys = ['liveViewers', 'liveHeat', 'wallet', 'giftsSent'];
@@ -159,7 +159,7 @@
         base[key] = Object.fromEntries(Object.entries(saved[key]).filter(([, messages]) => Array.isArray(messages)).map(([id, messages]) => [id, messages.filter(message => message && typeof message === 'object' && !Array.isArray(message))]));
       }
     }
-    base.walletBudgets = Object.fromEntries(Object.entries(base.walletBudgets||{}).filter(([key,value])=>/^\\d{4}-\\d{2}$/.test(key)&&value&&typeof value==='object'&&!Array.isArray(value)).map(([key,value])=>[key,{total:Number.isSafeInteger(value.total)&&value.total>=0?value.total:0,categories:Object.fromEntries(Object.entries(value.categories||{}).filter(([name,amount])=>typeof name==='string'&&Number.isSafeInteger(amount)&&amount>=0).slice(0,30))}]));
+    base.walletBudgets = Object.fromEntries(Object.entries(saved.walletBudgets||{}).filter(([key,value])=>/^\d{4}-\d{2}$/.test(key)&&value&&typeof value==='object'&&!Array.isArray(value)).map(([key,value])=>[key,{total:Number.isSafeInteger(value.total)&&value.total>=0?value.total:0,categories:Object.fromEntries(Object.entries(value.categories||{}).filter(([name,amount])=>typeof name==='string'&&Number.isSafeInteger(amount)&&amount>=0).slice(0,30))}]));
     const pages = new Set(['home', 'notifications', 'wechat', 'wechat-moments', 'chat', 'weibo', 'red', 'xplatform', 'live', 'wallet', 'photos', 'browser', 'calendar', 'notes', 'settings']);
     if (!pages.has(base.page)) base.page = 'home';
     if (!['chats','contacts','discover','me'].includes(base.wechatTab)) base.wechatTab = 'chats';
@@ -640,9 +640,9 @@
     const totalBudget = Number(monthBudget.total)||0;
     const totalBudgetPct = totalBudget>0?Math.min(100,Math.round(expense/totalBudget*100)):0;
     const budgetWarning = totalBudget>0&&expense>totalBudget;
-    const budgetCategories = Object.entries(monthBudget.categories||{}).filter(([,limit])=>Number(limit)>0).map(([name,limit])=>{const spent=categoryTotals[name]||0,pct=Math.min(100,Math.round(spent/limit*100)),over=spent>limit;return '<div class="xp-wallet-budget-category"><div><span>'+escapeHtml(name)+'</span><b>'+spent.toLocaleString('zh-CN')+' / '+Number(limit).toLocaleString('zh-CN')+' 钻</b></div><div class="xp-wallet-budget-track"><i class="'+(over?'over':'')+'" style="width:'+pct+'%"></i></div>'+(over?'<small class="xp-wallet-budget-alert">已超出分类预算 '+(spent-limit).toLocaleString('zh-CN')+' 钻</small>':'')+'</div>';}).join('');
     const categoryTotals = {};
     monthTransactions.filter(x=>Number(x.amount)<0).forEach(x=>{const key=x.category||'其他';categoryTotals[key]=(categoryTotals[key]||0)+Math.abs(Number(x.amount));});
+    const budgetCategories = Object.entries(monthBudget.categories||{}).filter(([,limit])=>Number(limit)>0).map(([name,limit])=>{const spent=categoryTotals[name]||0,pct=Math.min(100,Math.round(spent/limit*100)),over=spent>limit;return '<div class="xp-wallet-budget-category"><div><span>'+escapeHtml(name)+'</span><b>'+spent.toLocaleString('zh-CN')+' / '+Number(limit).toLocaleString('zh-CN')+' 钻</b></div><div class="xp-wallet-budget-track"><i class="'+(over?'over':'')+'" style="width:'+pct+'%"></i></div>'+(over?'<small class="xp-wallet-budget-alert">已超出分类预算 '+(spent-limit).toLocaleString('zh-CN')+' 钻</small>':'')+'</div>';}).join('');
     const categories = Object.entries(categoryTotals).sort((a,b)=>b[1]-a[1]).slice(0,4).map(([name,total])=>'<div class="xp-wallet-category"><span>'+escapeHtml(name)+'</span><b>'+total.toLocaleString('zh-CN')+' 钻</b></div>').join('');
     const filter = ['all','income','expense'].includes(state.walletTypeFilter) ? state.walletTypeFilter : 'all';
     state.walletTypeFilter = filter;
