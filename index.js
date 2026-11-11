@@ -191,7 +191,8 @@
       const dialog = event.target.closest('.xphone-shell, .xp-inline-device')?.querySelector('.xp-action-dialog');
       if (dialog) {
         dialog.remove();
-        pendingDialog = null;
+        const root = event.target.closest('.xphone-shell, .xp-inline-device');
+        if (pendingDialog?.root === root) pendingDialog = null;
         event.stopPropagation();
       } else {
         closePhone();
@@ -422,7 +423,7 @@
     const root = inlineHost?.querySelector('.xp-inline-device') || overlay?.querySelector('.xphone-shell');
     if (!root) return;
     root.querySelector('.xp-action-dialog')?.remove();
-    pendingDialog = { kind, extra };
+    pendingDialog = { kind, extra, root };
     root.insertAdjacentHTML('beforeend', `<div class="xp-action-dialog"><form class="xp-dialog-card" data-form="dialog"><button type="button" class="xp-dialog-close" data-action="dialog-close" aria-label="关闭">×</button><strong>${escapeHtml(title)}</strong><p>${escapeHtml(description)}</p>${kind === 'gift' ? `<select name="value"><option value="小心心">小心心 · 10钻</option><option value="玫瑰">玫瑰 · 99钻</option><option value="星海">星海 · 520钻</option></select>` : `<textarea name="value" maxlength="300" placeholder="${escapeHtml(placeholder || '')}" ${kind === 'comment' ? 'required' : ''}></textarea>`}<button class="xp-dialog-submit" type="submit">${kind === 'gift' ? '确认赠送' : kind === 'comment' ? '发表评论' : '发布'}</button></form></div>`);
     root.querySelector('.xp-action-dialog textarea, .xp-action-dialog select')?.focus();
   }
@@ -438,14 +439,15 @@
   function closeActionDialog(event) {
     const root = event.target.closest('.xphone-shell, .xp-inline-device');
     root?.querySelector('.xp-action-dialog')?.remove();
-    pendingDialog = null;
+    if (!root || pendingDialog?.root === root) pendingDialog = null;
   }
 
   function completeDialog(event, data) {
     if (!pendingDialog) return;
-    const { kind, extra } = pendingDialog;
+    const { kind, extra, root } = pendingDialog;
     const value = String(data.get('value') || '').trim();
-    closeActionDialog(event);
+    root?.querySelector('.xp-action-dialog')?.remove();
+    pendingDialog = null;
     if (kind === 'weibo-compose' && value) {
       state.weiboPosts.unshift({ id: `w${Date.now()}`, user: '我', avatar: '我', text: value, tag: '#我的动态#', likes: 0, comments: 0, liked: false });
     } else if (kind === 'red-compose' && value) {
@@ -571,7 +573,7 @@
       host.addEventListener('keydown', event => {
         if (event.key !== 'Escape') return;
         const dialog = host.querySelector('.xp-action-dialog');
-        if (dialog) { dialog.remove(); pendingDialog = null; event.stopPropagation(); }
+        if (dialog) { dialog.remove(); if (pendingDialog?.root === host.querySelector('.xp-inline-device')) pendingDialog = null; event.stopPropagation(); }
       });
       host.addEventListener('submit', handleSubmit);
       host.addEventListener('input', handleInput);
