@@ -319,7 +319,7 @@
     const contact = state.contacts.find(c => c.id === state.selectedContact) || state.contacts[0];
     const msgs = state.chats[contact.id] || [];
     const bubbles = msgs.map((m, index) => `<div class="xp-chat-row ${m.from === 'me' ? 'mine' : ''}"><span class="xp-chat-avatar">${m.from === 'me' ? '我' : escapeHtml(contact.avatar)}</span><div class="xp-chat-bubble">${escapeHtml(m.text)}<small>${escapeHtml(m.time || '')}</small></div><button type="button" class="xp-chat-delete" data-delete-chat-message="${index}" aria-label="删除这条消息" title="删除消息">×</button></div>`).join('');
-    return `<section class="xp-page xp-chat-page"><div class="xp-chat-title"><button type="button" data-action="wechat-list" aria-label="返回微信">‹</button><span>${escapeHtml(contact.name)}<small>${contact.online ? '在线' : '最近在线'}</small></span></div><div class="xp-chat-history">${bubbles || '<div class="xp-empty">还没有聊天记录</div>'}</div><form class="xp-chat-compose" data-form="wechat"><input name="message" autocomplete="off" placeholder="发送消息…" maxlength="300"><button type="submit">发送</button></form></section>`;
+    return `<section class="xp-page xp-chat-page"><div class="xp-chat-title"><button type="button" data-action="wechat-list" aria-label="返回微信">‹</button><span>${escapeHtml(contact.name)}<small>${contact.online ? '在线' : '最近在线'}</small></span><button type="button" class="xp-chat-clear" data-action="clear-chat" aria-label="清空聊天记录" title="清空聊天记录">清空</button></div><div class="xp-chat-history">${bubbles || '<div class="xp-empty">还没有聊天记录</div>'}</div><form class="xp-chat-compose" data-form="wechat"><input name="message" autocomplete="off" placeholder="发送消息…" maxlength="300"><button type="submit">发送</button></form></section>`;
   }
 
   function renderWeibo() {
@@ -457,6 +457,7 @@
       case 'home': state.stack = []; setPage('home', null, false); break;
       case 'notifications': setPage('notifications'); break;
       case 'wechat-list': setPage('wechat', 'wechat'); break;
+      case 'clear-chat': openActionDialog('clear-chat', '清空聊天记录', '确定删除与当前联系人的全部聊天记录吗？', inlineHost); break;
       case 'clear-notices': state.notifications.forEach(n => n.unread = false); renderScreen(); persistState(); break;
       case 'delete-all-notices': state.notifications = []; renderScreen(); persistState(); break;
       case 'enter-live': setPage('live', 'xplatform'); break;
@@ -483,7 +484,7 @@
     if (!root) return;
     root.querySelector('.xp-action-dialog')?.remove();
     pendingDialog = { kind, extra, root };
-    root.insertAdjacentHTML('beforeend', `<div class="xp-action-dialog"><form class="xp-dialog-card" data-form="dialog"><button type="button" class="xp-dialog-close" data-action="dialog-close" aria-label="关闭">×</button><strong>${escapeHtml(title)}</strong><p>${escapeHtml(description)}</p>${kind === 'gift' ? `<select name="value"><option value="小心心">小心心 · 10钻</option><option value="玫瑰">玫瑰 · 99钻</option><option value="星海">星海 · 520钻</option></select>` : `<textarea name="value" maxlength="300" placeholder="${escapeHtml(placeholder || '')}" ${kind === 'comment' ? 'required' : ''}></textarea>`}<button class="xp-dialog-submit" type="submit">${kind === 'gift' ? '确认赠送' : kind === 'comment' ? '发表评论' : '发布'}</button></form></div>`);
+    root.insertAdjacentHTML('beforeend', `<div class="xp-action-dialog"><form class="xp-dialog-card" data-form="dialog"><button type="button" class="xp-dialog-close" data-action="dialog-close" aria-label="关闭">×</button><strong>${escapeHtml(title)}</strong><p>${escapeHtml(description)}</p>${kind === 'gift' ? `<select name="value"><option value="小心心">小心心 · 10钻</option><option value="玫瑰">玫瑰 · 99钻</option><option value="星海">星海 · 520钻</option></select>` : kind === 'clear-chat' ? `<div class="xp-dialog-confirm-note">此操作会删除与该联系人的全部本地聊天记录，且无法撤销。</div><input type="hidden" name="value" value="confirm">` : `<textarea name="value" maxlength="300" placeholder="${escapeHtml(placeholder || '')}" ${kind === 'comment' ? 'required' : ''}></textarea>`}<button class="xp-dialog-submit" type="submit">${kind === 'gift' ? '确认赠送' : kind === 'comment' ? '发表评论' : kind === 'clear-chat' ? '确认清空' : '发布'}</button></form></div>`);
     root.querySelector('.xp-action-dialog textarea, .xp-action-dialog select')?.focus();
   }
 
@@ -508,7 +509,9 @@
     const value = String(data.get('value') || '').trim();
     root?.querySelector('.xp-action-dialog')?.remove();
     pendingDialog = null;
-    if (kind === 'weibo-compose' && value) {
+    if (kind === 'clear-chat' && value === 'confirm') {
+      if (state.selectedContact) state.chats[state.selectedContact] = [];
+    } else if (kind === 'weibo-compose' && value) {
       state.weiboPosts.unshift({ id: `w${Date.now()}`, user: '我', avatar: '我', text: value, tag: '#我的动态#', likes: 0, comments: 0, liked: false });
       state.weiboPosts = state.weiboPosts.slice(0, 100);
     } else if (kind === 'red-compose' && value) {
