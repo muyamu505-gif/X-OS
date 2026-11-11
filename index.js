@@ -36,6 +36,8 @@
       zhou: [{ from: 'them', text: '有空看一下我发你的链接。', time: '昨天' }],
       group: [{ from: 'them', text: '今晚有人一起打游戏吗？', time: '09:10' }]
     },
+    weiboTab: 'recommend',
+    weiboFollowing: ['娱乐显微镜'],
     weiboPosts: [
       { id: 'w1', user: '娱乐显微镜', avatar: '娱', text: '昨晚深夜直播间又出现了新话题？评论区已经吵起来了。', tag: '#直播间观察#', likes: 2381, comments: 462, liked: false },
       { id: 'w2', user: '今天也要开心', avatar: '今', text: '感觉最近大家都在讨论主播和粉丝之间的边界感。', tag: '#网络社交#', likes: 806, comments: 93, liked: false }
@@ -99,9 +101,9 @@
   function mergeDefaults(saved) {
     const base = structuredCloneSafe(DEFAULT_STATE);
     if (!saved || typeof saved !== 'object' || Array.isArray(saved)) return base;
-    const arrayKeys = ['stack', 'notifications', 'moments', 'contacts', 'weiboPosts', 'redPosts', 'redFollowing', 'liveMessages', 'browserResults', 'photos', 'calendar', 'walletTransactions'];
+    const arrayKeys = ['stack', 'notifications', 'moments', 'contacts', 'weiboPosts', 'weiboFollowing', 'redPosts', 'redFollowing', 'liveMessages', 'browserResults', 'photos', 'calendar', 'walletTransactions'];
     const objectKeys = ['chats'];
-    const stringKeys = ['page', 'wechatTab', 'redTab', 'selectedContact', 'notes', 'browserUrl', 'browserQuery', 'selectedAlbum'];
+    const stringKeys = ['page', 'wechatTab', 'weiboTab', 'redTab', 'selectedContact', 'notes', 'browserUrl', 'browserQuery', 'selectedAlbum'];
     const booleanKeys = ['followed'];
     const numberKeys = ['liveViewers', 'liveHeat', 'wallet', 'giftsSent'];
     for (const key of arrayKeys) {
@@ -118,6 +120,7 @@
     const pages = new Set(['home', 'notifications', 'wechat', 'wechat-moments', 'chat', 'weibo', 'red', 'xplatform', 'live', 'wallet', 'photos', 'browser', 'calendar', 'notes']);
     if (!pages.has(base.page)) base.page = 'home';
     if (!['chats','contacts','discover','me'].includes(base.wechatTab)) base.wechatTab = 'chats';
+    if (!['recommend','following','mine'].includes(base.weiboTab)) base.weiboTab = 'recommend';
     // The chat renderer always needs a contact to display; recover the built-in
     // starter contacts if an old or damaged save contains an empty contact list.
     if (!base.contacts.length) base.contacts = structuredCloneSafe(DEFAULT_STATE.contacts);
@@ -392,8 +395,20 @@
   }
 
   function renderWeibo() {
-    const posts = state.weiboPosts.map(p => `<article class="xp-social-post" data-post-id="${escapeHtml(p.id)}"><div class="xp-post-author"><span class="xp-avatar xp-avatar-red">${escapeHtml(p.avatar || p.user?.[0] || '用')}</span><strong>${escapeHtml(p.user)}</strong><small>刚刚</small></div><p>${escapeHtml(p.text)}</p><a class="xp-hashtag">${escapeHtml(p.tag)}</a>${p.lastComment ? `<div class="xp-last-comment"><b>最新评论：</b>${escapeHtml(p.lastComment)}</div>` : ''}<div class="xp-post-actions"><button data-like-post="${escapeHtml(p.id)}" class="${p.liked ? 'is-liked' : ''}">♡ ${escapeHtml(p.likes)}</button><button data-action="weibo-comment">评论 ${escapeHtml(p.comments)}</button><button data-action="share">转发</button></div></article>`).join('');
-    return `<section class="xp-page xp-weibo"><div class="xp-appbar"><div class="xp-app-title xp-weibo-brand">微博</div><button class="xp-circle-btn" data-action="weibo-compose">＋</button></div><div class="xp-social-search"><span>⌕</span><input type="search" data-weibo-search placeholder="搜索用户、动态或话题"></div><div class="xp-hot-search"><strong>热搜榜</strong><span>1　直播间新话题　热</span><span>2　主播互动边界讨论　沸</span><span>3　深夜闲聊切片　新</span></div>${posts}</section>`;
+    const tab = state.weiboTab || 'recommend';
+    const following = state.weiboFollowing || [];
+    const all = state.weiboPosts || [];
+    const visible = tab === 'following' ? all.filter(p => p.user === '我' || following.includes(p.user)) : tab === 'mine' ? all.filter(p => p.user === '我') : all;
+    const posts = visible.map(p => {
+      const comments = Array.isArray(p.commentList) ? p.commentList : [];
+      const count = Math.max(Number(p.comments) || 0, comments.length);
+      const reposts = Number(p.reposts) || 0;
+      const repostOf = p.repostOf ? all.find(x => x.id === p.repostOf) : null;
+      return `<article class="xp-social-post" data-post-id="${escapeHtml(p.id)}"><div class="xp-post-author"><span class="xp-avatar xp-avatar-red">${escapeHtml(p.avatar || p.user?.[0] || '用')}</span><strong>${escapeHtml(p.user)}</strong><small>${escapeHtml(p.time || '刚刚')}</small>${p.user !== '我' ? `<button class="xp-weibo-follow ${following.includes(p.user)?'following':''}" data-follow-weibo="${escapeHtml(p.user)}">${following.includes(p.user)?'已关注':'＋关注'}</button>` : ''}</div>${p.repostOf ? '<div class="xp-weibo-repost-label">↗ 转发动态</div>' : ''}<p>${escapeHtml(p.text)}</p>${repostOf ? `<div class="xp-weibo-original"><b>@${escapeHtml(repostOf.user)}</b><p>${escapeHtml(repostOf.text)}</p></div>` : ''}<a class="xp-hashtag">${escapeHtml(p.tag || '#日常#')}</a>${comments.slice(-2).map(c=>`<div class="xp-last-comment"><b>${escapeHtml(c.user || '用户')}：</b>${escapeHtml(c.text)}</div>`).join('')}${p.lastComment && !comments.length ? `<div class="xp-last-comment"><b>最新评论：</b>${escapeHtml(p.lastComment)}</div>` : ''}<div class="xp-post-actions"><button data-like-post="${escapeHtml(p.id)}" class="${p.liked ? 'is-liked' : ''}">♡ ${Number(p.likes)||0}</button><button data-action="weibo-comment">评论 ${count}</button><button data-share-weibo="${escapeHtml(p.id)}">↗ 转发 ${reposts}</button></div></article>`;
+    }).join('');
+    const tabs = [['recommend','推荐'],['following','关注'],['mine','我的']].map(([id,label])=>`<button type="button" data-weibo-tab="${id}" class="${tab===id?'active':''}">${label}</button>`).join('');
+    const mine = all.filter(p=>p.user==='我');
+    return `<section class="xp-page xp-weibo"><div class="xp-appbar"><div class="xp-app-title xp-weibo-brand">微博</div><div class="xp-weibo-head-actions"><button class="xp-circle-btn" data-action="weibo-profile">我</button><button class="xp-circle-btn" data-action="weibo-compose">＋</button></div></div><div class="xp-social-search"><span>⌕</span><input type="search" data-weibo-search placeholder="搜索用户、动态或话题"></div><div class="xp-weibo-tabs">${tabs}</div>${tab==='mine'? `<div class="xp-weibo-profile"><div class="xp-weibo-profile-avatar">我</div><strong>我的微博</strong><small>本地模拟账号 · 分享你的生活</small><div><span><b>${mine.length}</b> 动态</span><span><b>${mine.reduce((n,p)=>n+(Number(p.likes)||0),0)}</b> 获赞</span><span><b>${following.length}</b> 关注</span></div><button data-action="weibo-compose">发布新动态</button></div>` : '<div class="xp-hot-search"><strong>热搜榜</strong><span>1　直播间新话题　热</span><span>2　主播互动边界讨论　沸</span><span>3　深夜闲聊切片　新</span></div>'}${posts || '<div class="xp-empty">暂时没有微博动态</div>'}</section>`;
   }
 
   function renderRed() {
@@ -511,6 +526,12 @@
     }
     const likePost = event.target.closest('[data-like-post]');
     if (likePost) { const p = state.weiboPosts.find(x => x.id === likePost.dataset.likePost); if (p) { p.liked = !p.liked; p.likes += p.liked ? 1 : -1; renderScreen(); persistState(); } return; }
+    const weiboTab = event.target.closest('[data-weibo-tab]');
+    if (weiboTab) { state.weiboTab = weiboTab.dataset.weiboTab; renderScreen(); persistState(); return; }
+    const followWeibo = event.target.closest('[data-follow-weibo]');
+    if (followWeibo) { const name=followWeibo.dataset.followWeibo; state.weiboFollowing=state.weiboFollowing||[]; state.weiboFollowing=state.weiboFollowing.includes(name)?state.weiboFollowing.filter(x=>x!==name):[...state.weiboFollowing,name]; renderScreen(); persistState(); return; }
+    const shareWeibo = event.target.closest('[data-share-weibo]');
+    if (shareWeibo) { const original=state.weiboPosts.find(p=>p.id===shareWeibo.dataset.shareWeibo); if(original){ original.reposts=(Number(original.reposts)||0)+1; state.weiboPosts.unshift({id:`wr${Date.now()}`,user:'我',avatar:'我',text:original.text,tag:original.tag||'#转发#',likes:0,comments:0,commentList:[],liked:false,reposts:0,repostOf:original.id,time:'刚刚'}); state.weiboPosts=state.weiboPosts.slice(0,100); addNotification('微博','转发成功',`你转发了 @${original.user} 的动态。`); } renderScreen(); persistState(); return; }
     const likeRed = event.target.closest('[data-like-red]');
     if (likeRed) { const p = state.redPosts.find(x => x.id === likeRed.dataset.likeRed); if (p) { p.liked = !p.liked; p.likes += p.liked ? 1 : -1; renderScreen(); persistState(); } return; }
     const redTab = event.target.closest('[data-red-tab]');
@@ -568,6 +589,7 @@
       case 'wechat-group-create': openActionDialog('wechat-group-create','发起群聊','创建群聊并邀请当前通讯录中的联系人（本地模拟）',inlineHost,'输入群聊名称……'); break;
       case 'wechat-chat-info': { const c=state.contacts.find(x=>x.id===state.selectedContact); const members=(c?.members||[]).map(id=>state.contacts.find(x=>x.id===id)?.name).filter(Boolean); if(c?.isGroup){openInfoDialog('群聊信息',`群名称：${c.name}\n群成员：我、${members.join('、')||'暂无'}\n成员人数：${members.length+1}`,inlineHost);}else{openActionDialog('wechat-contact-edit','编辑联系人资料','修改昵称与备注（仅保存在本地）',inlineHost,'',c?.id||'');} break; }
       case 'weibo-compose': openActionDialog('weibo-compose', '发布微博', '分享此刻想说的话', inlineHost, '写一条微博动态……'); break;
+      case 'weibo-profile': state.weiboTab='mine'; setPage('weibo'); persistState(); break;
       case 'red-compose': openActionDialog('red-compose', '发布笔记', '记录生活灵感与日常', inlineHost, '写一篇小红书笔记……'); break;
       case 'weibo-comment': {
         const post = event.target.closest('[data-post-id]');
@@ -619,14 +641,14 @@
     } else if (kind === 'wechat-moment-comment' && value) {
       const post=(state.moments||[]).find(p=>p.id===extra);if(post){post.comments=Array.isArray(post.comments)?post.comments:[];post.comments.push({user:'我',text:value});post.comments=post.comments.slice(-30);}
     } else if (kind === 'weibo-compose' && value) {
-      state.weiboPosts.unshift({ id: `w${Date.now()}`, user: '我', avatar: '我', text: value, tag: '#我的动态#', likes: 0, comments: 0, liked: false });
+      state.weiboPosts.unshift({ id: `w${Date.now()}`, user: '我', avatar: '我', text: value, tag: '#我的动态#', likes: 0, comments: 0, commentList: [], liked: false, reposts: 0, time: '刚刚' });
       state.weiboPosts = state.weiboPosts.slice(0, 100);
     } else if (kind === 'red-compose' && value) {
       state.redPosts.unshift({ id: `r${Date.now()}`, user: '我', title: value, desc: '刚刚发布 · 本地模拟笔记', likes: 0, liked: false, favorite: false, comments: [], color: 'peach' });
       state.redPosts = state.redPosts.slice(0, 100);
     } else if (kind === 'comment' && value) {
       const post = state.weiboPosts.find(p => p.id === extra);
-      if (post) { post.comments = Number(post.comments || 0) + 1; post.lastComment = value; }
+      if (post) { post.comments = (Number(post.comments) || 0) + 1; post.commentList = Array.isArray(post.commentList) ? post.commentList : []; post.commentList.push({ user: '我', text: value, time: nowTime() }); post.commentList = post.commentList.slice(-50); post.lastComment = value; }
     } else if (kind === 'red-comment' && value) {
       const post = state.redPosts.find(p => p.id === extra);
       if (post) { post.comments = Array.isArray(post.comments) ? post.comments : []; post.comments.push({ user: '我', text: value, time: nowTime() }); post.comments = post.comments.slice(-50); }
