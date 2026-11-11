@@ -212,13 +212,16 @@
     overlay.setAttribute('aria-hidden', 'true');
     overlay.innerHTML = `
       <div class="xphone-backdrop" aria-hidden="true"></div>
-      <section class="xphone-shell" role="dialog" aria-modal="true" aria-label="手机模拟器" style="width:320px;height:620px;max-width:calc(100vw - 24px);max-height:calc(100vh - 24px);">
-        <div class="xphone-notch"><span></span></div>
-        <div class="xphone-status"><span class="xp-clock">09:41</span><span class="xp-status-right">5G　●●●　▰</span></div>
-        <header class="xphone-header"><button class="xp-head-btn" data-action="back" aria-label="返回">‹</button><div class="xp-head-title">手机</div><button class="xp-head-btn" data-action="notifications" aria-label="通知">♧<i class="xp-notice-dot"></i></button></header>
-        <main class="xphone-screen" id="xphone-screen"></main>
-        <nav class="xphone-bottom-nav"><button data-action="back">‹</button><button data-action="home">○</button><button data-action="close">×</button></nav>
-        <div class="xphone-resize-handle" role="button" tabindex="0" aria-label="拖动右下角调整手机大小" title="拖动调整大小"></div>
+      <section class="xphone-shell" role="dialog" aria-modal="true" aria-label="手机模拟器" style="width:320px;height:620px;left:calc(50% - 160px);top:calc(50% - 310px);">
+        <div class="xphone-content">
+          <div class="xphone-notch"><span></span></div>
+          <div class="xphone-status"><span class="xp-clock">09:41</span><span class="xp-status-right">5G　●●●　▰</span></div>
+          <header class="xphone-header"><button class="xp-head-btn" data-action="back" aria-label="返回">‹</button><div class="xp-head-title">手机</div><button class="xp-head-btn" data-action="notifications" aria-label="通知">♧<i class="xp-notice-dot"></i></button></header>
+          <main class="xphone-screen" id="xphone-screen"></main>
+          <nav class="xphone-bottom-nav"><button data-action="back">‹</button><button data-action="home">○</button><button data-action="close">×</button></nav>
+        </div>
+        <div class="xphone-drag-handle" role="button" tabindex="0" aria-label="拖动手机顶部移动位置" title="拖动手机顶部移动"></div>
+        <div class="xphone-resize-handle" role="button" tabindex="0" aria-label="拖动右下角整体缩放手机" title="拖动调整整体大小"></div>
       </section>`;
     document.documentElement.appendChild(overlay);
     phoneScreen = overlay.querySelector('#xphone-screen');
@@ -264,8 +267,6 @@
     const width = Math.max(1, document.documentElement.clientWidth || window.innerWidth || 360);
     const liveHeight = Math.max(1, window.innerHeight || document.documentElement.clientHeight || 640);
     if (!keyboardFocused) keyboardViewportHeight = Math.max(liveHeight, window.visualViewport?.height || 0);
-    // Android resizes visualViewport when the software keyboard opens. Keep the
-    // phone's pre-keyboard geometry so the shell does not permanently collapse.
     const height = keyboardFocused && keyboardViewportHeight ? keyboardViewportHeight : liveHeight;
     overlay.style.setProperty('width', width + 'px', 'important');
     overlay.style.setProperty('height', height + 'px', 'important');
@@ -274,31 +275,57 @@
     const shell = overlay.querySelector('.xphone-shell'); if (!shell) return;
     const maxW = Math.max(220, width - 24), maxH = Math.max(220, height - 24);
     const w = Math.min(Math.max(220, parseFloat(shell.style.width) || 320), maxW);
-    shell.style.width = w + 'px';
-    // Do not overwrite the user's saved height with the temporary keyboard viewport.
+    const h = Math.min(Math.max(220, parseFloat(shell.style.height) || 620), maxH);
+    shell.style.setProperty('width', w + 'px', 'important');
+    shell.style.setProperty('height', h + 'px', 'important');
     shell.style.setProperty('max-width', maxW + 'px', 'important');
     shell.style.setProperty('max-height', maxH + 'px', 'important');
+    const scale = Math.min((w - 12) / 308, (h - 12) / 608);
+    const content = shell.querySelector('.xphone-content');
+    if (content) content.style.setProperty('--xp-phone-scale', String(Math.max(.25, scale)));
+    const pos = getPhonePosition(width, height, w, h);
+    shell.style.setProperty('left', pos.x + 'px', 'important');
+    shell.style.setProperty('top', pos.y + 'px', 'important');
+  }
+
+  function getPhonePosition(viewW, viewH, phoneW, phoneH) {
+    let saved = null;
+    try { saved = JSON.parse(localStorage.getItem(`${EXT_ID}:windowPosition`) || 'null'); } catch (_) {}
+    const x = Number.isFinite(saved?.x) ? saved.x : (viewW - phoneW) / 2;
+    const y = Number.isFinite(saved?.y) ? saved.y : (viewH - phoneH) / 2;
+    return { x: Math.max(0, Math.min(viewW - phoneW, x)), y: Math.max(0, Math.min(viewH - phoneH, y)) };
   }
 
   function attachPhoneResize(shell) {
-    const key = `${EXT_ID}:windowSize`, minW = 220, minH = 220;
+    const sizeKey = `${EXT_ID}:windowSize`, posKey = `${EXT_ID}:windowPosition`, minW = 220, minH = 220;
     const clamp = (w,h) => ({width:Math.min(Math.max(minW,(document.documentElement.clientWidth||innerWidth)-24),Math.max(minW,w)),height:Math.min(Math.max(minH,(window.innerHeight||document.documentElement.clientHeight||640)-24),Math.max(minH,h))});
-    try { const saved=JSON.parse(localStorage.getItem(key)||'null'); if(saved&&Number.isFinite(saved.width)&&Number.isFinite(saved.height)){const z=clamp(saved.width,saved.height);shell.style.width=z.width+'px';shell.style.height=z.height+'px';} } catch(_) {}
-    const h=shell.querySelector('.xphone-resize-handle'); if(!h)return; let d=null;
-    h.addEventListener('pointerdown',e=>{const r=shell.getBoundingClientRect();d={id:e.pointerId,x:e.clientX,y:e.clientY,w:r.width,h:r.height};try{h.setPointerCapture(e.pointerId);}catch(_){}e.preventDefault();});
-    h.addEventListener('pointermove',e=>{if(!d||d.id!==e.pointerId)return;const z=clamp(d.w+e.clientX-d.x,d.h+e.clientY-d.y);shell.style.width=z.width+'px';shell.style.height=z.height+'px';});
-    const finish=e=>{if(!d||(e.pointerId!==undefined&&d.id!==e.pointerId))return;const r=shell.getBoundingClientRect();try{localStorage.setItem(key,JSON.stringify({width:Math.round(r.width),height:Math.round(r.height)}));}catch(_){}d=null;updateOverlayGeometry();};
-    h.addEventListener('pointerup',finish);h.addEventListener('pointercancel',finish);
-    h.addEventListener('keydown',e=>{
-      if(!['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key))return;
-      e.preventDefault();
-      const r=shell.getBoundingClientRect(),step=e.shiftKey?48:16;
-      const dw=e.key==='ArrowRight'?step:e.key==='ArrowLeft'?-step:0;
-      const dh=e.key==='ArrowDown'?step:e.key==='ArrowUp'?-step:0;
-      const z=clamp(r.width+dw,r.height+dh);
-      shell.style.width=z.width+'px';shell.style.height=z.height+'px';
-      try{localStorage.setItem(key,JSON.stringify({width:Math.round(z.width),height:Math.round(z.height)}));}catch(_){}
-    });
+    try {
+      const saved=JSON.parse(localStorage.getItem(sizeKey)||'null');
+      if(saved&&Number.isFinite(saved.width)&&Number.isFinite(saved.height)){
+        const z=clamp(saved.width,saved.height);
+        shell.style.setProperty('width',z.width+'px','important');
+        shell.style.setProperty('height',z.height+'px','important');
+      }
+    } catch(_) {}
+    const handle=shell.querySelector('.xphone-resize-handle');
+    let resize=null, move=null;
+    const saveSize=()=>{const r=shell.getBoundingClientRect();try{localStorage.setItem(sizeKey,JSON.stringify({width:Math.round(r.width),height:Math.round(r.height)}));}catch(_){}};
+    if(handle){
+      handle.addEventListener('pointerdown',e=>{const r=shell.getBoundingClientRect();resize={id:e.pointerId,x:e.clientX,y:e.clientY,w:r.width,h:r.height};try{handle.setPointerCapture(e.pointerId);}catch(_){}e.preventDefault();e.stopPropagation();});
+      handle.addEventListener('pointermove',e=>{if(!resize||resize.id!==e.pointerId)return;const z=clamp(resize.w+e.clientX-resize.x,resize.h+e.clientY-resize.y);shell.style.setProperty('width',z.width+'px','important');shell.style.setProperty('height',z.height+'px','important');updateOverlayGeometry();});
+      const finish=e=>{if(!resize||(e.pointerId!==undefined&&resize.id!==e.pointerId))return;saveSize();resize=null;updateOverlayGeometry();};
+      handle.addEventListener('pointerup',finish);handle.addEventListener('pointercancel',finish);
+      handle.addEventListener('keydown',e=>{if(!['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key))return;e.preventDefault();const r=shell.getBoundingClientRect(),step=e.shiftKey?48:16;const z=clamp(r.width+(e.key==='ArrowRight'?step:e.key==='ArrowLeft'?-step:0),r.height+(e.key==='ArrowDown'?step:e.key==='ArrowUp'?-step:0));shell.style.setProperty('width',z.width+'px','important');shell.style.setProperty('height',z.height+'px','important');saveSize();updateOverlayGeometry();});
+    }
+    const drag=shell.querySelector('.xphone-drag-handle');
+    if(drag){
+      drag.addEventListener('pointerdown',e=>{const r=shell.getBoundingClientRect();move={id:e.pointerId,x:e.clientX,y:e.clientY,left:r.left,top:r.top};try{drag.setPointerCapture(e.pointerId);}catch(_){}e.preventDefault();});
+      drag.addEventListener('pointermove',e=>{if(!move||move.id!==e.pointerId)return;const vw=document.documentElement.clientWidth||innerWidth,vh=keyboardFocused&&keyboardViewportHeight?keyboardViewportHeight:(window.innerHeight||640);const r=shell.getBoundingClientRect(),x=Math.max(0,Math.min(vw-r.width,move.left+e.clientX-move.x)),y=Math.max(0,Math.min(vh-r.height,move.top+e.clientY-move.y));shell.style.setProperty('left',x+'px','important');shell.style.setProperty('top',y+'px','important');});
+      const finish=e=>{if(!move||(e.pointerId!==undefined&&move.id!==e.pointerId))return;const r=shell.getBoundingClientRect();try{localStorage.setItem(posKey,JSON.stringify({x:Math.round(r.left),y:Math.round(r.top)}));}catch(_){}move=null;};
+      drag.addEventListener('pointerup',finish);drag.addEventListener('pointercancel',finish);
+      drag.addEventListener('keydown',e=>{if(!['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key))return;e.preventDefault();const r=shell.getBoundingClientRect(),step=e.shiftKey?48:16;const x=Math.max(0,Math.min((document.documentElement.clientWidth||innerWidth)-r.width,r.left+(e.key==='ArrowRight'?step:e.key==='ArrowLeft'?-step:0))),y=Math.max(0,Math.min((window.innerHeight||640)-r.height,r.top+(e.key==='ArrowDown'?step:e.key==='ArrowUp'?-step:0)));shell.style.setProperty('left',x+'px','important');shell.style.setProperty('top',y+'px','important');try{localStorage.setItem(posKey,JSON.stringify({x,y}));}catch(_){}});
+    }
+    updateOverlayGeometry();
   }
 
   function updateClock() {
