@@ -46,6 +46,8 @@
     walletCategoryFilter: 'all',
     walletSearchQuery: '',
     notes: '这里可以记录临时备忘。',
+    notesList: [{ id: 'note-default', title: '备忘录', content: '这里可以记录临时备忘。', updatedAt: '' }],
+    activeNoteId: 'note-default',
     browserUrl: '',
     browserQuery: '',
     browserResults: [],
@@ -135,10 +137,10 @@
   function mergeDefaults(saved) {
     const base = structuredCloneSafe(DEFAULT_STATE);
     if (!saved || typeof saved !== 'object' || Array.isArray(saved)) return base;
-    const arrayKeys = ['stack', 'notifications', 'moments', 'wechatFavorites', 'contacts', 'weiboPosts', 'redPosts', 'liveMessages', 'importedLiveRooms', 'browserResults', 'photos', 'calendar', 'walletTransactions', 'xPosts'];
+    const arrayKeys = ['stack', 'notifications', 'moments', 'wechatFavorites', 'notesList', 'contacts', 'weiboPosts', 'redPosts', 'liveMessages', 'importedLiveRooms', 'browserResults', 'photos', 'calendar', 'walletTransactions', 'xPosts'];
     const stringArrayKeys = ['weiboFollowing', 'redFollowing', 'xFollowing', 'followedLiveRooms'];
     const objectKeys = ['chats'];
-    const stringKeys = ['page', 'wechatTab', 'weiboTab', 'redTab', 'xTab', 'activeLiveId', 'selectedContact', 'notes', 'browserUrl', 'browserQuery', 'selectedAlbum', 'calendarView', 'walletViewMonth', 'walletTypeFilter', 'walletCategoryFilter', 'walletSearchQuery'];
+    const stringKeys = ['page', 'wechatTab', 'weiboTab', 'redTab', 'xTab', 'activeLiveId', 'selectedContact', 'notes', 'activeNoteId', 'browserUrl', 'browserQuery', 'selectedAlbum', 'calendarView', 'walletViewMonth', 'walletTypeFilter', 'walletCategoryFilter', 'walletSearchQuery'];
     const booleanKeys = [];
     const numberKeys = ['liveViewers', 'liveHeat', 'wallet', 'giftsSent'];
     for (const key of arrayKeys) {
@@ -149,6 +151,9 @@
       if (Array.isArray(saved[key])) base[key] = saved[key].filter(item => typeof item === 'string' && item.trim()).map(item => item.trim());
     }
     for (const key of stringKeys) if (typeof saved[key] === 'string' || saved[key] === null && key === 'selectedContact') base[key] = saved[key];
+    if (!Array.isArray(saved.notesList)) { const legacy = String(saved.notes || '').trim(); base.notesList = legacy ? [{ id: 'note-legacy', title: legacy.split(/\n/)[0].slice(0,32) || '备忘录', content: legacy, updatedAt: '' }] : []; }
+    base.notesList = base.notesList.filter(n => n && typeof n.id === 'string' && typeof n.content === 'string').slice(0,200).map(n => ({ id:n.id, title:String(n.title || '无标题').slice(0,60), content:n.content.slice(0,20000), updatedAt:String(n.updatedAt || '') }));
+    if (!base.notesList.some(n => n.id === base.activeNoteId)) base.activeNoteId = base.notesList[0]?.id || '';
     // Template macros are identities, not creator accounts; never pre-follow them.
     base.xFollowing = base.xFollowing.filter(name => !['{{user}}','{{char}}'].includes(String(name).trim()));
     // Migrate the former single follow toggle to the room it represented in the old save.
@@ -713,7 +718,12 @@
   }
 
   function renderNotes() {
-    return `<section class="xp-page xp-notes-page"><div class="xp-ios-notes-head"><div><span class="xp-ios-eyebrow">NOTES</span><h2>备忘录</h2></div><span class="xp-notes-saved"><span data-notes-count>${String(state.notes || '').length}</span> 字 · 已自动保存</span></div><div class="xp-notes-paper"><div class="xp-notes-date">${new Intl.DateTimeFormat('zh-CN',{dateStyle:'full'}).format(new Date())}</div><textarea class="xp-notes" data-notes placeholder="开始书写……">${escapeHtml(state.notes)}</textarea></div><div class="xp-notes-footer"><button type="button" data-notes-tool="heading" aria-label="插入标题">Aa</button><button type="button" data-notes-tool="checklist" aria-label="插入待办事项">☑</button><button type="button" data-notes-tool="date" aria-label="插入日期">▦</button><small>仅保存在当前聊天</small></div></section>`;
+    const list = state.notesList || [];
+    let active = list.find(n => n.id === state.activeNoteId);
+    if (!active && list.length) { active = list[0]; state.activeNoteId = active.id; }
+    const content = active?.content ?? '';
+    const rows = list.map(n => `<button class="xp-note-row ${n.id === state.activeNoteId ? 'active' : ''}" data-note-open="${escapeHtml(n.id)}"><strong>${escapeHtml(n.title || '无标题')}</strong><small>${escapeHtml((n.content || '').slice(0,48) || '没有其他内容')}</small><time>${escapeHtml(n.updatedAt || '')}</time></button>`).join('');
+    return `<section class="xp-page xp-notes-page"><div class="xp-ios-notes-head"><div><span class="xp-ios-eyebrow">NOTES</span><h2>备忘录</h2></div><div class="xp-notes-head-actions"><span class="xp-notes-saved"><span data-notes-count>${content.length}</span> 字 · 已自动保存</span><button type="button" data-note-new>＋</button><button type="button" data-note-delete="${escapeHtml(active?.id || '')}" ${active ? '' : 'disabled'}>删除</button></div></div><div class="xp-notes-layout"><aside class="xp-notes-list">${rows || '<div class="xp-empty">暂无笔记，点击＋新建</div>'}</aside><div class="xp-notes-paper"><input class="xp-note-title" data-note-title value="${escapeHtml(active?.title || '')}" placeholder="标题" ${active ? '' : 'disabled'}><div class="xp-notes-date">${new Intl.DateTimeFormat('zh-CN',{dateStyle:'full'}).format(new Date())}</div><textarea class="xp-notes" data-notes placeholder="开始书写……" ${active ? '' : 'disabled'}>${escapeHtml(content)}</textarea></div></div><div class="xp-notes-footer"><button type="button" data-notes-tool="heading" aria-label="插入标题">Aa</button><button type="button" data-notes-tool="checklist" aria-label="插入待办事项">☑</button><button type="button" data-notes-tool="date" aria-label="插入日期">▦</button><small>笔记保存在当前聊天，可创建多篇</small></div></section>`;
   }
 
   function renderScreen() {
@@ -745,6 +755,12 @@
     }
 
     const notesTool = event.target.closest('[data-notes-tool]');
+    const noteOpen = event.target.closest('[data-note-open]');
+    if (noteOpen) { state.activeNoteId = noteOpen.dataset.noteOpen; state.notes = (state.notesList || []).find(n => n.id === state.activeNoteId)?.content || ''; renderScreen(); persistState(); return; }
+    const noteNew = event.target.closest('[data-note-new]');
+    if (noteNew) { const id = 'note' + Date.now(); state.notesList = state.notesList || []; state.notesList.unshift({ id, title: '新建备忘录', content: '', updatedAt: nowTime() }); state.activeNoteId = id; state.notes = ''; renderScreen(); persistState(); return; }
+    const noteDelete = event.target.closest('[data-note-delete]');
+    if (noteDelete && noteDelete.dataset.noteDelete) { state.notesList = (state.notesList || []).filter(n => n.id !== noteDelete.dataset.noteDelete); state.activeNoteId = state.notesList[0]?.id || ''; state.notes = state.notesList[0]?.content || ''; renderScreen(); persistState(); return; }
     if (notesTool) {
       const area = notesTool.closest('.xp-notes-page')?.querySelector('[data-notes]');
       if (!area) return;
@@ -1077,11 +1093,10 @@
       renderScreen(); persistState();
     }
     if (event.target.matches('[data-notes]')) {
-      state.notes = event.target.value;
-      const count = event.target.closest('.xp-notes-page')?.querySelector('[data-notes-count]');
-      if (count) count.textContent = String(state.notes.length);
-      persistState();
+      state.notes = event.target.value; const note = (state.notesList || []).find(n => n.id === state.activeNoteId); if (note) { note.content = state.notes; note.updatedAt = nowTime(); if (!note.title || note.title === '新建备忘录') note.title = state.notes.split(/\n/)[0].slice(0,32) || '无标题'; }
+      const count = event.target.closest('.xp-notes-page')?.querySelector('[data-notes-count]'); if (count) count.textContent = String(state.notes.length); persistState();
     }
+    if (event.target.matches('[data-note-title]')) { const note = (state.notesList || []).find(n => n.id === state.activeNoteId); if (note) { note.title = event.target.value.slice(0,60); note.updatedAt = nowTime(); persistState(); } }
     if (event.target.matches('[data-weibo-search]')) {
       const query = event.target.value.trim().toLocaleLowerCase();
       event.target.closest('.xp-weibo')?.querySelectorAll('.xp-social-post').forEach(post => {
