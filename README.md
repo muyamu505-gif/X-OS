@@ -32,7 +32,12 @@
 
 ## 版本
 
-当前版本：**1.1.87**
+当前版本：**1.1.88**
+
+### 1.1.88
+- Add AI-generated livestream host replies to viewer barrage, grounded in the active character card or imported streamer profile and recent room messages.
+- Show a live typing indicator while the host response is being generated; persist replies to the matching room and notify when the user has navigated away.
+- Keep viewer messages saved if generation is unavailable or fails; avoid fabricating audience members or off-screen events.
 
 ### 1.1.87
 - Add a direct streamer-profile entry from each live room, preserving the two-way room/profile navigation.
