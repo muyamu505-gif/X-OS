@@ -32,7 +32,7 @@
 
 ## 版本
 
-当前版本：**1.1.43**
+当前版本：**1.1.44**
 
 扩展源文件：`index.js`、`style.css`、`manifest.json`。
 
@@ -232,3 +232,9 @@
 - Extract story-supported livestream rooms only when a current card, selected worldbook, or chat explicitly establishes an active/planned stream.
 - Render extracted rooms in the X Platform live list and room view; avoid invented viewer counts and heat for story-derived rooms.
 - Keep a neutral generic current-character room fallback without hardcoded sample hosts or fixed NPC streamers.
+
+
+### 1.1.44
+- Import only explicitly evidenced livestream chat/barrage lines from the active story context and attach them to their matching room.
+- Scope locally sent barrages to the currently open room and keep messages from separate rooms isolated.
+- Display unknown viewer counts and heat as “not recorded” rather than rendering misleading zero values; show room descriptions and a proper empty state.
