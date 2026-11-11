@@ -32,10 +32,14 @@
 
 ## 版本
 
-当前版本：**1.1.72**
+当前版本：**1.1.73**
 
 扩展源文件：`index.js`、`style.css`、`manifest.json`。
 
+
+### 1.1.73
+- Add a dedicated Weibo post detail page with the full post body, repost reference, complete comment list, and in-place like, comment, favorite, and repost actions.
+- Add persisted selected-post routing state while keeping existing feed search, tabs, and favorites intact.
 
 ### 1.1.72
 - Add ownership-aware deletion for the user's own WeChat Moments posts, with an explicit confirmation dialog; other users' posts cannot be deleted through this action.
