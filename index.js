@@ -310,7 +310,7 @@
     const rows = state.contacts.map(c => {
       const msgs = state.chats[c.id] || [];
       const last = msgs[msgs.length - 1];
-      return `<button class="xp-contact" data-contact="${c.id}"><span class="xp-avatar xp-avatar-green">${escapeHtml(c.avatar)}</span><span class="xp-contact-main"><strong>${escapeHtml(c.name)}</strong><small>${escapeHtml(last?.text || c.note)}</small></span><time>${escapeHtml(last?.time || '')}</time></button>`;
+      return `<button class="xp-contact" data-contact="${escapeHtml(c.id)}"><span class="xp-avatar xp-avatar-green">${escapeHtml(c.avatar)}</span><span class="xp-contact-main"><strong>${escapeHtml(c.name)}</strong><small>${escapeHtml(last?.text || c.note)}</small></span><time>${escapeHtml(last?.time || '')}</time></button>`;
     }).join('');
     return `<section class="xp-page xp-wechat"><div class="xp-appbar"><div><div class="xp-app-title">微信</div><small>消息</small></div><button class="xp-circle-btn" data-action="wechat-add">＋</button></div><div class="xp-search">⌕　搜索</div>${rows}<div class="xp-bottom-tabs"><span class="active">微信</span><span>通讯录</span><span>发现</span><span>我</span></div></section>`;
   }
@@ -323,12 +323,12 @@
   }
 
   function renderWeibo() {
-    const posts = state.weiboPosts.map(p => `<article class="xp-social-post" data-post-id="${p.id}"><div class="xp-post-author"><span class="xp-avatar xp-avatar-red">${escapeHtml(p.avatar || p.user[0])}</span><strong>${escapeHtml(p.user)}</strong><small>刚刚</small></div><p>${escapeHtml(p.text)}</p><a class="xp-hashtag">${escapeHtml(p.tag)}</a>${p.lastComment ? `<div class="xp-last-comment"><b>最新评论：</b>${escapeHtml(p.lastComment)}</div>` : ''}<div class="xp-post-actions"><button data-like-post="${p.id}" class="${p.liked ? 'is-liked' : ''}">♡ ${p.likes}</button><button data-action="weibo-comment">评论 ${p.comments}</button><button data-action="share">转发</button></div></article>`).join('');
+    const posts = state.weiboPosts.map(p => `<article class="xp-social-post" data-post-id="${escapeHtml(p.id)}"><div class="xp-post-author"><span class="xp-avatar xp-avatar-red">${escapeHtml(p.avatar || p.user[0])}</span><strong>${escapeHtml(p.user)}</strong><small>刚刚</small></div><p>${escapeHtml(p.text)}</p><a class="xp-hashtag">${escapeHtml(p.tag)}</a>${p.lastComment ? `<div class="xp-last-comment"><b>最新评论：</b>${escapeHtml(p.lastComment)}</div>` : ''}<div class="xp-post-actions"><button data-like-post="${escapeHtml(p.id)}" class="${p.liked ? 'is-liked' : ''}">♡ ${p.likes}</button><button data-action="weibo-comment">评论 ${p.comments}</button><button data-action="share">转发</button></div></article>`).join('');
     return `<section class="xp-page xp-weibo"><div class="xp-appbar"><div class="xp-app-title xp-weibo-brand">微博</div><button class="xp-circle-btn" data-action="weibo-compose">＋</button></div><div class="xp-hot-search"><strong>热搜榜</strong><span>1　直播间新话题　热</span><span>2　主播互动边界讨论　沸</span><span>3　深夜闲聊切片　新</span></div>${posts}</section>`;
   }
 
   function renderRed() {
-    const posts = state.redPosts.map(p => `<article class="xp-red-card"><div class="xp-red-cover ${p.color}"><span>生活灵感</span></div><div class="xp-red-card-body"><strong>${escapeHtml(p.title)}</strong><p>${escapeHtml(p.desc)}</p><div><small>${escapeHtml(p.user)}</small><button data-like-red="${p.id}" class="${p.liked ? 'is-liked' : ''}">♡ ${p.likes}</button></div></div></article>`).join('');
+    const posts = state.redPosts.map(p => `<article class="xp-red-card"><div class="xp-red-cover ${p.color}"><span>生活灵感</span></div><div class="xp-red-card-body"><strong>${escapeHtml(p.title)}</strong><p>${escapeHtml(p.desc)}</p><div><small>${escapeHtml(p.user)}</small><button data-like-red="${escapeHtml(p.id)}" class="${p.liked ? 'is-liked' : ''}">♡ ${p.likes}</button></div></div></article>`).join('');
     return `<section class="xp-page xp-red"><div class="xp-appbar"><div class="xp-app-title xp-red-brand">小红书</div><button class="xp-circle-btn" data-action="red-compose">＋</button></div><div class="xp-red-tabs"><b>推荐</b><span>关注</span><span>附近</span></div>${posts}</section>`;
   }
 
@@ -349,8 +349,8 @@
     const albums = ['最近项目', '收藏', '截图', '下载', '直播素材', '其他'];
     const current = state.selectedAlbum || '最近项目';
     const items = (state.photos || []).filter(p => current === '最近项目' || p.album === current || (current === '收藏' && p.favorite));
-    const tiles = albums.map((name, i) => `<button class="xp-photo-album ${current === name ? 'active' : ''}" data-album="${name}"><span class="xp-photo-album-art art-${i}">▧</span><b>${name}</b><small>${name === '最近项目' ? (state.photos || []).length : name === '收藏' ? (state.photos || []).filter(p => p.favorite).length : (state.photos || []).filter(p => p.album === name).length} 项</small></button>`).join('');
-    const cards = items.map(p => `<article class="xp-photo-item"><div class="xp-photo-preview">${p.favorite ? '★' : '▧'}</div><div><b>${escapeHtml(p.title)}</b><small>${escapeHtml(p.detail || '')}</small><time>${escapeHtml(p.date || '')}</time></div><button data-favorite-photo="${p.id}" title="收藏">${p.favorite ? '★' : '☆'}</button></article>`).join('');
+    const tiles = albums.map((name, i) => `<button class="xp-photo-album ${current === name ? 'active' : ''}" data-album="${escapeHtml(name)}"><span class="xp-photo-album-art art-${i}">▧</span><b>${name}</b><small>${name === '最近项目' ? (state.photos || []).length : name === '收藏' ? (state.photos || []).filter(p => p.favorite).length : (state.photos || []).filter(p => p.album === name).length} 项</small></button>`).join('');
+    const cards = items.map(p => `<article class="xp-photo-item"><div class="xp-photo-preview">${p.favorite ? '★' : '▧'}</div><div><b>${escapeHtml(p.title)}</b><small>${escapeHtml(p.detail || '')}</small><time>${escapeHtml(p.date || '')}</time></div><button data-favorite-photo="${escapeHtml(p.id)}" title="收藏">${p.favorite ? '★' : '☆'}</button></article>`).join('');
     return `<section class="xp-page xp-photos"><div class="xp-appbar"><div><div class="xp-app-title">相册</div><small>整理你的灵感与记录</small></div><span class="xp-photo-count">${(state.photos || []).length} 项</span></div><div class="xp-photo-albums">${tiles}</div><div class="xp-section-heading">${escapeHtml(current)} <small>${items.length} 项</small></div><div class="xp-photo-items">${cards || '<div class="xp-empty">这个相册还没有内容</div>'}</div><form class="xp-inline-add-form" data-form="photo"><input name="title" maxlength="36" placeholder="添加一条图片/素材记录" required><input name="detail" maxlength="80" placeholder="备注（可选）"><button type="submit">添加</button></form><p class="xp-muted">相册为本地素材索引，可记录图片名称与用途；不会读取设备私人照片。</p></section>`;
   }
 
@@ -420,7 +420,7 @@
     const likeRed = event.target.closest('[data-like-red]');
     if (likeRed) { const p = state.redPosts.find(x => x.id === likeRed.dataset.likeRed); if (p) { p.liked = !p.liked; p.likes += p.liked ? 1 : -1; renderScreen(); persistState(); } return; }
     const album = event.target.closest('[data-album]');
-    if (album) { state.selectedAlbum = album.dataset.album; renderScreen(); return; }
+    if (album) { state.selectedAlbum = album.dataset.album; renderScreen(); persistState(); return; }
     const favoritePhoto = event.target.closest('[data-favorite-photo]');
     if (favoritePhoto) { const p = state.photos.find(x => x.id === favoritePhoto.dataset.favoritePhoto); if (p) p.favorite = !p.favorite; renderScreen(); persistState(); return; }
     const browserShortcut = event.target.closest('[data-browser-shortcut]');
