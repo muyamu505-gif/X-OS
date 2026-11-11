@@ -5,6 +5,9 @@
 .xphone-inline-entry{display:inline-flex;align-items:center;gap:7px;margin:10px 0 2px;padding:7px 12px;border:1px solid #6f8a9e;border-radius:12px;background:rgba(65,105,135,.16);color:inherit;cursor:pointer;font-size:.9em}
 .xphone-overlay{position:fixed;inset:0;z-index:100000;display:none;align-items:center;justify-content:center;padding:14px;font-family:system-ui,-apple-system,"Noto Sans SC",sans-serif;color:var(--xp-ink)}
 .xphone-overlay.xphone-open{display:flex}
+.xphone-external-close{position:absolute;z-index:2147483647;width:34px;height:34px;padding:0;border:1px solid rgba(255,255,255,.42);border-radius:50%;background:rgba(35,39,46,.94);color:#fff;font:300 27px/30px system-ui,-apple-system,sans-serif;text-align:center;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px #0005;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.xphone-external-close:active{transform:scale(.92);background:#17191e}
+.xphone-external-close:focus-visible{outline:2px solid #9bbbd2;outline-offset:3px}
 .xphone-backdrop{position:absolute;inset:0;background:rgba(8,10,14,.68);backdrop-filter:blur(5px)}
 .xphone-shell{position:relative;width:min(420px,100%);height:min(850px,94dvh);min-height:570px;border:7px solid #17191d;border-radius:36px;background:#f8f9fb;box-shadow:0 25px 90px #0009;overflow:hidden;display:flex;flex-direction:column}
 .xphone-notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:112px;height:20px;background:#17191d;border-radius:0 0 14px 14px;z-index:3}
