@@ -297,6 +297,7 @@
         ${appIcon('wallet', '钱包', '¥', '#d7a64d')}
         ${appIcon('browser', '浏览器', '◉', '#4d9cce')}
         ${appIcon('calendar', '日历', '日', '#e46b55')}
+        ${appIcon('notes', '备忘录', '✎', '#71879a')}
       </div>
       </div>`;
   }
