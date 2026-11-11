@@ -560,7 +560,7 @@
     const category = state.walletCategoryFilter || 'all';
     const query = String(state.walletSearchQuery || '').trim().toLocaleLowerCase();
     const all = state.walletTransactions || [];
-    const getMonth = item => typeof item.month==='string'&&/^\\d{4}-\\d{2}$/.test(item.month)?item.month:(typeof item.date==='string'&&/^\\d{4}-\\d{2}-\\d{2}/.test(item.date)?item.date.slice(0,7):'');
+    const getMonth = item => typeof item.month==='string'&&/^\d{4}-\d{2}$/.test(item.month)?item.month:(typeof item.date==='string'&&/^\d{4}-\d{2}-\d{2}/.test(item.date)?item.date.slice(0,7):'');
     const matches = all.filter(item => {
       const itemMonth=getMonth(item), amount=Number(item.amount)||0;
       const typeOk=type==='all'||(type==='income'?amount>0:amount<0);
@@ -570,16 +570,16 @@
     });
     const quote = value => {
       let text=String(value??'');
-      if (/^[=+@\\-\\t\\r]/.test(text)) text="'"+text;
+      if (['=','+','-','@','\t','\r'].includes(text[0])) text="'"+text;
       return '"'+text.replace(/"/g,'""')+'"';
     };
     const rows=[['日期','时间','项目','类型','分类','金额（钻）'],...matches.map(item=>[item.date||'未记录',item.time||'未记录',item.title||'未命名记录',Number(item.amount)>0?'收入':'支出',item.category||'其他',Number(item.amount)||0])];
-    const csv='\\uFEFF'+rows.map(row=>row.map(quote).join(',')).join('\\r\\n');
+    const csv='\uFEFF'+rows.map(row=>row.map(quote).join(',')).join('\r\n');
     try {
       const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
       const url=URL.createObjectURL(blob);
       const link=document.createElement('a');
-      const safeMonth=/^\\d{4}-\\d{2}$/.test(month)?month:'账单';
+      const safeMonth=/^\d{4}-\d{2}$/.test(month)?month:'账单';
       link.href=url;link.download='X-OS-账单-'+safeMonth+'.csv';link.style.display='none';
       document.body.appendChild(link);link.click();link.remove();
       setTimeout(()=>URL.revokeObjectURL(url),1000);
