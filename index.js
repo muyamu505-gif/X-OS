@@ -50,9 +50,9 @@
     redFollowing: ['一颗晚睡的栗子'],
     followed: false,
     xTab: 'recommend',
-    xFollowing: ['沉沦'],
+    xFollowing: ['{{char}}'],
     xPosts: [
-      {id:'xp1',user:'沉沦',avatar:'沉',text:'今晚临时加播，想聊聊天的可以来。',time:'刚刚',likes:2860,comments:[],liked:false,room:'main'},
+      {id:'xp1',user:'{{char}}',avatar:'{{char}}',text:'今晚临时加播，想聊聊天的可以来。',time:'刚刚',likes:2860,comments:[],liked:false,room:'main'},
       {id:'xp2',user:'今晚冲分车队',avatar:'游',text:'差一个队友，今晚目标上分。',time:'12分钟前',likes:842,comments:[],liked:false,room:'game'},
       {id:'xp3',user:'深夜情绪电台',avatar:'声',text:'今晚主题：那些没来得及说出口的话。',time:'半小时前',likes:1206,comments:[],liked:false,room:'voice'}
     ],
@@ -392,13 +392,13 @@
     return '<section class="xp-page xp-wechat"><div class="xp-wechat-topbar"><div class="xp-app-title">'+({chats:'微信',contacts:'通讯录',discover:'发现',me:'我'}[tab])+'</div><div class="xp-wechat-top-actions">'+(tab==='chats'?'<button class="xp-circle-btn" data-action="wechat-add">＋</button>':'')+'<button class="xp-circle-btn" data-action="wechat-search">⌕</button></div></div>'+search+body+nav+'</section>';
   }
   function renderWechatMoments() {
-    const posts = (state.moments || []).map(p => '<article class="xp-moment-post"><div class="xp-moment-avatar">'+escapeHtml(p.avatar||p.user?.[0]||'我')+'</div><div class="xp-moment-content"><b>'+escapeHtml(p.user||'我')+'</b><p>'+escapeHtml(p.text)+'</p><div class="xp-moment-meta"><time>'+escapeHtml(p.time||'')+'</time><button data-like-moment="'+escapeHtml(p.id)+'" class="'+(p.liked?'liked':'')+'">'+(p.liked?'♥':'♡')+' '+(Number(p.likes)||0)+'</button></div>'+((p.comments||[]).map(c=>'<div class="xp-moment-comment"><b>'+escapeHtml(c.user)+'：</b>'+escapeHtml(c.text)+'</div>').join(''))+'<button class="xp-moment-comment-btn" data-comment-moment="'+escapeHtml(p.id)+'">评论</button></div></article>').join('');
+    const posts = (state.moments || []).map(p => '<article class="xp-moment-post"><div class="xp-moment-avatar">'+escapeHtml(p.avatar||p.user?.[0]||'{{user}}')+'</div><div class="xp-moment-content"><b>'+escapeHtml(p.user||'{{user}}')+'</b><p>'+escapeHtml(p.text)+'</p><div class="xp-moment-meta"><time>'+escapeHtml(p.time||'')+'</time><button data-like-moment="'+escapeHtml(p.id)+'" class="'+(p.liked?'liked':'')+'">'+(p.liked?'♥':'♡')+' '+(Number(p.likes)||0)+'</button></div>'+((p.comments||[]).map(c=>'<div class="xp-moment-comment"><b>'+escapeHtml(c.user)+'：</b>'+escapeHtml(c.text)+'</div>').join(''))+'<button class="xp-moment-comment-btn" data-comment-moment="'+escapeHtml(p.id)+'">评论</button></div></article>').join('');
     return '<section class="xp-page xp-wechat-moments"><div class="xp-moments-header"><button data-action="wechat-list">‹</button><strong>朋友圈</strong><button data-action="wechat-moment-compose">相机</button></div><div class="xp-moments-cover"><span>记录生活中的每一个瞬间</span><b>我的朋友圈</b></div><div class="xp-moments-feed">'+(posts||'<div class="xp-empty">还没有朋友圈动态</div>')+'</div></section>';
   }
   function renderChat() {
     const contact = state.contacts.find(c => c.id === state.selectedContact) || state.contacts[0];
     const msgs = state.chats[contact.id] || [];
-    const bubbles = msgs.map((m, index) => `<div class="xp-chat-row ${m.from === 'me' ? 'mine' : ''}"><span class="xp-chat-avatar">${m.from === 'me' ? '我' : escapeHtml(m.avatar || contact.avatar)}</span><div class="xp-chat-bubble">${contact.isGroup && m.from !== 'me' ? `<b class="xp-chat-sender">${escapeHtml(m.user || '群成员')}</b>` : ''}${m.kind && m.kind !== 'text' ? `<span class="xp-chat-attachment">${({image:'▧ 图片消息',voice:'◖ 语音消息',file:'▤ 文件消息'}[m.kind] || '消息')}</span><span>${escapeHtml(m.text)}</span>` : escapeHtml(m.text)}<small>${escapeHtml(m.time || '')}</small></div><button type="button" class="xp-chat-delete" data-delete-chat-message="${index}" aria-label="删除这条消息" title="删除消息">×</button></div>`).join('');
+    const bubbles = msgs.map((m, index) => `<div class="xp-chat-row ${m.from === 'me' ? 'mine' : ''}"><span class="xp-chat-avatar">${m.from === 'me' ? '{{user}}' : escapeHtml(m.avatar || contact.avatar)}</span><div class="xp-chat-bubble">${contact.isGroup && m.from !== 'me' ? `<b class="xp-chat-sender">${escapeHtml(m.user || '群成员')}</b>` : ''}${m.kind && m.kind !== 'text' ? `<span class="xp-chat-attachment">${({image:'▧ 图片消息',voice:'◖ 语音消息',file:'▤ 文件消息'}[m.kind] || '消息')}</span><span>${escapeHtml(m.text)}</span>` : escapeHtml(m.text)}<small>${escapeHtml(m.time || '')}</small></div><button type="button" class="xp-chat-delete" data-delete-chat-message="${index}" aria-label="删除这条消息" title="删除消息">×</button></div>`).join('');
     return `<section class="xp-page xp-chat-page"><div class="xp-chat-title"><button type="button" data-action="wechat-list" aria-label="返回微信">‹</button><span>${escapeHtml(contact.name)}<small>${contact.isGroup ? `${(contact.members || []).length + 1} 位成员` : (contact.online ? '在线' : '最近在线')}</small></span><button type="button" class="xp-chat-clear" data-action="wechat-chat-info" aria-label="聊天信息" title="聊天信息">···</button><button type="button" class="xp-chat-clear" data-action="clear-chat" aria-label="清空聊天记录" title="清空聊天记录">清空</button></div><div class="xp-chat-history">${bubbles || '<div class="xp-empty">还没有聊天记录</div>'}</div><form class="xp-chat-compose" data-form="wechat"><select name="messageKind" aria-label="消息类型"><option value="text">文字</option><option value="image">图片</option><option value="voice">语音</option><option value="file">文件</option></select><input name="message" autocomplete="off" placeholder="发送消息…" maxlength="300"><button type="submit">发送</button></form></section>`;
   }
 
@@ -406,27 +406,27 @@
     const tab = state.weiboTab || 'recommend';
     const following = state.weiboFollowing || [];
     const all = state.weiboPosts || [];
-    const visible = tab === 'following' ? all.filter(p => p.user === '我' || following.includes(p.user)) : tab === 'mine' ? all.filter(p => p.user === '我') : all;
+    const visible = tab === 'following' ? all.filter(p => p.user === '{{user}}' || following.includes(p.user)) : tab === 'mine' ? all.filter(p => p.user === '{{user}}') : all;
     const posts = visible.map(p => {
       const comments = Array.isArray(p.commentList) ? p.commentList : [];
       const count = Math.max(Number(p.comments) || 0, comments.length);
       const reposts = Number(p.reposts) || 0;
       const repostOf = p.repostOf ? all.find(x => x.id === p.repostOf) : null;
-      return `<article class="xp-social-post" data-post-id="${escapeHtml(p.id)}"><div class="xp-post-author"><span class="xp-avatar xp-avatar-red">${escapeHtml(p.avatar || p.user?.[0] || '用')}</span><strong>${escapeHtml(p.user)}</strong><small>${escapeHtml(p.time || '刚刚')}</small>${p.user !== '我' ? `<button class="xp-weibo-follow ${following.includes(p.user)?'following':''}" data-follow-weibo="${escapeHtml(p.user)}">${following.includes(p.user)?'已关注':'＋关注'}</button>` : ''}</div>${p.repostOf ? '<div class="xp-weibo-repost-label">↗ 转发动态</div>' : ''}<p>${escapeHtml(p.text)}</p>${repostOf ? `<div class="xp-weibo-original"><b>@${escapeHtml(repostOf.user)}</b><p>${escapeHtml(repostOf.text)}</p></div>` : ''}<a class="xp-hashtag">${escapeHtml(p.tag || '#日常#')}</a>${comments.slice(-2).map(c=>`<div class="xp-last-comment"><b>${escapeHtml(c.user || '用户')}：</b>${escapeHtml(c.text)}</div>`).join('')}${p.lastComment && !comments.length ? `<div class="xp-last-comment"><b>最新评论：</b>${escapeHtml(p.lastComment)}</div>` : ''}<div class="xp-post-actions"><button data-like-post="${escapeHtml(p.id)}" class="${p.liked ? 'is-liked' : ''}">♡ ${Number(p.likes)||0}</button><button data-action="weibo-comment">评论 ${count}</button><button data-share-weibo="${escapeHtml(p.id)}">↗ 转发 ${reposts}</button></div></article>`;
+      return `<article class="xp-social-post" data-post-id="${escapeHtml(p.id)}"><div class="xp-post-author"><span class="xp-avatar xp-avatar-red">${escapeHtml(p.avatar || p.user?.[0] || '用')}</span><strong>${escapeHtml(p.user)}</strong><small>${escapeHtml(p.time || '刚刚')}</small>${p.user !== '{{user}}' ? `<button class="xp-weibo-follow ${following.includes(p.user)?'following':''}" data-follow-weibo="${escapeHtml(p.user)}">${following.includes(p.user)?'已关注':'＋关注'}</button>` : ''}</div>${p.repostOf ? '<div class="xp-weibo-repost-label">↗ 转发动态</div>' : ''}<p>${escapeHtml(p.text)}</p>${repostOf ? `<div class="xp-weibo-original"><b>@${escapeHtml(repostOf.user)}</b><p>${escapeHtml(repostOf.text)}</p></div>` : ''}<a class="xp-hashtag">${escapeHtml(p.tag || '#日常#')}</a>${comments.slice(-2).map(c=>`<div class="xp-last-comment"><b>${escapeHtml(c.user || '用户')}：</b>${escapeHtml(c.text)}</div>`).join('')}${p.lastComment && !comments.length ? `<div class="xp-last-comment"><b>最新评论：</b>${escapeHtml(p.lastComment)}</div>` : ''}<div class="xp-post-actions"><button data-like-post="${escapeHtml(p.id)}" class="${p.liked ? 'is-liked' : ''}">♡ ${Number(p.likes)||0}</button><button data-action="weibo-comment">评论 ${count}</button><button data-share-weibo="${escapeHtml(p.id)}">↗ 转发 ${reposts}</button></div></article>`;
     }).join('');
     const tabs = [['recommend','推荐'],['following','关注'],['mine','我的']].map(([id,label])=>`<button type="button" data-weibo-tab="${id}" class="${tab===id?'active':''}">${label}</button>`).join('');
-    const mine = all.filter(p=>p.user==='我');
+    const mine = all.filter(p=>p.user==='{{user}}');
     return `<section class="xp-page xp-weibo"><div class="xp-appbar"><div class="xp-app-title xp-weibo-brand">微博</div><div class="xp-weibo-head-actions"><button class="xp-circle-btn" data-action="weibo-profile">我</button><button class="xp-circle-btn" data-action="weibo-compose">＋</button></div></div><div class="xp-social-search"><span>⌕</span><input type="search" data-weibo-search placeholder="搜索用户、动态或话题"></div><div class="xp-weibo-tabs">${tabs}</div>${tab==='mine'? `<div class="xp-weibo-profile"><div class="xp-weibo-profile-avatar">我</div><strong>我的微博</strong><small>本地模拟账号 · 分享你的生活</small><div><span><b>${mine.length}</b> 动态</span><span><b>${mine.reduce((n,p)=>n+(Number(p.likes)||0),0)}</b> 获赞</span><span><b>${following.length}</b> 关注</span></div><button data-action="weibo-compose">发布新动态</button></div>` : '<div class="xp-hot-search"><strong>热搜榜</strong><span>1　直播间新话题　热</span><span>2　主播互动边界讨论　沸</span><span>3　深夜闲聊切片　新</span></div>'}${posts || '<div class="xp-empty">暂时没有微博动态</div>'}</section>`;
   }
 
   function renderRed() {
     const tab = state.redTab || 'recommend';
     const all = state.redPosts || [];
-    const visible = tab === 'following' ? all.filter(p => p.user === '我' || (state.redFollowing || []).includes(p.user)) : tab === 'nearby' ? all.filter(p => p.nearby !== false) : all;
+    const visible = tab === 'following' ? all.filter(p => p.user === '{{user}}' || (state.redFollowing || []).includes(p.user)) : tab === 'nearby' ? all.filter(p => p.nearby !== false) : all;
     const posts = visible.map(p => {
       const comments = Array.isArray(p.comments) ? p.comments : [];
       const following = (state.redFollowing || []).includes(p.user);
-      return `<article class="xp-red-card"><div class="xp-red-cover ${escapeHtml(p.color || 'peach')}"><span>生活灵感</span></div><div class="xp-red-card-body"><div class="xp-red-author"><strong>${escapeHtml(p.title)}</strong><small>${escapeHtml(p.user)}</small></div><p>${escapeHtml(p.desc)}</p><div class="xp-red-actions"><button data-like-red="${escapeHtml(p.id)}" class="${p.liked ? 'is-liked' : ''}">♡ ${escapeHtml(p.likes)}</button><button data-favorite-red="${escapeHtml(p.id)}" class="${p.favorite ? 'is-favorited' : ''}">${p.favorite ? '★ 已收藏' : '☆ 收藏'}</button><button data-comment-red="${escapeHtml(p.id)}">评论 ${comments.length}</button>${p.user !== '我' ? `<button data-follow-red="${escapeHtml(p.user)}">${following ? '已关注' : '+ 关注'}</button>` : ''}</div>${comments.slice(-2).map(c => `<div class="xp-red-comment"><b>${escapeHtml(c.user || '用户')}：</b>${escapeHtml(c.text)}</div>`).join('')}</div></article>`;
+      return `<article class="xp-red-card"><div class="xp-red-cover ${escapeHtml(p.color || 'peach')}"><span>生活灵感</span></div><div class="xp-red-card-body"><div class="xp-red-author"><strong>${escapeHtml(p.title)}</strong><small>${escapeHtml(p.user)}</small></div><p>${escapeHtml(p.desc)}</p><div class="xp-red-actions"><button data-like-red="${escapeHtml(p.id)}" class="${p.liked ? 'is-liked' : ''}">♡ ${escapeHtml(p.likes)}</button><button data-favorite-red="${escapeHtml(p.id)}" class="${p.favorite ? 'is-favorited' : ''}">${p.favorite ? '★ 已收藏' : '☆ 收藏'}</button><button data-comment-red="${escapeHtml(p.id)}">评论 ${comments.length}</button>${p.user !== '{{user}}' ? `<button data-follow-red="${escapeHtml(p.user)}">${following ? '已关注' : '+ 关注'}</button>` : ''}</div>${comments.slice(-2).map(c => `<div class="xp-red-comment"><b>${escapeHtml(c.user || '用户')}：</b>${escapeHtml(c.text)}</div>`).join('')}</div></article>`;
     }).join('');
     const tabs = [['recommend','推荐'],['following','关注'],['nearby','附近']].map(([id,label]) => `<button type="button" data-red-tab="${id}" class="${tab===id?'active':''}">${label}</button>`).join('');
     return `<section class="xp-page xp-red"><div class="xp-appbar"><div class="xp-app-title xp-red-brand">小红书</div><button class="xp-circle-btn" data-action="red-compose">＋</button></div><div class="xp-red-tabs">${tabs}</div>${posts || '<div class="xp-empty">这里暂时没有笔记</div>'}</section>`;
@@ -434,13 +434,13 @@
 
   function renderXPlatform() {
     const rooms = [
-      {id:'main',name:'沉沦的直播间',title:'深夜闲聊｜今天不想早睡',category:'聊天 · 日常',viewers:state.liveViewers,heat:state.liveHeat,tag:'颜值',cover:'LIVE'},
+      {id:'main',name:'{{char}}的直播间',title:'深夜闲聊｜今天不想早睡',category:'聊天 · 日常',viewers:state.liveViewers,heat:state.liveHeat,tag:'颜值',cover:'LIVE'},
       {id:'game',name:'今晚冲分车队',title:'今晚冲分车队｜差一个队友',category:'游戏 · 竞技',viewers:32000,heat:428000,tag:'游戏',cover:'GAME'},
       {id:'voice',name:'深夜情绪电台',title:'深夜情绪电台｜听你说说话',category:'语音 · 情感',viewers:8600,heat:168000,tag:'语音',cover:'VOICE'}
     ];
     const tab=state.xTab||'recommend', following=state.xFollowing||[];
-    const filtered=(state.xPosts||[]).filter(p=>tab==='following'?following.includes(p.user)||p.user==='我':tab==='game'?p.room==='game':tab==='voice'?p.room==='voice':tab==='beauty'?p.room==='main':true);
-    const posts=filtered.map(p=>{const cs=Array.isArray(p.comments)?p.comments:[];return `<article class="xp-x-post"><div class="xp-x-post-author"><span>${escapeHtml(p.avatar||p.user?.[0]||'用')}</span><b>${escapeHtml(p.user)}</b><small>${escapeHtml(p.time||'刚刚')}</small>${p.user!=='我'? `<button data-x-follow="${escapeHtml(p.user)}">${following.includes(p.user)?'已关注':'＋关注'}</button>`:''}</div><p>${escapeHtml(p.text)}</p><div class="xp-x-post-actions"><button data-x-like="${escapeHtml(p.id)}" class="${p.liked?'is-liked':''}">♡ ${Number(p.likes)||0}</button><button data-x-comment="${escapeHtml(p.id)}">评论 ${cs.length}</button><button data-x-enter-room="${escapeHtml(p.room||'main')}">进入直播间 ↗</button></div>${cs.slice(-2).map(c=>`<div class="xp-x-comment"><b>${escapeHtml(c.user||'用户')}：</b>${escapeHtml(c.text)}</div>`).join('')}</article>`;}).join('');
+    const filtered=(state.xPosts||[]).filter(p=>tab==='following'?following.includes(p.user)||p.user==='{{user}}':tab==='game'?p.room==='game':tab==='voice'?p.room==='voice':tab==='beauty'?p.room==='main':true);
+    const posts=filtered.map(p=>{const cs=Array.isArray(p.comments)?p.comments:[];return `<article class="xp-x-post"><div class="xp-x-post-author"><span>${escapeHtml(p.avatar||p.user?.[0]||'用')}</span><b>${escapeHtml(p.user)}</b><small>${escapeHtml(p.time||'刚刚')}</small>${p.user!=='{{user}}'? `<button data-x-follow="${escapeHtml(p.user)}">${following.includes(p.user)?'已关注':'＋关注'}</button>`:''}</div><p>${escapeHtml(p.text)}</p><div class="xp-x-post-actions"><button data-x-like="${escapeHtml(p.id)}" class="${p.liked?'is-liked':''}">♡ ${Number(p.likes)||0}</button><button data-x-comment="${escapeHtml(p.id)}">评论 ${cs.length}</button><button data-x-enter-room="${escapeHtml(p.room||'main')}">进入直播间 ↗</button></div>${cs.slice(-2).map(c=>`<div class="xp-x-comment"><b>${escapeHtml(c.user||'用户')}：</b>${escapeHtml(c.text)}</div>`).join('')}</article>`;}).join('');
     const tabs=[['recommend','推荐'],['following','关注'],['game','游戏'],['voice','语音'],['beauty','颜值']].map(([id,n])=>`<button data-x-tab="${id}" class="${tab===id?'active':''}">${n}</button>`).join('');
     const cards=rooms.map(r=>`<article class="xp-live-card"><div class="xp-live-cover xp-live-cover-${r.id}"><span class="xp-live-tag">● LIVE</span><span class="xp-live-count">${Number(r.viewers).toLocaleString('zh-CN')} 人在线</span><div class="xp-live-cover-title">${escapeHtml(r.title)}</div></div><div class="xp-live-info"><strong>${escapeHtml(r.name)}</strong><small>${escapeHtml(r.category)}　热度 ${Number(r.heat).toLocaleString('zh-CN')}</small><button data-x-enter-room="${r.id}">进入直播间　›</button></div></article>`).join('');
     return `<section class="xp-page xp-xplatform"><div class="xp-x-top"><div class="xp-x-logo">X</div><div><strong>X平台</strong><small>综合直播社区</small></div><button data-action="notifications">♧</button></div><div class="xp-x-tabs">${tabs}</div><div class="xp-x-section-title">正在直播</div>${cards}<div class="xp-x-section-title">动态广场 <button data-action="x-compose">＋ 发布动态</button></div>${posts||'<div class="xp-empty">这里暂时没有动态</div>'}<div class="xp-x-bottom"><button data-action="x-home">首页</button><button data-x-tab="following">关注</button><button data-action="x-compose">＋</button><button data-action="notifications">消息</button><button data-action="x-profile">我的</button></div></section>`;
@@ -448,7 +448,7 @@
 
   function renderLive() {
     const roomId=state.activeLiveId||'main';
-    const rooms={main:{name:'沉沦',title:'深夜闲聊｜今天不想早睡',category:'聊天分区',viewers:state.liveViewers,heat:state.liveHeat},game:{name:'今晚冲分车队',title:'今晚冲分车队｜差一个队友',category:'游戏分区',viewers:32000,heat:428000},voice:{name:'深夜情绪电台',title:'深夜情绪电台｜听你说说话',category:'语音分区',viewers:8600,heat:168000}};
+    const rooms={main:{name:'{{char}}',title:'深夜闲聊｜今天不想早睡',category:'聊天分区',viewers:state.liveViewers,heat:state.liveHeat},game:{name:'今晚冲分车队',title:'今晚冲分车队｜差一个队友',category:'游戏分区',viewers:32000,heat:428000},voice:{name:'深夜情绪电台',title:'深夜情绪电台｜听你说说话',category:'语音分区',viewers:8600,heat:168000}};
     const room=rooms[roomId]||rooms.main;
     const lines=state.liveMessages.slice(-30).map(m=>`<div class="xp-barrage"><b>${escapeHtml(m.user)}：</b>${escapeHtml(m.text)}</div>`).join('');
     return `<section class="xp-page xp-live-room"><div class="xp-live-video"><span class="xp-live-tag">● LIVE</span><span class="xp-live-video-label">${escapeHtml(room.title)}</span><small>这里显示由剧情描述的直播画面</small></div><div class="xp-live-room-info"><div><strong>${escapeHtml(room.title)}</strong><small>${escapeHtml(room.name)}　·　${room.category}　·　${Number(room.viewers).toLocaleString('zh-CN')} 人在线</small></div><button data-action="follow" class="xp-follow ${state.followed?'following':''}">${state.followed?'已关注':'＋ 关注'}</button></div><div class="xp-live-metrics"><span>热度 <b>${Number(room.heat).toLocaleString('zh-CN')}</b></span><span>本地模拟礼物 <b>${state.giftsSent}</b></span><span>余额 <b>${state.wallet}</b> 钻石</span></div><div class="xp-barrage-list">${lines}</div><form class="xp-live-compose" data-form="barrage"><input name="message" autocomplete="off" placeholder="和主播聊两句…" maxlength="100"><button type="submit">发送</button><button type="button" data-action="gift">礼物</button></form></section>`;
@@ -552,7 +552,7 @@
     const followWeibo = event.target.closest('[data-follow-weibo]');
     if (followWeibo) { const name=followWeibo.dataset.followWeibo; state.weiboFollowing=state.weiboFollowing||[]; state.weiboFollowing=state.weiboFollowing.includes(name)?state.weiboFollowing.filter(x=>x!==name):[...state.weiboFollowing,name]; renderScreen(); persistState(); return; }
     const shareWeibo = event.target.closest('[data-share-weibo]');
-    if (shareWeibo) { const original=state.weiboPosts.find(p=>p.id===shareWeibo.dataset.shareWeibo); if(original){ original.reposts=(Number(original.reposts)||0)+1; state.weiboPosts.unshift({id:`wr${Date.now()}`,user:'我',avatar:'我',text:original.text,tag:original.tag||'#转发#',likes:0,comments:0,commentList:[],liked:false,reposts:0,repostOf:original.id,time:'刚刚'}); state.weiboPosts=state.weiboPosts.slice(0,100); addNotification('微博','转发成功',`你转发了 @${original.user} 的动态。`); } renderScreen(); persistState(); return; }
+    if (shareWeibo) { const original=state.weiboPosts.find(p=>p.id===shareWeibo.dataset.shareWeibo); if(original){ original.reposts=(Number(original.reposts)||0)+1; state.weiboPosts.unshift({id:`wr${Date.now()}`,user:'{{user}}',avatar:'{{user}}',text:original.text,tag:original.tag||'#转发#',likes:0,comments:0,commentList:[],liked:false,reposts:0,repostOf:original.id,time:'刚刚'}); state.weiboPosts=state.weiboPosts.slice(0,100); addNotification('微博','转发成功',`你转发了 @${original.user} 的动态。`); } renderScreen(); persistState(); return; }
     const xTab=event.target.closest('[data-x-tab]');
     if(xTab){state.xTab=xTab.dataset.xTab;setPage('xplatform','xplatform',false);persistState();return;}
     const xFollow=event.target.closest('[data-x-follow]');
@@ -614,7 +614,7 @@
       case 'enter-live': state.activeLiveId='main'; setPage('live', 'xplatform'); break;
       case 'x-home': setPage('xplatform', 'xplatform'); break;
       case 'x-compose': openActionDialog('x-compose','发布 X 平台动态','发布内容会显示在动态广场',inlineHost,'分享此刻的动态……'); break;
-      case 'x-profile': openInfoDialog('我的 X 平台主页',`已关注：${(state.xFollowing||[]).length} 人\n我的动态：${(state.xPosts||[]).filter(p=>p.user==='我').length} 条\n收到的点赞：${(state.xPosts||[]).filter(p=>p.user==='我').reduce((n,p)=>n+(Number(p.likes)||0),0)}\n直播间：沉沦的直播间\n以上为本地模拟资料。`,inlineHost); break;
+      case 'x-profile': openInfoDialog('我的 X 平台主页',`已关注：${(state.xFollowing||[]).length} 人\n我的动态：${(state.xPosts||[]).filter(p=>p.user==='{{user}}').length} 条\n收到的点赞：${(state.xPosts||[]).filter(p=>p.user==='{{user}}').reduce((n,p)=>n+(Number(p.likes)||0),0)}\n直播间：{{char}}的直播间\n以上为本地模拟资料。`,inlineHost); break;
       case 'wallet': setPage('wallet', 'xplatform'); break;
       case 'follow': state.followed = !state.followed; renderScreen(); persistState(); break;
       case 'gift': openActionDialog('gift', '赠送礼物', '选择一份礼物支持主播。将扣除模拟钻石，不涉及真实支付。', inlineHost); break;
@@ -670,25 +670,25 @@
     if (kind === 'clear-chat' && value === 'confirm') {
       if (state.selectedContact) state.chats[state.selectedContact] = [];
     } else if (kind === 'wechat-moment-compose' && value) {
-      state.moments=state.moments||[];state.moments.unshift({id:`m${Date.now()}`,user:'我',avatar:'我',text:value,time:`今天 ${nowTime()}`,likes:0,liked:false,comments:[]});state.moments=state.moments.slice(0,100);
+      state.moments=state.moments||[];state.moments.unshift({id:`m${Date.now()}`,user:'{{user}}',avatar:'{{user}}',text:value,time:`今天 ${nowTime()}`,likes:0,liked:false,comments:[]});state.moments=state.moments.slice(0,100);
     } else if (kind === 'wechat-moment-comment' && value) {
-      const post=(state.moments||[]).find(p=>p.id===extra);if(post){post.comments=Array.isArray(post.comments)?post.comments:[];post.comments.push({user:'我',text:value});post.comments=post.comments.slice(-30);}
+      const post=(state.moments||[]).find(p=>p.id===extra);if(post){post.comments=Array.isArray(post.comments)?post.comments:[];post.comments.push({user:'{{user}}',text:value});post.comments=post.comments.slice(-30);}
     } else if (kind === 'weibo-compose' && value) {
-      state.weiboPosts.unshift({ id: `w${Date.now()}`, user: '我', avatar: '我', text: value, tag: '#我的动态#', likes: 0, comments: 0, commentList: [], liked: false, reposts: 0, time: '刚刚' });
+      state.weiboPosts.unshift({ id: `w${Date.now()}`, user: '{{user}}', avatar: '{{user}}', text: value, tag: '#我的动态#', likes: 0, comments: 0, commentList: [], liked: false, reposts: 0, time: '刚刚' });
       state.weiboPosts = state.weiboPosts.slice(0, 100);
     } else if (kind === 'x-compose' && value) {
-      state.xPosts=state.xPosts||[];state.xPosts.unshift({id:`xp${Date.now()}`,user:'我',avatar:'我',text:value,time:'刚刚',likes:0,comments:[],liked:false,room:'main'});state.xPosts=state.xPosts.slice(0,100);
+      state.xPosts=state.xPosts||[];state.xPosts.unshift({id:`xp${Date.now()}`,user:'{{user}}',avatar:'{{user}}',text:value,time:'刚刚',likes:0,comments:[],liked:false,room:'main'});state.xPosts=state.xPosts.slice(0,100);
     } else if (kind === 'x-comment' && value) {
-      const post=(state.xPosts||[]).find(p=>p.id===extra);if(post){post.comments=Array.isArray(post.comments)?post.comments:[];post.comments.push({user:'我',text:value,time:nowTime()});post.comments=post.comments.slice(-50);}
+      const post=(state.xPosts||[]).find(p=>p.id===extra);if(post){post.comments=Array.isArray(post.comments)?post.comments:[];post.comments.push({user:'{{user}}',text:value,time:nowTime()});post.comments=post.comments.slice(-50);}
     } else if (kind === 'red-compose' && value) {
-      state.redPosts.unshift({ id: `r${Date.now()}`, user: '我', title: value, desc: '刚刚发布 · 本地模拟笔记', likes: 0, liked: false, favorite: false, comments: [], color: 'peach' });
+      state.redPosts.unshift({ id: `r${Date.now()}`, user: '{{user}}', title: value, desc: '刚刚发布 · 本地模拟笔记', likes: 0, liked: false, favorite: false, comments: [], color: 'peach' });
       state.redPosts = state.redPosts.slice(0, 100);
     } else if (kind === 'comment' && value) {
       const post = state.weiboPosts.find(p => p.id === extra);
-      if (post) { post.comments = (Number(post.comments) || 0) + 1; post.commentList = Array.isArray(post.commentList) ? post.commentList : []; post.commentList.push({ user: '我', text: value, time: nowTime() }); post.commentList = post.commentList.slice(-50); post.lastComment = value; }
+      if (post) { post.comments = (Number(post.comments) || 0) + 1; post.commentList = Array.isArray(post.commentList) ? post.commentList : []; post.commentList.push({ user: '{{user}}', text: value, time: nowTime() }); post.commentList = post.commentList.slice(-50); post.lastComment = value; }
     } else if (kind === 'red-comment' && value) {
       const post = state.redPosts.find(p => p.id === extra);
-      if (post) { post.comments = Array.isArray(post.comments) ? post.comments : []; post.comments.push({ user: '我', text: value, time: nowTime() }); post.comments = post.comments.slice(-50); }
+      if (post) { post.comments = Array.isArray(post.comments) ? post.comments : []; post.comments.push({ user: '{{user}}', text: value, time: nowTime() }); post.comments = post.comments.slice(-50); }
     } else if (kind === 'wechat-contact-edit' && value === 'save') {
       const c=state.contacts.find(x=>x.id===extra&&!x.isGroup);if(c){if(contactName)c.name=contactName;c.note=contactNote||'好友';c.avatar=c.avatar||c.name.slice(0,1);}
     } else if (kind === 'wechat-group-create' && value) {
@@ -772,7 +772,7 @@
     } else if (type === 'barrage') {
       const text = String(data.get('message') || '').trim();
       if (!text) return;
-      state.liveMessages.push({ user: '我', text });
+      state.liveMessages.push({ user: '{{user}}', text });
       state.liveMessages = state.liveMessages.slice(-200);
       renderScreen(); persistState();
     } else if (type === 'browser') {
