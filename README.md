@@ -32,10 +32,14 @@
 
 ## 版本
 
-当前版本：**1.1.71**
+当前版本：**1.1.72**
 
 扩展源文件：`index.js`、`style.css`、`manifest.json`。
 
+
+### 1.1.72
+- Add ownership-aware deletion for the user's own WeChat Moments posts, with an explicit confirmation dialog; other users' posts cannot be deleted through this action.
+- Keep existing Moments publishing, likes, and comments intact.
 
 ### 1.1.71
 - Add full Xiaohongshu note detail pages with author information, complete text, full comment list, follow, like, favorite, and comment actions.
