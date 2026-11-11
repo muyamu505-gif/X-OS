@@ -332,7 +332,7 @@
   }
 
   function renderXPlatform() {
-    return `<section class="xp-page xp-xplatform"><div class="xp-x-top"><div class="xp-x-logo">X</div><div><strong>X平台</strong><small>综合直播社区</small></div><button data-action="notifications">♧</button></div><div class="xp-x-tabs"><b>推荐</b><span>关注</span><span>游戏</span><span>语音</span><span>颜值</span></div><article class="xp-live-card"><div class="xp-live-cover"><span class="xp-live-tag">● LIVE</span><span class="xp-live-count">${Number(state.liveViewers).toLocaleString('zh-CN')} 人在线</span><div class="xp-live-cover-title">深夜闲聊｜今天不想早睡</div></div><div class="xp-live-info"><strong>沉沦的直播间</strong><small>聊天 · 日常　　热度 ${Number(state.liveHeat).toLocaleString('zh-CN')}</small><button data-action="enter-live">进入直播间　›</button></div></article><div class="xp-x-section-title">热门直播</div><div class="xp-mini-live"><span class="xp-mini-thumb game">GAME</span><span><b>今晚冲分车队</b><small>游戏 · 3.2万人在线</small></span></div><div class="xp-mini-live"><span class="xp-mini-thumb voice">VOICE</span><span><b>深夜情绪电台</b><small>语音 · 8.6千人在线</small></span></div><div class="xp-x-bottom"><span>首页</span><span>关注</span><span>＋</span><span>消息</span><span>我的</span></div></section>`;
+    return `<section class="xp-page xp-xplatform"><div class="xp-x-top"><div class="xp-x-logo">X</div><div><strong>X平台</strong><small>综合直播社区</small></div><button data-action="notifications">♧</button></div><div class="xp-x-tabs"><b>推荐</b><span>关注</span><span>游戏</span><span>语音</span><span>颜值</span></div><article class="xp-live-card"><div class="xp-live-cover"><span class="xp-live-tag">● LIVE</span><span class="xp-live-count">${Number(state.liveViewers).toLocaleString('zh-CN')} 人在线</span><div class="xp-live-cover-title">深夜闲聊｜今天不想早睡</div></div><div class="xp-live-info"><strong>沉沦的直播间</strong><small>聊天 · 日常　　热度 ${Number(state.liveHeat).toLocaleString('zh-CN')}</small><button data-action="enter-live">进入直播间　›</button></div></article><div class="xp-x-section-title">热门直播</div><button type="button" class="xp-mini-live" data-action="enter-live"><span class="xp-mini-thumb game">GAME</span><span><b>今晚冲分车队</b><small>游戏 · 3.2万人在线</small></span><i>›</i></button><button type="button" class="xp-mini-live" data-action="enter-live"><span class="xp-mini-thumb voice">VOICE</span><span><b>深夜情绪电台</b><small>语音 · 8.6千人在线</small></span><i>›</i></button><div class="xp-x-bottom"><button type="button" data-action="x-home">首页</button><button type="button" data-action="follow">关注</button><button type="button" data-action="enter-live">＋</button><button type="button" data-action="notifications">消息</button><button type="button" data-action="wallet">我的</button></div></section>`;
   }
 
   function renderLive() {
@@ -447,6 +447,8 @@
       case 'notifications': setPage('notifications'); break;
       case 'clear-notices': state.notifications.forEach(n => n.unread = false); renderScreen(); persistState(); break;
       case 'enter-live': setPage('live', 'xplatform'); break;
+      case 'x-home': setPage('xplatform', 'xplatform'); break;
+      case 'wallet': setPage('wallet', 'xplatform'); break;
       case 'follow': state.followed = !state.followed; renderScreen(); persistState(); break;
       case 'gift': openActionDialog('gift', '赠送礼物', '选择一份礼物支持主播。将扣除模拟钻石，不涉及真实支付。', inlineHost); break;
       case 'wechat-add': openActionDialog('wechat-add', '添加联系人', '创建一个本地模拟联系人', inlineHost, '输入联系人昵称……'); break;
