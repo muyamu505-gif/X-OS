@@ -45,3 +45,7 @@
 ### 1.1.3
 - Hardened the phone modal overlay and shell against host-theme/mobile CSS overrides.
 - Reduced the default phone size and enforced viewport-safe bounds.
+
+
+### 1.1.4
+- Fixed inline phone insertion inside message text flow and constrained its layout to a centered, self-contained device.
