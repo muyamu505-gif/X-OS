@@ -1072,11 +1072,16 @@
       state.xPosts = state.xPosts.slice(-200);
       if (!state.selectedContact || !state.contacts.some(c=>c.id===state.selectedContact)) state.selectedContact = importedContactIds[0] || state.contacts[0]?.id || null;
       const incomingRooms=(Array.isArray(profile.liveRooms)?profile.liveRooms:[]).slice(0,20);
-      state.importedLiveRooms=incomingRooms.map(room=>{
+      // A partial extraction must not erase previously imported rooms. Reconcile only
+      // rooms evidenced in this pass, while retaining older context-derived entries.
+      const roomMap=new Map((Array.isArray(state.importedLiveRooms)?state.importedLiveRooms:[]).filter(room=>room&&typeof room.id==='string').map(room=>[room.id,room]));
+      for(const room of incomingRooms){
         const name=String(room.name||'').trim().slice(0,48),title=String(room.title||'').trim().slice(0,100),category=String(room.category||'直播').trim().slice(0,32),description=String(room.description||'').trim().slice(0,500),host=String(room.host||'').trim().slice(0,48);
+        if(!name||!title) continue;
         const id='storylive_'+makeImportKey('live',name+':'+title+':'+host);
-        return {id,name:name||'直播间',title:title||'剧情直播',category,description,host,source:'xos-context'};
-      }).filter(room=>room.title&&room.name);
+        roomMap.set(id,{...(roomMap.get(id)||{}),id,name,title,category,description,host,source:'xos-context'});
+      }
+      state.importedLiveRooms=Array.from(roomMap.values()).slice(-40);
       const incomingLiveChat=(Array.isArray(profile.liveChat)?profile.liveChat:[]).slice(0,80);
       let importedLiveMessageCount=0;
       for(const item of incomingLiveChat){
