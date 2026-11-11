@@ -32,10 +32,14 @@
 
 ## 版本
 
-当前版本：**1.1.70**
+当前版本：**1.1.71**
 
 扩展源文件：`index.js`、`style.css`、`manifest.json`。
 
+
+### 1.1.71
+- Add full Xiaohongshu note detail pages with author information, complete text, full comment list, follow, like, favorite, and comment actions.
+- Preserve selected note state and return navigation.
 
 ### 1.1.70
 - Add searchable chat history inside each WeChat conversation, with persistent query state and a clear-search action.
