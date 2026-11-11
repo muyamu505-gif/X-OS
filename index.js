@@ -72,6 +72,7 @@
   let contextReady = false;
   let boundEventSource = null;
   let pendingDialog = null;
+  let notificationSequence = 0;
 
   function structuredCloneSafe(value) {
     return JSON.parse(JSON.stringify(value));
@@ -394,7 +395,7 @@
 
   function addNotification(app, title, body) {
     const now = new Intl.DateTimeFormat('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date());
-    state.notifications.unshift({ id: `n${Date.now()}`, app, title, body, time: now, unread: true });
+    state.notifications.unshift({ id: `n${Date.now()}-${++notificationSequence}`, app, title, body, time: now, unread: true });
     state.notifications = state.notifications.slice(0, 30);
   }
 
@@ -491,8 +492,10 @@
     pendingDialog = null;
     if (kind === 'weibo-compose' && value) {
       state.weiboPosts.unshift({ id: `w${Date.now()}`, user: '我', avatar: '我', text: value, tag: '#我的动态#', likes: 0, comments: 0, liked: false });
+      state.weiboPosts = state.weiboPosts.slice(0, 100);
     } else if (kind === 'red-compose' && value) {
       state.redPosts.unshift({ id: `r${Date.now()}`, user: '我', title: value, desc: '刚刚发布 · 本地模拟笔记', likes: 0, liked: false, color: 'peach' });
+      state.redPosts = state.redPosts.slice(0, 100);
     } else if (kind === 'comment' && value) {
       const post = state.weiboPosts.find(p => p.id === extra);
       if (post) { post.comments = Number(post.comments || 0) + 1; post.lastComment = value; }
@@ -510,6 +513,7 @@
         state.wallet -= price;
         state.giftsSent += 1;
         state.liveMessages.push({ user: '系统', text: `你送出了 ${value} ×1` });
+        state.liveMessages = state.liveMessages.slice(-200);
       }
     }
     renderScreen();
@@ -532,11 +536,13 @@
       if (!text || !state.selectedContact) return;
       const arr = state.chats[state.selectedContact] || (state.chats[state.selectedContact] = []);
       arr.push({ from: 'me', text, time: nowTime() });
+      if (arr.length > 200) arr.splice(0, arr.length - 200);
       renderScreen(); persistState();
     } else if (type === 'barrage') {
       const text = String(data.get('message') || '').trim();
       if (!text) return;
       state.liveMessages.push({ user: '我', text });
+      state.liveMessages = state.liveMessages.slice(-200);
       renderScreen(); persistState();
     } else if (type === 'browser') {
       state.browserQuery = String(data.get('url') || '').trim();
@@ -546,12 +552,14 @@
       const title = String(data.get('title') || '').trim();
       if (!title) return;
       state.photos.unshift({ id: `p${Date.now()}`, album: state.selectedAlbum === '收藏' ? '最近项目' : state.selectedAlbum || '最近项目', title, detail: String(data.get('detail') || '').trim(), date: `今天 ${nowTime()}` });
+      state.photos = state.photos.slice(0, 200);
       renderScreen(); persistState();
     } else if (type === 'calendar') {
       const day = Math.max(1, Math.min(31, Number(data.get('day')) || 1));
       const title = String(data.get('title') || '').trim();
       if (!title) return;
       state.calendar.push({ day, title, desc: String(data.get('desc') || '').trim() });
+      if (state.calendar.length > 200) state.calendar = state.calendar.slice(-200);
       state.calendar.sort((a,b) => Number(a.day)-Number(b.day));
       renderScreen(); persistState();
     }
