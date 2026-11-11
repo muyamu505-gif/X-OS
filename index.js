@@ -279,6 +279,7 @@
     overlay.setAttribute('aria-hidden', 'true');
     overlay.innerHTML = `
       <div class="xphone-backdrop" aria-hidden="true"></div>
+      <button class="xphone-external-close" type="button" aria-label="关闭小手机" title="关闭小手机">×</button>
       <section class="xphone-shell" role="dialog" aria-modal="true" aria-label="手机模拟器" style="width:320px;height:620px;left:calc(50% - 160px);top:calc(50% - 310px);">
         <div class="xphone-content">
           <div class="xphone-notch"><span></span></div>
@@ -290,6 +291,8 @@
         <div class="xphone-resize-handle" role="button" tabindex="0" aria-label="拖动右下角整体缩放手机" title="拖动调整整体大小"></div>
       </section>`;
     document.documentElement.appendChild(overlay);
+    const externalClose = overlay.querySelector('.xphone-external-close');
+    externalClose.addEventListener('click', event => { event.preventDefault(); event.stopPropagation(); closePhone(); });
     phoneScreen = overlay.querySelector('#xphone-screen');
     phoneScreen.style.cssText = 'flex:1 1 auto;min-height:0;overflow:auto;overscroll-behavior:contain;';
     attachPhoneResize(overlay.querySelector('.xphone-shell'));
@@ -355,6 +358,8 @@
     const pos = getPhonePosition(width, height, w, h);
     shell.style.setProperty('left', pos.x + 'px', 'important');
     shell.style.setProperty('top', pos.y + 'px', 'important');
+    const close = overlay.querySelector('.xphone-external-close');
+    if (close) { close.style.left = Math.min(width - 42, pos.x + w - 12) + 'px'; close.style.top = Math.max(4, pos.y - 14) + 'px'; }
   }
 
   function getPhonePosition(viewW, viewH, phoneW, phoneH) {
@@ -397,7 +402,7 @@
         shell.style.setProperty('width',z.width+'px','important');shell.style.setProperty('height',z.height+'px','important');
         const content=shell.querySelector('.xphone-content');if(content)content.style.setProperty('--xp-phone-scale',String((z.width-12)/308));
         const vw=document.documentElement.clientWidth||innerWidth,vh=window.innerHeight||640;
-        const r=shell.getBoundingClientRect();shell.style.setProperty('left',Math.max(0,Math.min(vw-z.width,r.left))+'px','important');shell.style.setProperty('top',Math.max(0,Math.min(vh-z.height,r.top))+'px','important');});
+        const r=shell.getBoundingClientRect();shell.style.setProperty('left',Math.max(0,Math.min(vw-z.width,r.left))+'px','important');shell.style.setProperty('top',Math.max(0,Math.min(vh-z.height,r.top))+'px','important');const close=overlay.querySelector('.xphone-external-close');if(close){const p=shell.getBoundingClientRect();close.style.left=Math.min(vw-42,p.right-12)+'px';close.style.top=Math.max(4,p.top-14)+'px';}});
       const finish=e=>{if(!resize||(e.pointerId!==undefined&&resize.id!==e.pointerId))return;saveSize();resize=null;updateOverlayGeometry();};
       handle.addEventListener('pointerup',finish);handle.addEventListener('pointercancel',finish);
       handle.addEventListener('keydown',e=>{if(!['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key))return;e.preventDefault();const r=shell.getBoundingClientRect(),step=e.shiftKey?48:16,delta=(e.key==='ArrowRight'||e.key==='ArrowDown'?step:-step),z=fromScale(Math.max(.25,Math.min(getLimits().maxScale,(r.width-12)/308+delta/308)));shell.style.setProperty('width',z.width+'px','important');shell.style.setProperty('height',z.height+'px','important');saveSize();updateOverlayGeometry();});
@@ -405,7 +410,7 @@
     const drag=shell.querySelector('.xphone-drag-handle');
     if(drag){
       drag.addEventListener('pointerdown',e=>{const r=shell.getBoundingClientRect();move={id:e.pointerId,x:e.clientX,y:e.clientY,left:r.left,top:r.top};try{drag.setPointerCapture(e.pointerId);}catch(_){}e.preventDefault();});
-      drag.addEventListener('pointermove',e=>{if(!move||move.id!==e.pointerId)return;const vw=document.documentElement.clientWidth||innerWidth,vh=keyboardFocused&&keyboardViewportHeight?keyboardViewportHeight:(window.innerHeight||640);const r=shell.getBoundingClientRect(),x=Math.max(0,Math.min(vw-r.width,move.left+e.clientX-move.x)),y=Math.max(0,Math.min(vh-r.height,move.top+e.clientY-move.y));shell.style.setProperty('left',x+'px','important');shell.style.setProperty('top',y+'px','important');});
+      drag.addEventListener('pointermove',e=>{if(!move||move.id!==e.pointerId)return;const vw=document.documentElement.clientWidth||innerWidth,vh=keyboardFocused&&keyboardViewportHeight?keyboardViewportHeight:(window.innerHeight||640);const r=shell.getBoundingClientRect(),x=Math.max(0,Math.min(vw-r.width,move.left+e.clientX-move.x)),y=Math.max(0,Math.min(vh-r.height,move.top+e.clientY-move.y));shell.style.setProperty('left',x+'px','important');shell.style.setProperty('top',y+'px','important');const close=overlay.querySelector('.xphone-external-close');if(close){close.style.left=Math.min(vw-42,x+r.width-12)+'px';close.style.top=Math.max(4,y-14)+'px';}});
       const finish=e=>{if(!move||(e.pointerId!==undefined&&move.id!==e.pointerId))return;const r=shell.getBoundingClientRect();try{localStorage.setItem(posKey,JSON.stringify({x:Math.round(r.left),y:Math.round(r.top)}));}catch(_){}move=null;};
       drag.addEventListener('pointerup',finish);drag.addEventListener('pointercancel',finish);
       drag.addEventListener('keydown',e=>{if(!['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key))return;e.preventDefault();const r=shell.getBoundingClientRect(),step=e.shiftKey?48:16;const x=Math.max(0,Math.min((document.documentElement.clientWidth||innerWidth)-r.width,r.left+(e.key==='ArrowRight'?step:e.key==='ArrowLeft'?-step:0))),y=Math.max(0,Math.min((window.innerHeight||640)-r.height,r.top+(e.key==='ArrowDown'?step:e.key==='ArrowUp'?-step:0)));shell.style.setProperty('left',x+'px','important');shell.style.setProperty('top',y+'px','important');try{localStorage.setItem(posKey,JSON.stringify({x,y}));}catch(_){}});
