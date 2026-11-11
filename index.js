@@ -32,6 +32,8 @@
     xFollowing: ['{{char}}'],
     xPosts: [],
     liveMessages: [],
+    importedLiveRooms: [],
+    activeLiveId: 'main',
     liveViewers: 128436,
     liveHeat: 865200,
     wallet: 8888,
@@ -125,7 +127,7 @@
   function mergeDefaults(saved) {
     const base = structuredCloneSafe(DEFAULT_STATE);
     if (!saved || typeof saved !== 'object' || Array.isArray(saved)) return base;
-    const arrayKeys = ['stack', 'notifications', 'moments', 'contacts', 'weiboPosts', 'weiboFollowing', 'redPosts', 'redFollowing', 'liveMessages', 'browserResults', 'photos', 'calendar', 'walletTransactions', 'xPosts', 'xFollowing'];
+    const arrayKeys = ['stack', 'notifications', 'moments', 'contacts', 'weiboPosts', 'weiboFollowing', 'redPosts', 'redFollowing', 'liveMessages', 'importedLiveRooms', 'browserResults', 'photos', 'calendar', 'walletTransactions', 'xPosts', 'xFollowing'];
     const objectKeys = ['chats'];
     const stringKeys = ['page', 'wechatTab', 'weiboTab', 'redTab', 'xTab', 'activeLiveId', 'selectedContact', 'notes', 'browserUrl', 'browserQuery', 'selectedAlbum'];
     const booleanKeys = ['followed'];
@@ -136,6 +138,7 @@
     for (const key of stringKeys) if (typeof saved[key] === 'string' || saved[key] === null && key === 'selectedContact') base[key] = saved[key];
     for (const key of booleanKeys) if (typeof saved[key] === 'boolean') base[key] = saved[key];
     for (const key of numberKeys) if (Number.isFinite(saved[key])) base[key] = saved[key];
+    if (saved.importedProfile && typeof saved.importedProfile === 'object' && !Array.isArray(saved.importedProfile)) base.importedProfile = saved.importedProfile;
     for (const key of objectKeys) {
       if (saved[key] && typeof saved[key] === 'object' && !Array.isArray(saved[key])) {
         base[key] = Object.fromEntries(Object.entries(saved[key]).filter(([, messages]) => Array.isArray(messages)).map(([id, messages]) => [id, messages.filter(message => message && typeof message === 'object' && !Array.isArray(message))]));
@@ -178,8 +181,9 @@
 
   function persistState() {
     const snapshot = structuredCloneSafe(state);
-    try { localStorage.setItem(`${EXT_ID}:fallback`, JSON.stringify(snapshot)); } catch { /* storage may be disabled */ }
     const contextAtChange = currentContext();
+    // Chat-bound story data must never be copied into the global fallback store.
+    if (!contextAtChange) { try { localStorage.setItem(`${EXT_ID}:fallback`, JSON.stringify(snapshot)); } catch { /* storage may be disabled */ } }
     const metadataAtChange = contextAtChange?.chatMetadata;
     const chatIdAtChange = contextAtChange?.chatId;
     // Update the active chat's metadata immediately. If the user switches chats
@@ -764,7 +768,7 @@
         state.giftsSent += 1;
         state.walletTransactions.unshift({ id: `tx${Date.now()}`, title: `赠送礼物：${value}`, amount: -price, time: nowTime() });
         state.walletTransactions = state.walletTransactions.slice(0, 100);
-        state.liveMessages.push({ user: '系统', text: `你送出了 ${value} ×1` });
+        state.liveMessages.push({ user: '系统', text: `你送出了 ${value} ×1`, roomId: state.activeLiveId || 'main' });
         state.liveMessages = state.liveMessages.slice(-200);
       }
     }
@@ -1019,6 +1023,7 @@
         return {id,name:name||'直播间',title:title||'剧情直播',category,description,host,source:'xos-context'};
       }).filter(room=>room.title&&room.name);
       const incomingLiveChat=(Array.isArray(profile.liveChat)?profile.liveChat:[]).slice(0,80);
+      let importedLiveMessageCount=0;
       for(const item of incomingLiveChat){
         const speaker=String(item.speaker||'').trim().slice(0,48),body=String(item.text||'').trim().slice(0,240),roomTitle=String(item.roomTitle||'').trim().slice(0,100);
         if(!speaker||!body) continue;
@@ -1027,10 +1032,11 @@
         const roomId=matchedRoom?.id||'main',key=makeImportKey('livechat',roomId+':'+speaker+':'+body);
         if(state.liveMessages.some(message=>message?.source==='xos-context'&&message.sourceKey===key)) continue;
         state.liveMessages.push({user:speaker,text:body,roomId,source:'xos-context',sourceKey:key});
+        importedLiveMessageCount++;
       }
       state.liveMessages=state.liveMessages.slice(-200);
       if(!state.importedLiveRooms.some(room=>room.id===state.activeLiveId)) state.activeLiveId='main';
-      state.importedProfile = {summary:String(profile.summary||'').slice(0,1000),userRole:String(profile.userRole||'').slice(0,500),charRole:String(profile.charRole||'').slice(0,500),characters:safeChars.map(x=>({name:x.name,relation:x.relation})),importedAt:nowTime(),importedContacts:importedContactIds.length,importedPosts:routedCounts,importedLiveRooms:state.importedLiveRooms.length,importedLiveMessages:incomingLiveChat.length};
+      state.importedProfile = {summary:String(profile.summary||'').slice(0,1000),userRole:String(profile.userRole||'').slice(0,500),charRole:String(profile.charRole||'').slice(0,500),characters:safeChars.map(x=>({name:x.name,relation:x.relation})),importedAt:nowTime(),importedContacts:importedContactIds.length,importedPosts:routedCounts,importedLiveRooms:state.importedLiveRooms.length,importedLiveMessages:importedLiveMessageCount};
       persistState(); addNotification('上下文导入','识别完成',`已导入 ${safeChars.length} 位剧情人物。资料仅保存于当前聊天。`); renderScreen();
     } catch(error) {
       console.error(`[${EXT_ID}] story context import failed`,error);
