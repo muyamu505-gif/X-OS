@@ -26,6 +26,10 @@
     wechatFavorites: [],
     contacts: [],
     chats: {},
+    wechatDirectory: [],
+    friendRequests: [],
+    friendRequestTab: 'received',
+    friendSearchQuery: '',
     weiboTab: 'recommend',
     weiboSearchQuery: '',
     weiboFollowing: [],
@@ -144,10 +148,10 @@
   function mergeDefaults(saved) {
     const base = structuredCloneSafe(DEFAULT_STATE);
     if (!saved || typeof saved !== 'object' || Array.isArray(saved)) return base;
-    const arrayKeys = ['stack', 'notifications', 'moments', 'wechatFavorites', 'notesList', 'contacts', 'weiboPosts', 'redPosts', 'liveMessages', 'importedLiveRooms', 'browserResults', 'photos', 'calendar', 'walletTransactions', 'xPosts'];
+    const arrayKeys = ['stack', 'notifications', 'moments', 'wechatFavorites', 'notesList', 'contacts', 'wechatDirectory', 'friendRequests', 'weiboPosts', 'redPosts', 'liveMessages', 'importedLiveRooms', 'browserResults', 'photos', 'calendar', 'walletTransactions', 'xPosts'];
     const stringArrayKeys = ['weiboFollowing', 'redFollowing', 'xFollowing', 'followedLiveRooms'];
     const objectKeys = ['chats'];
-    const stringKeys = ['page', 'wechatTab', 'weiboTab', 'redTab', 'xTab', 'activeLiveId', 'selectedContact', 'selectedRedPostId', 'selectedWeiboPostId', 'selectedXUser', 'chatSearchQuery', 'notes', 'activeNoteId', 'browserUrl', 'browserQuery', 'selectedAlbum', 'calendarView', 'walletViewMonth', 'walletTypeFilter', 'walletCategoryFilter', 'walletSearchQuery', 'weiboSearchQuery', 'redSearchQuery', 'xSearchQuery'];
+    const stringKeys = ['page', 'wechatTab', 'weiboTab', 'redTab', 'xTab', 'activeLiveId', 'selectedContact', 'selectedRedPostId', 'selectedWeiboPostId', 'selectedXUser', 'friendRequestTab', 'friendSearchQuery', 'chatSearchQuery', 'notes', 'activeNoteId', 'browserUrl', 'browserQuery', 'selectedAlbum', 'calendarView', 'walletViewMonth', 'walletTypeFilter', 'walletCategoryFilter', 'walletSearchQuery', 'weiboSearchQuery', 'redSearchQuery', 'xSearchQuery'];
     const booleanKeys = [];
     const numberKeys = ['liveViewers', 'liveHeat', 'wallet', 'giftsSent'];
     for (const key of arrayKeys) {
@@ -174,7 +178,7 @@
       }
     }
     base.walletBudgets = Object.fromEntries(Object.entries(saved.walletBudgets||{}).filter(([key,value])=>/^\d{4}-\d{2}$/.test(key)&&value&&typeof value==='object'&&!Array.isArray(value)).map(([key,value])=>[key,{total:Number.isSafeInteger(value.total)&&value.total>=0?value.total:0,categories:Object.fromEntries(Object.entries(value.categories||{}).filter(([name,amount])=>typeof name==='string'&&Number.isSafeInteger(amount)&&amount>=0).slice(0,30))}]));
-    const pages = new Set(['home', 'notifications', 'wechat', 'wechat-moments', 'wechat-favorites', 'chat', 'weibo', 'red', 'xplatform', 'live', 'wallet', 'photos', 'browser', 'calendar', 'notes', 'settings']);
+    const pages = new Set(['home', 'notifications', 'wechat', 'wechat-new-friends', 'wechat-add-friend', 'wechat-moments', 'wechat-favorites', 'chat', 'weibo', 'red', 'xplatform', 'live', 'wallet', 'photos', 'browser', 'calendar', 'notes', 'settings']);
     if (!pages.has(base.page)) base.page = 'home';
     if (!['chats','contacts','discover','me'].includes(base.wechatTab)) base.wechatTab = 'chats';
     if (!['recommend','following','mine'].includes(base.weiboTab)) base.weiboTab = 'recommend';
@@ -483,16 +487,29 @@
       const msgs = state.chats[c.id] || []; const last = msgs[msgs.length - 1];
       return '<button class="xp-contact" data-contact="' + escapeHtml(c.id) + '"><span class="xp-avatar xp-avatar-green">' + escapeHtml(c.avatar) + '</span><span class="xp-contact-main"><strong>' + (c.isGroup?'群聊 · ':'') + escapeHtml(c.name) + '</strong><small>' + escapeHtml(last?.text || c.note) + '</small></span><time>' + escapeHtml(last?.time || '') + '</time></button>';
     }).join('');
+    const pendingCount=(state.friendRequests||[]).filter(r=>r.status==='pending'&&r.direction==='incoming').length;
     const tabs = [['chats','微信','▤'],['contacts','通讯录','♙'],['discover','发现','◎'],['me','我','●']];
     const nav = '<nav class="xp-wechat-nav">' + tabs.map(t => '<button data-wechat-tab="'+t[0]+'" class="'+(tab===t[0]?'active':'')+'"><span>'+t[2]+'</span>'+t[1]+'</button>').join('') + '</nav>';
     let body = '';
     if (tab === 'chats') body = '<div class="xp-wechat-list">' + rows + '<div class="xp-empty" data-contact-empty hidden>没有找到联系人或聊天记录</div></div>';
-    else if (tab === 'contacts') body = '<div class="xp-wechat-section-label">新的朋友</div><button class="xp-wechat-menu-row" data-action="wechat-add"><span class="xp-wechat-menu-icon green">＋</span><b>添加朋友</b><i>›</i></button><div class="xp-wechat-section-label">联系人</div><button class="xp-wechat-menu-row" data-action="wechat-group-create"><span class="xp-wechat-menu-icon group">群</span><b>发起群聊</b><i>›</i></button><div class="xp-wechat-list">'+rows+'</div>';
+    else if (tab === 'contacts') body = '<div class="xp-wechat-section-label">新的朋友</div><button class="xp-wechat-menu-row" data-action="wechat-new-friends"><span class="xp-wechat-menu-icon green">＋</span><b>新的朋友</b>'+(pendingCount?'<em class="xp-friend-badge">'+pendingCount+'</em>':'')+'<i>›</i></button><button class="xp-wechat-menu-row" data-action="wechat-add"><span class="xp-wechat-menu-icon green">⌕</span><b>添加朋友</b><i>›</i></button><div class="xp-wechat-section-label">联系人</div><button class="xp-wechat-menu-row" data-action="wechat-group-create"><span class="xp-wechat-menu-icon group">群</span><b>发起群聊</b><i>›</i></button><div class="xp-wechat-list">'+rows+'</div>';
     else if (tab === 'discover') body = '<div class="xp-wechat-discover"><button class="xp-wechat-menu-row" data-action="wechat-moments"><span class="xp-wechat-menu-icon moments">▧</span><b>朋友圈</b><i>›</i></button><button class="xp-wechat-menu-row" data-action="wechat-channels"><span class="xp-wechat-menu-icon channels">▶</span><b>视频号</b><i>›</i></button><button class="xp-wechat-menu-row" data-action="wechat-search"><span class="xp-wechat-menu-icon search">⌕</span><b>搜一搜</b><i>›</i></button><button class="xp-wechat-menu-row" data-action="wechat-mini"><span class="xp-wechat-menu-icon mini">▦</span><b>小程序</b><i>›</i></button></div>';
     else body = '<div class="xp-wechat-profile"><div class="xp-wechat-profile-card"><span class="xp-wechat-profile-avatar">我</span><div><strong>我的微信</strong><small>微信号：xos_user_01</small><small>个人二维码　›</small></div><i>›</i></div><button class="xp-wechat-menu-row" data-action="wechat-favorites"><span class="xp-wechat-menu-icon favorites">☆</span><b>收藏</b><i>›</i></button><button class="xp-wechat-menu-row" data-action="wechat-files"><span class="xp-wechat-menu-icon files">▣</span><b>卡包与文件</b><i>›</i></button><button class="xp-wechat-menu-row" data-action="wechat-settings"><span class="xp-wechat-menu-icon settings">⚙</span><b>设置</b><i>›</i></button></div>';
     const search = (tab==='chats'||tab==='contacts') ? '<label class="xp-search"><span>⌕</span><input type="search" data-contact-search placeholder="'+(tab==='chats'?'搜索联系人和聊天记录':'搜索联系人')+'"></label>' : '';
     return '<section class="xp-page xp-wechat"><div class="xp-wechat-topbar"><div class="xp-app-title">'+({chats:'微信',contacts:'通讯录',discover:'发现',me:'我'}[tab])+'</div><div class="xp-wechat-top-actions">'+(tab==='chats'?'<button class="xp-circle-btn" data-action="wechat-add">＋</button>':'')+'<button class="xp-circle-btn" data-action="wechat-search">⌕</button></div></div>'+search+body+nav+'</section>';
   }
+  function renderWechatNewFriends() {
+    const tab=state.friendRequestTab||'received',items=(state.friendRequests||[]).filter(r=>r.status==='pending'&&(tab==='received'?r.direction==='incoming':r.direction==='outgoing'));
+    const rows=items.map(r=>`<article class="xp-friend-request"><span class="xp-friend-avatar">${escapeHtml(r.avatar||r.name?.slice(0,1)||'友')}</span><div class="xp-friend-request-main"><strong>${escapeHtml(r.name||'未知用户')}</strong><small>${escapeHtml(r.message||'请求添加你为朋友')}</small><time>${escapeHtml(r.time||'')}</time></div>${r.direction==='incoming'?`<div class="xp-friend-request-actions"><button data-friend-accept="${escapeHtml(r.id)}">接受</button><button data-friend-reject="${escapeHtml(r.id)}">拒绝</button></div>`:'<span class="xp-friend-pending">等待验证</span>'}</article>`).join('');
+    return `<section class="xp-page xp-wechat-friends"><header class="xp-wechat-subhead"><button data-action="wechat-list">‹</button><strong>新的朋友</strong><button data-action="wechat-add">＋</button></header><div class="xp-friend-tabs"><button data-friend-tab="received" class="${tab==='received'?'active':''}">收到的申请</button><button data-friend-tab="sent" class="${tab==='sent'?'active':''}">发出的申请</button></div><div class="xp-friend-request-list">${rows||'<div class="xp-empty">这里还没有好友申请</div>'}</div></section>`;
+  }
+  function renderWechatAddFriend() {
+    const q=String(state.friendSearchQuery||'').trim().toLocaleLowerCase();
+    const directory=(state.wechatDirectory||[]).filter(p=>!q||[p.name,p.note,p.account].some(v=>String(v||'').toLocaleLowerCase().includes(q)));
+    const results=directory.map(p=>{const exists=state.contacts.some(c=>c.id===p.id)||state.friendRequests.some(r=>r.personId===p.id&&r.status==='pending');return `<article class="xp-friend-directory-row"><span class="xp-friend-avatar">${escapeHtml(p.avatar||p.name?.slice(0,1)||'友')}</span><div><strong>${escapeHtml(p.name)}</strong><small>${escapeHtml(p.note||'X-OS 用户')}</small></div><button data-friend-send="${escapeHtml(p.id)}" ${exists?'disabled':''}>${state.contacts.some(c=>c.id===p.id)?'已添加':exists?'已申请':'添加'}</button></article>`}).join('');
+    return `<section class="xp-page xp-wechat-add-friend"><header class="xp-wechat-subhead"><button data-action="wechat-list">‹</button><strong>添加朋友</strong><span></span></header><label class="xp-friend-search">⌕ <input type="search" data-friend-search value="${escapeHtml(state.friendSearchQuery||'')}" placeholder="搜索昵称或微信号"></label><div class="xp-friend-directory">${results||'<div class="xp-empty">没有找到可添加的用户。先从当前剧情识别人物，人物会出现在这里。</div>'}</div></section>`;
+  }
+
   function renderWechatFavorites() {
     const items = (state.wechatFavorites || []).map((item, index) =>
       '<article class="xp-favorite-item"><div><strong>' + escapeHtml(item.contactName || '微信联系人') + '</strong><small>' + escapeHtml(item.time || '') + '</small></div><p>' + escapeHtml(item.text) + '</p><button data-remove-wechat-favorite="' + index + '">取消收藏</button></article>'
@@ -758,8 +775,8 @@
   }
 
   function renderScreen() {
-    const titles = { home: '手机', notifications: '通知中心', wechat: '微信', 'wechat-moments': '朋友圈', 'wechat-favorites': '我的收藏', chat: '微信', weibo: '微博', 'weibo-detail': '微博详情', red: '小红书', xplatform: 'X平台', live: '直播间', wallet: '钱包', photos: '相册', browser: '浏览器', calendar: '日历', notes: '备忘录', settings: '设置' };
-    const renderers = { home: renderHome, notifications: renderNotifications, wechat: renderWechat, 'wechat-moments': renderWechatMoments, 'wechat-favorites': renderWechatFavorites, chat: renderChat, weibo: renderWeibo, 'weibo-detail': renderWeiboDetail, red: renderRed, 'x-profile': renderXProfile, 'red-detail': renderRedDetail, xplatform: renderXPlatform, live: renderLive, wallet: renderWallet, photos: renderPhotos, browser: renderBrowser, calendar: renderCalendar, notes: renderNotes, settings: renderSettings };
+    const titles = { home: '手机', notifications: '通知中心', wechat: '微信', 'wechat-new-friends':'新的朋友', 'wechat-add-friend':'添加朋友', 'wechat-moments': '朋友圈', 'wechat-favorites': '我的收藏', chat: '微信', weibo: '微博', 'weibo-detail': '微博详情', red: '小红书', xplatform: 'X平台', live: '直播间', wallet: '钱包', photos: '相册', browser: '浏览器', calendar: '日历', notes: '备忘录', settings: '设置' };
+    const renderers = { home: renderHome, notifications: renderNotifications, wechat: renderWechat, 'wechat-new-friends': renderWechatNewFriends, 'wechat-add-friend': renderWechatAddFriend, 'wechat-moments': renderWechatMoments, 'wechat-favorites': renderWechatFavorites, chat: renderChat, weibo: renderWeibo, 'weibo-detail': renderWeiboDetail, red: renderRed, 'x-profile': renderXProfile, 'red-detail': renderRedDetail, xplatform: renderXPlatform, live: renderLive, wallet: renderWallet, photos: renderPhotos, browser: renderBrowser, calendar: renderCalendar, notes: renderNotes, settings: renderSettings };
     const renderer = renderers[state.page] || renderHome;
     if (phoneScreen && overlay) {
       phoneScreen.innerHTML = renderer();
@@ -917,6 +934,10 @@
     if (browserShortcut) { openExternalBrowser(browserShortcut.dataset.browserShortcut); return; }
     const browserResult = event.target.closest('[data-browser-result]');
     if (browserResult) { const r = state.browserResults.find(x => x.id === browserResult.dataset.browserResult); if (r?.page) setPage(r.page); return; }
+    const friendTab=event.target.closest('[data-friend-tab]');if(friendTab){state.friendRequestTab=friendTab.dataset.friendTab;renderScreen();persistState();return;}
+    const friendSend=event.target.closest('[data-friend-send]');if(friendSend){const person=state.wechatDirectory.find(p=>p.id===friendSend.dataset.friendSend);if(person&&!state.contacts.some(c=>c.id===person.id)&&!state.friendRequests.some(r=>r.personId===person.id&&r.status==='pending')){state.friendRequests.unshift({id:'fr'+Date.now(),personId:person.id,name:person.name,avatar:person.avatar||person.name.slice(0,1),message:'我想添加你为朋友',direction:'outgoing',status:'pending',time:nowTime()});addNotification('微信','好友申请已发送','已向 '+person.name+' 发送好友申请。');}renderScreen();persistState();return;}
+    const friendAccept=event.target.closest('[data-friend-accept]');if(friendAccept){const req=state.friendRequests.find(r=>r.id===friendAccept.dataset.friendAccept&&r.direction==='incoming'&&r.status==='pending');if(req){let contact=state.contacts.find(c=>c.id===req.personId);if(!contact){contact={id:req.personId||'contact'+Date.now(),name:req.name,note:req.note||'微信好友',avatar:req.avatar||req.name.slice(0,1),online:false,source:'friend-request'};state.contacts.unshift(contact);state.chats[contact.id]=Array.isArray(state.chats[contact.id])?state.chats[contact.id]:[];}req.status='accepted';req.respondedAt=nowTime();addNotification('微信','已添加好友',`你和 ${req.name} 已成为好友。`);}renderScreen();persistState();return;}
+    const friendReject=event.target.closest('[data-friend-reject]');if(friendReject){const req=state.friendRequests.find(r=>r.id===friendReject.dataset.friendReject&&r.direction==='incoming'&&r.status==='pending');if(req){req.status='rejected';req.respondedAt=nowTime();addNotification('微信','已拒绝申请',`已拒绝 ${req.name} 的好友申请。`);}renderScreen();persistState();return;}
     const action = event.target.closest('[data-action]')?.dataset.action;
     if (!action) return;
     if (action === 'dialog-close') { closeActionDialog(event); return; }
@@ -954,7 +975,8 @@
       case 'wallet': setPage('wallet', 'xplatform'); break;
       case 'follow': { const id=state.activeLiveId||'main'; state.followedLiveRooms=state.followedLiveRooms||[]; state.followedLiveRooms=state.followedLiveRooms.includes(id)?state.followedLiveRooms.filter(roomId=>roomId!==id):[...state.followedLiveRooms,id]; renderScreen(); persistState(); break; }
       case 'gift': openActionDialog('gift', '赠送礼物', '选择一份礼物支持主播。将扣除模拟钻石，不涉及真实支付。', inlineHost); break;
-      case 'wechat-add': openActionDialog('wechat-add', '添加联系人', '创建一个本地模拟联系人', inlineHost, '输入联系人昵称……'); break;
+      case 'wechat-add': setPage('wechat-add-friend','wechat'); break;
+      case 'wechat-new-friends': state.friendRequestTab='received'; setPage('wechat-new-friends','wechat'); break;
       case 'wechat-group-create': openActionDialog('wechat-group-create','发起群聊','创建群聊并邀请当前通讯录中的联系人（本地模拟）',inlineHost,'输入群聊名称……'); break;
       case 'wechat-chat-info': { const c=state.contacts.find(x=>x.id===state.selectedContact); const members=(c?.members||[]).map(id=>state.contacts.find(x=>x.id===id)?.name).filter(Boolean); if(c?.isGroup){openInfoDialog('群聊信息',`群名称：${c.name}\n群成员：我、${members.join('、')||'暂无'}\n成员人数：${members.length+1}`,inlineHost);}else{openActionDialog('wechat-contact-edit','编辑联系人资料','修改昵称与备注（仅保存在本地）',inlineHost,'',c?.id||'');} break; }
       case 'weibo-compose': openActionDialog('weibo-compose', '发布微博', '分享此刻想说的话', inlineHost, '写一条微博动态……'); break;
@@ -1084,16 +1106,7 @@
       const name=value.slice(0,24);const duplicate=state.contacts.find(c=>c.isGroup&&String(c.name||'').trim().toLocaleLowerCase()===name.toLocaleLowerCase());
       if(duplicate){addNotification('微信','群聊已存在',`“${name}”已在通讯录中。`);}else{const members=state.contacts.filter(c=>!c.isGroup).map(c=>c.id);const id=`group${Date.now()}`;state.contacts.unshift({id,name,note:`群聊 · ${members.length+1}人`,avatar:'群',online:true,isGroup:true,members});state.chats[id]=[];state.selectedContact=id;state.wechatTab='chats';state.page='chat';state.app='wechat';state.stack.push({page:'wechat',app:'wechat',selectedContact:null});addNotification('微信','群聊已创建',`已创建群聊：${name}`);}
     } else if (kind === 'wechat-add' && value) {
-      const name = value.slice(0, 24);
-      const duplicate = state.contacts.find(contact => String(contact.name || '').trim().toLocaleLowerCase() === name.trim().toLocaleLowerCase());
-      if (duplicate) {
-        addNotification('微信', '联系人已存在', `“${name}”已在通讯录中。`);
-      } else {
-        const id = `contact${Date.now()}`;
-        state.contacts.unshift({ id, name, note: '新联系人', avatar: name.slice(0, 1), online: false });
-        state.chats[id] = [];
-        addNotification('微信', '联系人已添加', `已添加联系人：${name}`);
-      }
+      addNotification('微信','请从用户列表发送申请','不能通过输入昵称直接创建好友；请在添加朋友页面选择已存在的用户。');
     } else if (kind === 'gift') {
       const prices = { '小心心': 10, '玫瑰': 99, '星海': 520 };
       const price = prices[value];
@@ -1124,6 +1137,7 @@
       saveSystemSettings();
     }
 
+    if (event.target.matches('[data-friend-search]')) { state.friendSearchQuery=event.target.value; const cursor=event.target.selectionStart; renderScreen(); const input=phoneScreen?.querySelector('[data-friend-search]')||document.querySelector('.xphone-inline-screen [data-friend-search]'); if(input){input.focus();input.setSelectionRange(cursor,cursor);} persistState(); }
     if (event.target.matches('[data-wallet-search]')) {
       state.walletSearchQuery = event.target.value;
       const query = state.walletSearchQuery.trim().toLocaleLowerCase();
