@@ -32,7 +32,7 @@
 
 ## 版本
 
-当前版本：**1.1.52**
+当前版本：**1.1.53**
 
 扩展源文件：`index.js`、`style.css`、`manifest.json`。
 
@@ -285,3 +285,8 @@
 ### 1.1.52
 - Add a bottom gesture-navigation pill to floating and inline phone views.
 - A single tap triggers Back; two quick taps return directly to the phone home screen.
+
+
+### 1.1.53
+- Improve gesture navigation accessibility with Enter/Space keyboard activation and visible focus feedback.
+- Isolate double-tap recognition per navigation pill so taps on separate phone views are not combined.
