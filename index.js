@@ -112,9 +112,16 @@
   }
 
   function renderAiCenter() {
-    const info=getContextSummary();
-    const count=(state.importedProfile?.characters||[]).length;
-    const importedAt=state.importedProfile?.importedAt||'尚未同步';
+    const info=getContextSummary(), profile=state.importedProfile||null;
+    const count=(profile?.characters||[]).length;
+    const importedAt=profile?.importedAt||'尚未同步';
+    const posts=profile?.importedPosts||{};
+    const postCount=Number(posts.moments||0)+Number(posts.weibo||0)+Number(posts.red||0)+Number(posts.x||0);
+    const friendCount=Number(profile?.importedFriendRequests||0);
+    const wechatCount=Number(profile?.importedWechatMessages||0);
+    const liveRoomCount=Number(profile?.importedLiveRooms||0);
+    const liveMessageCount=Number(profile?.importedLiveMessages||0);
+    const contactCount=Number(profile?.importedContacts||0);
     return `<section class="xp-page xp-system-settings xp-ai-center">
       <div class="xp-settings-heading"><strong>AI 中心</strong><small>模型测试 · 剧情同步 · 生成状态</small></div>
       <div class="xp-settings-card"><div class="xp-settings-card-title">当前连接状态</div>
@@ -126,11 +133,19 @@
       </div>
       <div class="xp-settings-card"><div class="xp-settings-card-title">剧情同步</div>
         <div class="xp-settings-info"><span>上次同步</span><b>${escapeHtml(importedAt)}</b></div>
-        <div class="xp-settings-info"><span>已识别人物</span><b>${count} 位</b></div>
-        <p class="xp-settings-note">读取当前角色卡、已启用的世界书和近期聊天记录，提取人物资料与剧情事实，供微信、直播间等功能调用。只保存到当前聊天，不修改角色卡原文。</p>
-        <div class="xp-settings-actions"><button data-action="context-import" ${!info.hasGenerator||!info.hasCharacter?'disabled':''}>${state.importedProfile?'重新识别并同步':'识别并同步当前剧情'}</button></div>
+        <div class="xp-settings-info"><span>识别人物</span><b>${count} 位</b></div>
+        <p class="xp-settings-note">读取当前角色卡、已启用的世界书和近期聊天记录，提取有原文依据的人物与事件。结果只保存到当前聊天，不修改角色卡原文。</p>
+        ${profile?`<div class="xp-settings-info"><span>微信通讯录资料</span><b>${contactCount} 位</b></div>
+        <div class="xp-settings-info"><span>好友申请</span><b>${friendCount} 条</b></div>
+        <div class="xp-settings-info"><span>导入好友私聊</span><b>${wechatCount} 条</b></div>
+        <div class="xp-settings-info"><span>社交平台动态</span><b>${postCount} 条</b></div>
+        <div class="xp-settings-info"><span>剧情直播间</span><b>${liveRoomCount} 个</b></div>
+        <div class="xp-settings-info"><span>直播间弹幕</span><b>${liveMessageCount} 条</b></div>
+        <p class="xp-settings-note">动态分布：朋友圈 ${Number(posts.moments||0)} · 微博 ${Number(posts.weibo||0)} · 小红书 ${Number(posts.red||0)} · X ${Number(posts.x||0)}。人物资料只进入通讯录目录，不会自动变成微信好友；只有明确发生的好友申请才会进入新的朋友。</p>
+        <p class="xp-settings-note">剧情摘要：${escapeHtml(profile.summary||'本次没有提取到摘要。')}</p>`:'<p class="xp-settings-note">还没有同步记录。先选择一张角色卡并进入对应聊天，再点击下方按钮。</p>'}
+        <div class="xp-settings-actions"><button data-action="context-import" ${!info.hasGenerator||!info.hasCharacter?'disabled':''}>${profile?'重新识别并同步':'识别并同步当前剧情'}</button></div>
       </div>
-      <div class="xp-settings-card"><div class="xp-settings-card-title">下一步怎么测试</div><p class="xp-settings-note">① 先测试模型生成；② 同步当前剧情；③ 打开微信测试联系人回复，或进入 X平台直播间发送弹幕，观察 AI 是否根据已导入人物资料回应。</p></div>
+      <div class="xp-settings-card"><div class="xp-settings-card-title">下一步怎么测试</div><p class="xp-settings-note">① 先测试模型生成；② 同步当前剧情并核对上方数量；③ 打开微信检查新的朋友与联系人，或进入 X平台直播间检查导入的房间和弹幕。</p></div>
     </section>`;
   }
 
@@ -1750,7 +1765,7 @@
       }
       state.liveMessages=state.liveMessages.slice(-200);
       if(!state.importedLiveRooms.some(room=>room.id===state.activeLiveId)) state.activeLiveId='main';
-      state.importedProfile = {summary:String(profile.summary||'').slice(0,1000),userRole:String(profile.userRole||'').slice(0,500),charRole:String(profile.charRole||'').slice(0,500),characters:safeChars.map(x=>({name:x.name,relation:x.relation,description:x.description,personality:x.personality,voice:x.voice,notes:x.notes,openingMessage:x.openingMessage})),importedAt:nowTime(),importedContacts:importedContactIds.length,importedPosts:routedCounts,importedLiveRooms:state.importedLiveRooms.length,importedLiveMessages:importedLiveMessageCount,importedWechatMessages:importedWechatMessageCount};
+      state.importedProfile = {summary:String(profile.summary||'').slice(0,1000),userRole:String(profile.userRole||'').slice(0,500),charRole:String(profile.charRole||'').slice(0,500),characters:safeChars.map(x=>({name:x.name,relation:x.relation,description:x.description,personality:x.personality,voice:x.voice,notes:x.notes,openingMessage:x.openingMessage})),importedAt:nowTime(),importedContacts:importedContactIds.length,importedFriendRequests:importedFriendRequestCount,importedWechatMessages:importedWechatMessageCount,importedPosts:routedCounts,importedLiveRooms:state.importedLiveRooms.length,importedLiveMessages:importedLiveMessageCount};
       persistState(); addNotification('上下文导入','识别完成',`已识别 ${safeChars.length} 位剧情人物、${importedFriendRequestCount} 条好友申请、${importedWechatMessageCount} 条好友私聊消息。未成为好友的角色不会建立聊天。`); renderScreen();
     } catch(error) {
       console.error(`[${EXT_ID}] story context import failed`,error);
