@@ -493,3 +493,7 @@ html #xphone-overlay .xphone-resize-handle{background:transparent!important;bord
 
 /* WeChat friend discovery and verification flow */
 .xp-friend-import-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:10px 12px;padding:11px 12px;border:1px solid #e6edf2;border-radius:11px;background:#f5f8fa}.xp-friend-import-bar>div{display:flex;min-width:0;flex-direction:column;gap:4px}.xp-friend-import-bar b{color:#526d83;font-size:12px;font-weight:600}.xp-friend-import-bar small{color:#91a0ac;font-size:10px;line-height:1.4}.xp-friend-import-bar button{flex:0 0 auto;padding:7px 10px;border:1px solid #dce6ed;border-radius:8px;background:#fff;color:#637f95;font-size:11px}.xp-friend-import-bar button:disabled{opacity:.45}.xp-friend-response{display:block;margin-top:3px;color:#71899c!important}.xp-friend-pending.is-final{color:#8496a4;background:#eef2f5}
+
+
+/* X-OS mobile API settings */
+.xp-system-settings .xp-settings-actions{display:flex;flex-wrap:wrap;gap:8px}.xp-system-settings .xp-settings-actions button{min-width:0;flex:1 1 92px;white-space:normal;line-height:1.35}.xp-system-settings [data-setting="apiModel"]{width:100%;min-width:0}.xp-system-settings .xp-settings-note{display:block;line-height:1.55;overflow-wrap:anywhere}
