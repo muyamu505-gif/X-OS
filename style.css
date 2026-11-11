@@ -202,3 +202,27 @@ html #xphone-overlay>.xphone-shell{
   max-width:calc(100vw - 24px)!important;max-height:calc(100vh - 24px)!important;
   margin:auto!important;box-sizing:border-box!important;overflow:hidden!important;
 }
+
+
+/* X-OS 1.1.6: persistent, draggable floating launcher above the host UI. */
+#xphone-floating-entry{
+  all:initial!important;
+  position:fixed!important;
+  display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;
+  box-sizing:border-box!important;width:54px!important;height:54px!important;min-width:54px!important;min-height:54px!important;
+  padding:4px!important;margin:0!important;border:1px solid rgba(255,255,255,.62)!important;border-radius:18px!important;
+  background:linear-gradient(145deg,#3c4857 0%,#17202b 100%)!important;color:#fff!important;
+  box-shadow:0 5px 20px rgba(12,22,34,.34),inset 0 1px 0 rgba(255,255,255,.22)!important;
+  cursor:grab!important;touch-action:none!important;user-select:none!important;-webkit-user-select:none!important;
+  -webkit-tap-highlight-color:transparent!important;pointer-events:auto!important;z-index:2147483646!important;
+  font-family:system-ui,-apple-system,"Noto Sans SC",sans-serif!important;
+}
+#xphone-floating-entry .xphone-fab-mark{
+  display:grid!important;place-items:center!important;width:27px!important;height:27px!important;
+  border:1.5px solid rgba(255,255,255,.85)!important;border-radius:9px!important;
+  font-size:19px!important;line-height:1!important;font-weight:800!important;letter-spacing:-1px!important;
+}
+#xphone-floating-entry .xphone-fab-caption{display:block!important;margin-top:2px!important;font-size:9px!important;line-height:11px!important;color:#fff!important}
+#xphone-floating-entry.is-dragging{cursor:grabbing!important;opacity:.92!important;transition:none!important}
+#xphone-floating-entry:focus-visible{outline:2px solid #9fc5e8!important;outline-offset:3px!important}
+#xphone-topbar-entry{display:inline-flex;align-items:center;gap:6px;padding:7px 10px;cursor:pointer}
