@@ -820,7 +820,7 @@
         const signedAmount = walletDirection === 'income' ? walletAmount : -walletAmount;
         const now = new Date();
         state.walletTransactions = state.walletTransactions || [];
-        state.walletTransactions.unshift({id:`tx${Date.now()}`,title:walletTitle,amount:signedAmount,category:walletCategory||'其他',time:nowTime(),date:now.toISOString().slice(0,10),month:`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`});
+        state.walletTransactions.unshift({id:`tx${Date.now()}`,title:walletTitle,amount:signedAmount,category:walletCategory||'其他',time:nowTime(),date:new Date(now.getTime()-now.getTimezoneOffset()*60000).toISOString().slice(0,10),month:new Date(now.getTime()-now.getTimezoneOffset()*60000).toISOString().slice(0,7)});
         state.walletTransactions = state.walletTransactions.slice(0,200);
         state.wallet = Math.max(0, Number(state.wallet)||0) + signedAmount;
         addNotification('记账',walletDirection==='income'?'收入已记录':'支出已记录',`${walletTitle}：${signedAmount>0?'+':''}${signedAmount}钻`);
@@ -871,7 +871,8 @@
       else {
         state.wallet -= price;
         state.giftsSent += 1;
-        state.walletTransactions.unshift({ id: `tx${Date.now()}`, title: `赠送礼物：${value}`, amount: -price, time: nowTime() });
+        const localDate = new Date(Date.now() - new Date().getTimezoneOffset()*60000).toISOString().slice(0,10);
+        state.walletTransactions.unshift({ id: `tx${Date.now()}`, title: `赠送礼物：${value}`, amount: -price, category: '礼物', time: nowTime(), date: localDate, month: localDate.slice(0,7) });
         state.walletTransactions = state.walletTransactions.slice(0, 100);
         state.liveMessages.push({ user: '系统', text: `你送出了 ${value} ×1`, roomId: state.activeLiveId || 'main' });
         state.liveMessages = state.liveMessages.slice(-200);
