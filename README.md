@@ -32,9 +32,16 @@
 
 ## 版本
 
-当前版本：**1.1.57**
+当前版本：**1.1.59**
 
 扩展源文件：`index.js`、`style.css`、`manifest.json`。
+
+
+### 1.1.59
+- Keep the external close button aligned with the phone when the window is repositioned using keyboard arrow keys.
+
+### 1.1.58
+- Add an external close button at the phone's upper-right corner; keep it aligned while dragging or resizing the device.
 
 
 ### 1.1.2
