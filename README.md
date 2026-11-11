@@ -32,10 +32,15 @@
 
 ## 版本
 
-当前版本：**1.1.78**
+当前版本：**1.1.79**
 
 扩展源文件：`index.js`、`style.css`、`manifest.json`。
 
+
+### 1.1.79
+- Enable multi-member WeChat group replies through the active SillyTavern generation interface. The model may let up to three existing group members respond in one turn, each under their own name and persona; unknown speakers are discarded.
+- Persist each member's message independently, update group unread counts and notifications, and show the latest speaker in the chat-list preview.
+- Validate group member references during state migration so deleted or invalid contacts are not treated as active members.
 
 ### 1.1.78
 - Story-imported incoming and outgoing WeChat friend requests now create matching notification-center entries, in addition to appearing in the Friends Requests inbox.
