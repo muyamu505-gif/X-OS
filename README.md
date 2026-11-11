@@ -32,7 +32,7 @@
 
 ## 版本
 
-当前版本：**1.1.60**
+当前版本：**1.1.61**
 
 扩展源文件：`index.js`、`style.css`、`manifest.json`。
 
@@ -46,6 +46,9 @@
 
 ### 1.1.60
 - Turn the Notes toolbar into working controls for inserting a heading divider, checklist item, and formatted date at the current cursor or selection.
+
+### 1.1.61
+- Make calendar dates selectable, highlight the selected day, filter the agenda to that day, and prefill new events with the selected date.
 
 ### 1.1.2
 - Fixed phone window viewport positioning and edge clipping on mobile.
