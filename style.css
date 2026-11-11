@@ -388,3 +388,15 @@ html #xphone-overlay .xphone-resize-handle{background:transparent!important;bord
 .xp-wallet-legacy>strong,.xp-wallet-legacy>small{display:block}
 .xp-wallet-legacy>strong{font-size:11px;color:#687789}
 .xp-wallet-legacy>small{margin-top:4px;font-size:10px;color:#9aa2ac}
+
+
+/* Wallet transaction row actions */
+.xp-ledger-controls{display:flex;gap:5px;flex-shrink:0;margin-left:auto}
+.xp-ledger-controls button{border:1px solid #e5eaf0;border-radius:7px;background:#f8fafc;color:#718093;padding:5px 7px;font-size:10px;line-height:1.2}
+.xp-ledger-controls button:last-child{color:#bd7777}
+.xp-ledger-controls button:active{background:#e9f0f7;transform:scale(.97)}
+.xp-ledger-controls button:focus-visible{outline:2px solid #8eb4d4;outline-offset:2px}
+.xp-ios-ledger-row{min-width:0}
+.xp-ledger-main{min-width:0;flex:1}
+.xp-ledger-main b,.xp-ledger-main small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media(max-width:380px){.xp-ledger-controls{gap:3px}.xp-ledger-controls button{padding:5px 5px;font-size:9px}.xp-ios-ledger-row{gap:6px}}
