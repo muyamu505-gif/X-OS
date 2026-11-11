@@ -32,7 +32,7 @@
 
 ## 版本
 
-当前版本：**1.1.53**
+当前版本：**1.1.54**
 
 扩展源文件：`index.js`、`style.css`、`manifest.json`。
 
@@ -290,3 +290,7 @@
 ### 1.1.53
 - Improve gesture navigation accessibility with Enter/Space keyboard activation and visible focus feedback.
 - Isolate double-tap recognition per navigation pill so taps on separate phone views are not combined.
+
+
+### 1.1.54
+- Replace non-functional Safari-style bottom toolbar icons with a clear note explaining that links open in the device's default browser.
