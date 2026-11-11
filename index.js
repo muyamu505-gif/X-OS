@@ -699,11 +699,35 @@
   function boot() {
     const run = () => { try { initialize(); } catch (error) { console.error(`[${EXT_ID}] initialization failed`, error); } };
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run, { once: true }); else run();
+
+    // SillyTavern may mount or replace its extension settings/top bar after this script boots.
+    // Keep the launcher and settings shortcut recoverable if the host re-renders those regions.
+    let entryRepairQueued = false;
+    const repairEntries = () => {
+      if (entryRepairQueued) return;
+      entryRepairQueued = true;
+      queueMicrotask(() => {
+        entryRepairQueued = false;
+        try {
+          if (!document.getElementById('xphone-floating-entry') ||
+              !document.getElementById('xphone-topbar-entry') ||
+              !document.getElementById('xphone-settings')) {
+            createEntryButtons();
+            addSettingsPanel();
+          }
+        } catch (error) { console.warn(`[${EXT_ID}] entry recovery failed`, error); }
+      });
+    };
+    if (document.documentElement) {
+      const entryObserver = new MutationObserver(repairEntries);
+      entryObserver.observe(document.documentElement, { childList: true, subtree: true });
+    }
+
     const waitForST = setInterval(() => {
-      if (window.SillyTavern?.getContext && !contextReady) run();
+      run();
       if (contextReady) clearInterval(waitForST);
     }, 800);
-    setTimeout(() => clearInterval(waitForST), 20000);
+    setTimeout(() => clearInterval(waitForST), 30000);
   }
 
   boot();
