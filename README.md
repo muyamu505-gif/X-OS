@@ -1,3 +1,5 @@
+- **v1.1.95**：修复 AI 中心与系统设置中的剧情同步按钮被预检条件禁用、看起来点击无反应的问题；兼容读取当前角色卡记录，并在同步完成或失败后恢复按钮状态。
+
 - **v1.1.94**：修复独立 API 生成测试的关键错误：补齐缺失的 `extractApiText` 响应解析函数；兼容常见 Chat Completions、旧式 text completion 与 Responses API 文本字段；API 地址自动去除误填的 `/models`、`/completions` 等尾路径；酒馆模式增加 `generateQuietPrompt` 兼容回退。
 
 - **v1.1.93**：微信发出的待处理好友申请增加 AI 处理状态与“重新询问”入口；接口未连接或生成失败时保留申请并说明原因，配置接口后可重试；继续保留撤回申请功能。
@@ -40,7 +42,7 @@
 
 ## 版本
 
-当前版本：**1.1.93**
+当前版本：**1.1.95**
 
 ### 1.1.90
 - Add a dedicated AI Center app on the phone home screen with visible model test, story sync, connection status and a direct route to API settings.
