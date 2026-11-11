@@ -32,10 +32,14 @@
 
 ## 版本
 
-当前版本：**1.1.73**
+当前版本：**1.1.74**
 
 扩展源文件：`index.js`、`style.css`、`manifest.json`。
 
+
+### 1.1.74
+- Add individual X platform streamer profile pages with follow/unfollow, public post history, received-like totals, and associated live-room entry when room host metadata matches the profile.
+- Make streamer names in the dynamic feed open their profile; route the self-profile tab to the same profile page.
 
 ### 1.1.73
 - Add a dedicated Weibo post detail page with the full post body, repost reference, complete comment list, and in-place like, comment, favorite, and repost actions.
