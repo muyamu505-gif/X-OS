@@ -144,6 +144,7 @@
   function openPhone(page = 'home') {
     if (!overlay) buildOverlay();
     overlay.classList.add('xphone-open');
+    overlay.style.display = 'flex';
     overlay.setAttribute('aria-hidden', 'false');
     if (page === 'home') { state.page = 'home'; state.app = null; state.stack = []; }
     renderScreen();
@@ -153,6 +154,7 @@
   function closePhone() {
     if (!overlay) return;
     overlay.classList.remove('xphone-open');
+    overlay.style.display = 'none';
     overlay.setAttribute('aria-hidden', 'true');
   }
 
@@ -160,10 +162,11 @@
     overlay = document.createElement('div');
     overlay.id = 'xphone-overlay';
     overlay.className = 'xphone-overlay';
+    overlay.style.cssText = 'position:fixed!important;inset:0!important;z-index:2147483000!important;display:none;align-items:center!important;justify-content:center!important;box-sizing:border-box!important;padding: max(12px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom))!important;overflow:hidden!important;isolation:isolate!important;';
     overlay.setAttribute('aria-hidden', 'true');
     overlay.innerHTML = `
-      <div class="xphone-backdrop" data-action="close"></div>
-      <section class="xphone-shell" role="dialog" aria-modal="true" aria-label="手机模拟器">
+      <div class="xphone-backdrop" data-action="close" style="position:absolute;inset:0;background:rgba(8,10,14,.72);backdrop-filter:blur(5px);z-index:0"></div>
+      <section class="xphone-shell" role="dialog" aria-modal="true" aria-label="手机模拟器" style="position:relative;z-index:1;box-sizing:border-box;width:min(320px,calc(100vw - 32px));height:min(620px,calc(100dvh - 48px));min-width:min(260px,calc(100vw - 32px));min-height:min(440px,calc(100dvh - 48px));max-width:calc(100vw - 24px);max-height:calc(100dvh - 24px);border:6px solid #17191d;border-radius:30px;background:#f8f9fb;box-shadow:0 25px 90px #0009;overflow:hidden;display:flex;flex-direction:column">
         <div class="xphone-notch"><span></span></div>
         <div class="xphone-status"><span class="xp-clock">09:41</span><span class="xp-status-right">5G　●●●　▰</span></div>
         <header class="xphone-header"><button class="xp-head-btn" data-action="back" aria-label="返回">‹</button><div class="xp-head-title">手机</div><button class="xp-head-btn" data-action="notifications" aria-label="通知">♧<i class="xp-notice-dot"></i></button></header>
@@ -174,6 +177,7 @@
     document.body.appendChild(overlay);
     attachPhoneResize(overlay.querySelector('.xphone-shell'));
     phoneScreen = overlay.querySelector('#xphone-screen');
+    phoneScreen.style.cssText = 'flex:1;min-height:0;overflow:auto;background:#f7f8fa;overscroll-behavior:contain;';
     overlay.addEventListener('click', handleClick);
     overlay.addEventListener('submit', handleSubmit);
     overlay.addEventListener('input', handleInput);
