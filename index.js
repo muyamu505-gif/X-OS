@@ -773,6 +773,7 @@
       }
       case 'share': addNotification('微博', '转发成功', '这条动态已加入本地模拟分享记录。'); renderScreen(); persistState(); break;
       case 'wallet-record': openInfoDialog('账单记录', (state.walletTransactions || []).map(t => `${t.title}：${t.amount > 0 ? '+' : ''}${t.amount}钻（${t.time}）`).join('\n') || '暂无账单记录。', inlineHost); break;
+      case 'wallet-add': openActionDialog('wallet-add','记一笔','记录一笔模拟收入或支出',inlineHost); break;
       case 'wallet-recharge': openInfoDialog('模拟充值', '此演示版不接入真实充值或支付渠道。', inlineHost); break;
     }
   }
