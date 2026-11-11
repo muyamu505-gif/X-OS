@@ -254,3 +254,100 @@ html #xphone-overlay>.xphone-shell{position:absolute!important;display:block!imp
 /* X-OS 1.1.45: align the scaled screen to the phone's inner frame; keep resize hit-area invisible */
 html #xphone-overlay .xphone-content{left:0!important;top:0!important}
 html #xphone-overlay .xphone-resize-handle{background:transparent!important;border:0!important;box-shadow:none!important}
+
+
+/* X-OS 1.1.51 — clean iPhone-like device chrome and app surfaces */
+#xphone-overlay .xphone-header,#xphone-overlay .xphone-bottom-nav,
+.xphone-inline-host .xp-inline-toolbar,.xphone-inline-host .xp-inline-nav{display:none!important}
+#xphone-overlay .xphone-screen,.xphone-inline-screen,
+#xphone-overlay .xphone-shell,.xphone-inline-device,
+#xphone-overlay .xphone-screen *,.xphone-inline-screen *{
+  scrollbar-width:none!important;
+}
+#xphone-overlay .xphone-screen::-webkit-scrollbar,
+.xphone-inline-screen::-webkit-scrollbar,
+#xphone-overlay .xphone-screen *::-webkit-scrollbar,
+.xphone-inline-screen *::-webkit-scrollbar{display:none!important;width:0!important;height:0!important}
+#xphone-overlay .xphone-content{display:flex;flex-direction:column}
+#xphone-overlay .xphone-screen{flex:1 1 auto;min-height:0;overflow:auto;overscroll-behavior:contain}
+.xphone-inline-screen{overflow:auto;overscroll-behavior:contain}
+
+/* iOS Notes */
+.xp-ios-eyebrow{display:block;font-size:9px;font-weight:800;letter-spacing:1.5px;color:#a0a4aa}
+.xp-ios-notes-head,.xp-ios-calendar-head,.xp-ios-ledger-head,.xp-safari-top{display:flex;align-items:flex-end;justify-content:space-between;margin:3px 0 20px}
+.xp-ios-notes-head h2,.xp-ios-calendar-head h2,.xp-ios-ledger-head h2,.xp-safari-top h2{margin:3px 0 0;font-size:29px;letter-spacing:-1px;font-weight:750;color:#1c1c1e}
+.xp-notes-page{background:#fffdf8!important;padding:20px 17px!important}
+.xp-notes-saved{font-size:9px;color:#a1a1a6}
+.xp-notes-paper{min-height:68%;background:linear-gradient(transparent 31px,#f1e8d4 32px);background-size:100% 32px;padding:4px 2px}
+.xp-notes-date{font-size:10px;color:#a2a2a2;margin:0 0 13px}
+.xp-notes{display:block;min-height:390px!important;width:100%;border:0!important;border-radius:0!important;background:transparent!important;padding:0 2px!important;font:14px/32px -apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif!important;resize:none!important;color:#242424!important;outline:none!important}
+.xp-notes-footer{position:sticky;bottom:0;display:flex;align-items:center;gap:23px;padding:13px 5px;background:#fffdf8;border-top:1px solid #eee8dc;color:#d6a33b;font-size:17px}
+.xp-notes-footer small{margin-left:auto;font-size:9px;color:#a3a3a3}
+
+/* iOS Calendar */
+.xp-calendar{padding:20px 16px!important;background:#fff!important}
+.xp-ios-calendar-head{margin-bottom:10px}
+.xp-ios-calendar-head button,.xp-ios-ledger-head>button{border:0;background:#f2f2f7;color:#3478d4;border-radius:18px;padding:7px 13px;font-size:11px}
+.xp-calendar-month-nav{display:flex;align-items:center;justify-content:space-between;margin:12px 0 14px}
+.xp-calendar-month-nav strong{font-size:16px;color:#1c1c1e}
+.xp-calendar-month-nav button{width:30px;height:30px;border:0;border-radius:50%;background:#f2f2f7;color:#3478d4;font-size:22px;line-height:1}
+.xp-calendar-week,.xp-calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));text-align:center}
+.xp-calendar-week{margin-bottom:6px;color:#8e8e93;font-size:10px}
+.xp-calendar-week span{padding:7px 0}
+.xp-calendar-grid{gap:4px 0}
+.xp-calendar-grid .xp-cal-day{height:39px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:2px;font-size:12px;color:#242424;border-radius:50%;position:relative}
+.xp-calendar-grid .xp-cal-day.today{background:#e84b4b;color:white;font-weight:700}
+.xp-calendar-grid .xp-cal-day i{width:4px;height:4px;border-radius:50%;background:#e84b4b}
+.xp-calendar-grid .xp-cal-day.today i{background:white}
+.xp-ios-agenda-head{display:flex;justify-content:space-between;align-items:center;margin:22px 0 7px}
+.xp-ios-agenda-head strong{font-size:16px;color:#1c1c1e}
+.xp-ios-agenda-head small{font-size:10px;color:#8e8e93}
+.xp-calendar-events{margin:0!important}
+.xp-calendar-events .xp-calendar-event{display:flex;flex-direction:row;align-items:center;justify-content:space-between;padding:12px 2px;border-bottom:1px solid #f0f0f2}
+.xp-calendar-event b{font-size:12px;color:#252525}
+.xp-calendar-event small{font-size:10px;color:#8e8e93}
+.xp-calendar-event button{border:0;background:#f2f2f7;color:#e05252;border-radius:50%;width:24px;height:24px}
+.xp-calendar-add{display:grid;grid-template-columns:65px 1fr;gap:7px;margin-top:15px;padding-top:13px;border-top:1px solid #eee}
+.xp-calendar-add input{min-width:0;border:1px solid #e8e8ed;border-radius:9px;padding:9px;font-size:11px;background:#fafafa}
+.xp-calendar-add input[name="desc"]{grid-column:1/-1}
+.xp-calendar-add button{grid-column:1/-1;border:0;border-radius:10px;padding:10px;background:#e94b4b;color:#fff;font-size:11px}
+
+/* iOS-inspired ledger */
+.xp-wallet{background:#f5f5f7!important;padding:20px 15px!important}
+.xp-ios-ledger-head{margin-bottom:17px}
+.xp-wallet-card{background:linear-gradient(145deg,#343b46,#171c23)!important;border-radius:20px!important;padding:23px 20px!important;box-shadow:0 8px 20px #0002}
+.xp-wallet-card strong{font-size:32px!important;font-weight:700}
+.xp-ledger-summary{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:12px 0 23px}
+.xp-ledger-summary>div{background:#fff;border-radius:14px;padding:13px 12px;display:flex;flex-direction:column;gap:7px}
+.xp-ledger-summary small{font-size:10px;color:#8e8e93}
+.xp-ledger-summary b{font-size:16px;color:#32a36a}
+.xp-ledger-summary>div+div b{color:#e05a55}
+.xp-wallet-records{background:#fff;border-radius:14px;padding:0 12px}
+.xp-ios-ledger-row{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid #f0f0f2}
+.xp-ios-ledger-row:last-child{border-bottom:0}
+.xp-ledger-icon{width:32px;height:32px;display:grid;place-items:center;border-radius:50%;background:#f2f2f7;color:#6e7b8c;font-size:16px}
+.xp-ledger-main{display:flex;flex-direction:column;gap:4px;flex:1;min-width:0}
+.xp-ledger-main b{font-size:11px;color:#252525}
+.xp-ledger-main small{font-size:9px;color:#9a9a9f}
+.xp-ios-ledger-row>strong{font-size:12px}
+.xp-ios-ledger-row .is-minus{color:#e45a55}
+.xp-ios-ledger-row .is-plus{color:#32a36a}
+
+/* Safari-inspired browser start page */
+.xp-browser{background:#f5f5f7!important;padding:20px 15px 12px!important}
+.xp-safari-top{align-items:center;margin-bottom:18px}
+.xp-browser-private{font-size:9px;color:#8e8e93;background:#e9e9ee;border-radius:20px;padding:6px 9px}
+.xp-browser-form{align-items:center;background:#e8e8ed;border-radius:13px;padding:4px 7px 4px 11px;gap:8px}
+.xp-browser-form>span{font-size:18px;color:#8e8e93}
+.xp-browser-form input{border:0!important;background:transparent!important;padding:10px 2px!important;font-size:12px!important;outline:none}
+.xp-browser-form button{width:31px;height:31px;border-radius:9px!important;background:#3478d4!important;font-size:17px}
+.xp-browser-section-title{font-size:12px;font-weight:700;margin:26px 0 12px;color:#34343a}
+.xp-safari-favorites{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+.xp-safari-favorites button{border:0;border-radius:14px;background:#fff;padding:13px 5px;display:flex;flex-direction:column;align-items:center;gap:8px;color:#424248;font-size:10px}
+.xp-safari-favorites i{width:36px;height:36px;border-radius:11px;display:grid;place-items:center;font-size:19px;font-weight:800;font-style:normal}
+.safari-fav-google{background:#f1f1f1;color:#4285f4}.safari-fav-baidu{background:#e8f1ff;color:#2468d8}.safari-fav-bing{background:#e2f4ec;color:#16845a}
+.xp-safari-privacy-card{margin-top:22px;background:#fff;border-radius:15px;padding:16px;display:grid;grid-template-columns:24px 1fr;gap:5px 8px}
+.xp-safari-privacy-card>span{grid-row:span 2;color:#3478d4;font-size:19px}
+.xp-safari-privacy-card b{font-size:12px;color:#303038}
+.xp-safari-privacy-card p{grid-column:2;margin:0;color:#8e8e93;font-size:10px;line-height:1.6}
+.xp-safari-bottom{position:sticky;bottom:-12px;margin:24px -15px -12px;padding:13px 17px;background:#ffffffed;border-top:1px solid #e5e5e8;display:flex;justify-content:space-around;color:#3478d4;font-size:18px}
