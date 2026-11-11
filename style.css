@@ -110,3 +110,21 @@ html #xphone-overlay #xphone-screen{background:#f6f8fa!important}
 .xp-widget{border:1px solid #e8edf1!important;box-shadow:0 5px 18px #26394a0b!important}
 .xp-app-grid{gap:17px 12px!important}
 .xp-app-icon{filter:drop-shadow(0 3px 5px #26394a14)}
+
+
+/* X-OS 1.1.19 interaction polish */
+.xp-social-search{display:flex;align-items:center;gap:8px;margin:8px 0 12px;padding:0 12px;height:38px;border-radius:12px;background:#fff;border:1px solid #e9edf1;color:#9099a2}
+.xp-social-search input{flex:1;min-width:0;border:0;outline:0;background:transparent;color:#303943;font-size:12px}
+.xp-social-post[hidden]{display:none!important}
+.xp-photo-actions{display:flex;align-items:center;gap:5px}
+.xp-photo-actions button,.xp-calendar-event>button{border:0;border-radius:9px;padding:6px 8px;background:#f2f4f6;color:#687582;font-size:11px}
+.xp-calendar-event{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:7px 0;padding:10px 11px;border-radius:12px;background:#fff;border:1px solid #edf0f2}
+.xp-calendar-event>span{display:flex;flex-direction:column;gap:4px;min-width:0}
+.xp-calendar-event small{color:#8b949d}
+.xp-calendar-event>button{flex:0 0 28px;height:28px;font-size:18px}
+.xp-notes-saved{font-size:10px;color:#8c969f}
+.xp-mini-live{width:100%;display:flex;align-items:center;gap:10px;text-align:left;cursor:pointer;color:inherit;font:inherit}
+.xp-mini-live>span:nth-child(2){flex:1;min-width:0}
+.xp-mini-live>i{font-style:normal;color:#9aa4ad;font-size:20px}
+.xp-x-bottom button{flex:1;min-width:0;border:0;background:transparent;color:inherit;font:inherit;font-size:11px;padding:9px 2px}
+.xp-x-bottom button:active,.xp-mini-live:active{opacity:.7}
