@@ -61,3 +61,6 @@ html #xphone-overlay .xphone-resize-handle{position:absolute!important;right:0!i
 #xphone-settings .xphone-reset-confirm[hidden]{display:none!important}
 #xphone-settings .xphone-reset-confirm p{margin:0 0 10px;font-size:13px;line-height:1.5}
 #xphone-settings #xphone-reset-accept{border-color:#c96b70;color:#c04d56}
+
+/* Keyboard-accessible phone resizing */
+html #xphone-overlay .xphone-resize-handle:focus-visible{outline:2px solid #6b91b2!important;outline-offset:-3px!important;border-radius:0 0 22px 0!important}
