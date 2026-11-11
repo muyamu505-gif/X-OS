@@ -7,8 +7,9 @@
   const EXT_ID = 'x-phone-simulator';
   const META_KEY = 'xPhoneSimulatorState';
   const SETTINGS_KEY = `${EXT_ID}:systemSettings`;
-  const DEFAULT_SETTINGS = { contextEnabled: true, includeCharacter: true, includeWorldbook: true, includeChat: true, contextMessages: 24, apiMode: 'sillytavern', apiBase: '', apiKey: '', apiModel: '', apiModels: [], temperature: 0.7, maxTokens: 1800 };
+  const DEFAULT_SETTINGS = { contextEnabled: true, includeCharacter: true, includeWorldbook: true, includeChat: true, contextMessages: 24, apiMode: 'sillytavern', apiBase: '', apiKey: '', apiModel: '', apiModels: [], temperature: 0.7, maxTokens: 1800, apiTimeoutMs: 45000, apiRetries: 1 };
   let systemSettings = loadSystemSettings();
+  let apiRuntimeStatus = { kind: 'idle', message: '尚未测试 API' };
   let keyboardFocused = false;
   let keyboardViewportHeight = 0;
   const DEFAULT_STATE = {
@@ -128,9 +129,12 @@
         <label class="xp-settings-field">调用方式<select data-setting="apiMode"><option value="sillytavern" ${systemSettings.apiMode==='sillytavern'?'selected':''}>跟随酒馆当前 API</option><option value="openai" ${systemSettings.apiMode==='openai'?'selected':''}>独立 OpenAI 兼容 API</option></select></label>
         <label class="xp-settings-field">API 地址<input data-setting="apiBase" value="${escapeHtml(systemSettings.apiBase)}" placeholder="https://api.example.com/v1"></label>
         <label class="xp-settings-field">API Key<input data-setting="apiKey" type="password" autocomplete="off" value="${escapeHtml(systemSettings.apiKey)}" placeholder="输入后本机保存"></label>
-        <label class="xp-settings-field">模型名称<select data-setting="apiModel"><option value="">选择模型或手动填写</option>${(systemSettings.apiModels||[]).map(id=>`<option value="${escapeHtml(id)}" ${systemSettings.apiModel===id?"selected":""}>${escapeHtml(id)}</option>`).join("")}<option value="__manual__">手动填写模型 ID…</option></select><input data-setting="apiModel" value="${escapeHtml(systemSettings.apiModel)}" placeholder="模型 ID（也可直接填写）"></label>
+        <label class="xp-settings-field">模型名称<input list="xos-api-model-options" data-setting="apiModel" value="${escapeHtml(systemSettings.apiModel)}" placeholder="拉取模型后选择，或手动填写 ID"><datalist id="xos-api-model-options">${(systemSettings.apiModels||[]).map(id=>`<option value="${escapeHtml(id)}"></option>`).join("")}</datalist></label>
         <label class="xp-settings-field">Temperature<input data-setting="temperature" type="number" min="0" max="2" step="0.1" value="${systemSettings.temperature}"></label>
         <label class="xp-settings-field">最大输出 Token<input data-setting="maxTokens" type="number" min="128" max="16000" step="128" value="${systemSettings.maxTokens}"></label>
+        <label class="xp-settings-field">请求超时（秒）<input data-setting="apiTimeoutSeconds" type="number" min="10" max="180" step="5" value="${Math.round((Number(systemSettings.apiTimeoutMs)||45000)/1000)}"></label>
+        <label class="xp-settings-field">网络失败重试次数<input data-setting="apiRetries" type="number" min="0" max="3" step="1" value="${systemSettings.apiRetries}"></label>
+        <div class="xp-api-status ${escapeHtml(apiRuntimeStatus.kind)}" data-api-status>${escapeHtml(apiRuntimeStatus.message)}</div>
         <div class="xp-settings-actions"><button data-action="settings-save">保存设置</button><button data-action="settings-models">拉取模型</button><button data-action="settings-test">测试生成</button></div>
         <small class="xp-settings-note">独立 API 使用 OpenAI 兼容的 /models 与 /chat/completions 接口。API Key 保存在本机浏览器存储；手机网页跨域访问受服务商 CORS 策略限制。</small>
       </div>
@@ -669,7 +673,7 @@
   }
   function handleChange(event){
     const setting=event.target.closest('[data-setting]');
-    if(setting){const key=setting.dataset.setting;if(setting.type==='checkbox')systemSettings[key]=setting.checked;else if(['contextMessages','temperature','maxTokens'].includes(key))systemSettings[key]=Number(setting.value);else systemSettings[key]=setting.value;saveSystemSettings();if(key==='apiMode')renderScreen();}
+    if(setting){const key=setting.dataset.setting;if(setting.type==='checkbox')systemSettings[key]=setting.checked;else if(['contextMessages','temperature','maxTokens','apiTimeoutSeconds','apiRetries'].includes(key))systemSettings[key]=Number(setting.value);else systemSettings[key]=setting.value;if(key==='apiTimeoutSeconds')systemSettings.apiTimeoutMs=Math.max(10000,Math.min(180000,systemSettings.apiTimeoutSeconds*1000));if(key==='apiRetries')systemSettings.apiRetries=Math.max(0,Math.min(3,systemSettings.apiRetries));saveSystemSettings();if(key==='apiMode')renderScreen();}
     const input=event.target.closest('[data-wallet-restore-file]');if(!input)return;
     const file=input.files?.[0];input.value='';if(!file)return;
     if(file.size>2*1024*1024){addNotification('记账','恢复失败','备份文件不能超过 2 MB。');renderScreen();return;}
@@ -1169,9 +1173,11 @@
     if (setting) {
       const key = setting.dataset.setting;
       if (setting.type === 'checkbox') systemSettings[key] = setting.checked;
-      else if (['contextMessages','temperature','maxTokens'].includes(key)) systemSettings[key] = Number(setting.value);
+      else if (['contextMessages','temperature','maxTokens','apiTimeoutSeconds','apiRetries'].includes(key)) systemSettings[key] = Number(setting.value);
       else systemSettings[key] = setting.value;
       if (key === 'contextMessages') { const label = setting.closest('label')?.querySelector('b'); if (label) label.textContent = String(systemSettings.contextMessages); }
+      if(key==='apiTimeoutSeconds')systemSettings.apiTimeoutMs=Math.max(10000,Math.min(180000,systemSettings.apiTimeoutSeconds*1000));
+      if(key==='apiRetries')systemSettings.apiRetries=Math.max(0,Math.min(3,systemSettings.apiRetries));
       saveSystemSettings();
     }
 
@@ -1401,18 +1407,13 @@
   }
 
   function normalizeApiBase(){const base=String(systemSettings.apiBase||'').trim().replace(/\/+$/,'');if(!base)throw new Error('请填写 API 地址');return base;}
-  function extractApiText(data){const c=data?.choices?.[0]?.message?.content??data?.choices?.[0]?.text??data?.output_text??data?.content??'';return Array.isArray(c)?c.map(x=>typeof x==='string'?x:x?.text||'').join(''):String(c||'');}
-  function canGenerateText(){return systemSettings.apiMode==='openai'?!!(systemSettings.apiBase&&systemSettings.apiKey&&systemSettings.apiModel):typeof currentContext()?.generateRaw==='function';}
-  async function generateText({prompt,systemPrompt='',jsonSchema=null}){
-    if(systemSettings.apiMode==='openai'){
-      const base=normalizeApiBase();if(!systemSettings.apiKey)throw new Error('请先填写 API Key');if(!systemSettings.apiModel)throw new Error('请先选择或填写模型名称');
-      const body={model:systemSettings.apiModel,messages:[...(systemPrompt?[{role:'system',content:systemPrompt}]:[]),{role:'user',content:prompt}],temperature:Math.max(0,Math.min(2,Number(systemSettings.temperature)||0)),max_tokens:Math.max(128,Math.min(16000,Number(systemSettings.maxTokens)||1800))};if(jsonSchema)body.response_format={type:'json_object'};
-      const response=await fetch(base+'/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+systemSettings.apiKey},body:JSON.stringify(body)});const payload=await response.json().catch(()=>({}));if(!response.ok)throw new Error('API HTTP '+response.status+'：'+String(payload?.error?.message||payload?.message||response.statusText).slice(0,240));const text=extractApiText(payload);if(!text.trim())throw new Error('API 已响应，但没有返回可用文本');return text;
-    }
-    const context=currentContext();if(typeof context?.generateRaw!=='function')throw new Error('未检测到酒馆 generateRaw 接口，请切换到独立 API 或检查酒馆版本');return await generateText({prompt,systemPrompt,...(jsonSchema?{jsonSchema}:{})});
-  }
-  async function fetchApiModels(){if(systemSettings.apiMode!=='openai'){addNotification('模型列表','当前为酒馆模式','切换到独立 OpenAI 兼容 API 后才能从 API 地址拉取模型。');renderScreen();return;}try{saveSystemSettings();const base=normalizeApiBase();if(!systemSettings.apiKey)throw new Error('请先填写 API Key');const response=await fetch(base+'/models',{headers:{Authorization:'Bearer '+systemSettings.apiKey}});const payload=await response.json().catch(()=>({}));if(!response.ok)throw new Error('HTTP '+response.status+'：'+String(payload?.error?.message||payload?.message||response.statusText).slice(0,220));const models=(Array.isArray(payload.data)?payload.data:[]).map(x=>String(x?.id||'').trim()).filter(Boolean);if(!models.length)throw new Error('接口可访问，但没有返回 data[].id 模型列表');systemSettings.apiModels=Array.from(new Set(models)).sort();if(!systemSettings.apiModels.includes(systemSettings.apiModel))systemSettings.apiModel=systemSettings.apiModels[0];saveSystemSettings();addNotification('模型列表','拉取成功','已获取 '+models.length+' 个模型，请选择模型。');}catch(error){addNotification('模型列表','拉取失败',String(error?.message||error).slice(0,220));}renderScreen();}
-  async function testApiConnection(){try{const result=await generateText({prompt:'只回复两个字：连接成功',systemPrompt:'你是 API 连通性测试。严格按要求回复。'});if(!String(typeof result==='string'?result:result?.content||result?.text||'').trim())throw new Error('接口没有返回文本');addNotification('API 测试','生成测试成功','模型已完成一次真实文本生成。');}catch(error){addNotification('API 测试','测试失败',String(error?.message||error).slice(0,240));}renderScreen();}
+  function setApiRuntimeStatus(kind,message){apiRuntimeStatus={kind,message:String(message||'').slice(0,260)};const node=document.querySelector('[data-api-status]');if(node){node.className='xp-api-status '+kind;node.textContent=apiRuntimeStatus.message;}}
+  function apiTimeout(){return Math.max(10000,Math.min(180000,Number(systemSettings.apiTimeoutMs)||45000));}
+  function apiRetryCount(){return Math.max(0,Math.min(3,Number(systemSettings.apiRetries)||0));}
+  async function apiFetch(url,options={}){let lastError;const retries=apiRetryCount();for(let attempt=0;attempt<=retries;attempt++){const controller=typeof AbortController!=='undefined'?new AbortController():null;let timer=null;try{if(controller)timer=setTimeout(()=>controller.abort(),apiTimeout());const response=await fetch(url,{...options,...(controller?{signal:controller.signal}:{})});if(!response.ok){const payload=await response.json().catch(()=>({}));const error=new Error('HTTP '+response.status+'：'+String(payload?.error?.message||payload?.message||response.statusText||'请求失败').slice(0,220));error.status=response.status;if(response.status>=500&&attempt<retries){lastError=error;continue;}throw error;}return response;}catch(error){if(error?.name==='AbortError')lastError=new Error('请求超时（'+Math.round(apiTimeout()/1000)+' 秒），请检查网络或增加超时时间');else if(error instanceof TypeError)lastError=new Error('网络请求失败：可能是地址错误、网络不可达或服务商未开放 CORS 跨域访问');else lastError=error;if(attempt>=retries||(error?.status&&error.status<500))throw lastError;}finally{if(timer)clearTimeout(timer);}}throw lastError||new Error('API 请求失败');}
+  async function generateText({prompt,systemPrompt='',jsonSchema=null}){if(systemSettings.apiMode==='openai'){const base=normalizeApiBase();if(!systemSettings.apiKey)throw new Error('请先填写 API Key');if(!systemSettings.apiModel)throw new Error('请先选择或填写模型名称');const body={model:systemSettings.apiModel,messages:[...(systemPrompt?[{role:'system',content:systemPrompt}]:[]),{role:'user',content:prompt}],temperature:Math.max(0,Math.min(2,Number(systemSettings.temperature)||0)),max_tokens:Math.max(128,Math.min(16000,Number(systemSettings.maxTokens)||1800))};if(jsonSchema)body.response_format={type:'json_object'};const response=await apiFetch(base+'/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+systemSettings.apiKey},body:JSON.stringify(body)});const payload=await response.json().catch(()=>({}));const text=extractApiText(payload);if(!text.trim())throw new Error('API 已响应，但没有返回可用文本');return text;}const context=currentContext();if(typeof context?.generateRaw!=='function')throw new Error('未检测到酒馆 generateRaw 接口，请切换到独立 API 或检查酒馆版本');const result=await context.generateRaw({prompt,systemPrompt,...(jsonSchema?{jsonSchema}:{})});const text=typeof result==='string'?result:(result?.content||result?.text||'');if(!String(text).trim())throw new Error('酒馆生成接口没有返回文本');return text;}
+  async function fetchApiModels(){if(systemSettings.apiMode!=='openai'){addNotification('模型列表','当前为酒馆模式','切换到独立 OpenAI 兼容 API 后才能从 API 地址拉取模型。');renderScreen();return;}try{saveSystemSettings();setApiRuntimeStatus('loading','正在连接模型列表…');const base=normalizeApiBase();if(!systemSettings.apiKey)throw new Error('请先填写 API Key');const response=await apiFetch(base+'/models',{headers:{Authorization:'Bearer '+systemSettings.apiKey}});const payload=await response.json().catch(()=>({}));const models=(Array.isArray(payload.data)?payload.data:[]).map(x=>String(x?.id||'').trim()).filter(Boolean);if(!models.length)throw new Error('接口可访问，但没有返回 data[].id 模型列表');systemSettings.apiModels=Array.from(new Set(models)).sort();if(!systemSettings.apiModels.includes(systemSettings.apiModel))systemSettings.apiModel=systemSettings.apiModels[0];saveSystemSettings();setApiRuntimeStatus('success','模型列表已更新：'+models.length+' 个模型');addNotification('模型列表','拉取成功','已获取 '+models.length+' 个模型，请选择模型。');}catch(error){setApiRuntimeStatus('error','模型拉取失败：'+String(error?.message||error));addNotification('模型列表','拉取失败',String(error?.message||error).slice(0,220));}renderScreen();}
+  async function testApiConnection(){setApiRuntimeStatus('loading','正在进行真实生成测试…');renderScreen();try{const result=await generateText({prompt:'只回复两个字：连接成功',systemPrompt:'你是 API 连通性测试。严格按要求回复。'});if(!String(result||'').trim())throw new Error('接口没有返回文本');setApiRuntimeStatus('success','生成测试成功：'+String(result).trim().slice(0,100));addNotification('API 测试','测试成功','模型已完成一次真实文本生成。');}catch(error){setApiRuntimeStatus('error','测试失败：'+String(error?.message||error));addNotification('API 测试','测试失败',String(error?.message||error).slice(0,240));}renderScreen();}
 
   function parseGeneratedJson(raw) {
     let text = String(raw || '').trim();
