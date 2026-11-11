@@ -593,7 +593,7 @@
   }
 
   function exportWalletBackup() {
-    const payload={format:'xos-wallet-backup',version:1,exportedAt:new Date().toISOString(),wallet:Number(state.wallet)||0,transactions:(state.walletTransactions||[]).map(t=>({id:String(t.id||''),title:String(t.title||''),amount:Number(t.amount)||0,balanceDelta:Number.isFinite(Number(t.balanceDelta))?Number(t.balanceDelta):(Number(t.amount)||0),category:String(t.category||'其他'),time:String(t.time||''),date:String(t.date||''),month:String(t.month||''))};
+    const payload={format:'xos-wallet-backup',version:1,exportedAt:new Date().toISOString(),wallet:Number(state.wallet)||0,transactions:(state.walletTransactions||[]).map(t=>({id:String(t.id||''),title:String(t.title||''),amount:Number(t.amount)||0,balanceDelta:Number.isFinite(Number(t.balanceDelta))?Number(t.balanceDelta):(Number(t.amount)||0),category:String(t.category||'其他'),time:String(t.time||''),date:String(t.date||''),month:String(t.month||'')}))};
     try{const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='X-OS-钱包备份-'+new Date().toISOString().slice(0,10)+'.json';a.style.display='none';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);addNotification('记账','备份已导出','已导出余额和 '+payload.transactions.length+' 笔账单。');}
     catch(error){addNotification('记账','备份失败',String(error?.message||error).slice(0,100));}persistState();
   }
