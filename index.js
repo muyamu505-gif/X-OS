@@ -576,8 +576,9 @@
       host.addEventListener('click', handleClick);
       host.addEventListener('submit', handleSubmit);
       host.addEventListener('input', handleInput);
-      (message.querySelector('.mes_text') || message).appendChild(button);
-      message.appendChild(host);
+      const contentRoot = message.querySelector('.mes_text') || message;
+      contentRoot.appendChild(button);
+      contentRoot.appendChild(host);
     });
   }
 
