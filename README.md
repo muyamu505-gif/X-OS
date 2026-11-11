@@ -32,7 +32,7 @@
 
 ## 版本
 
-当前版本：**1.1.21**
+当前版本：**1.1.22**
 
 扩展源文件：`index.js`、`style.css`、`manifest.json`。
 
@@ -121,3 +121,7 @@
 ### 1.1.21
 - Add per-message deletion in WeChat conversations and a clear empty-chat state.
 - Add a back-to-conversation-list control in the chat header.
+
+
+### 1.1.22
+- Add a dedicated confirmation step before clearing all messages in the currently open WeChat conversation.
