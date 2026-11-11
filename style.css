@@ -54,7 +54,7 @@ html #xphone-floating-entry{all:initial!important;position:fixed!important;displ
 html #xphone-floating-entry .xphone-fab-mark{display:grid!important;place-items:center!important;width:27px!important;height:27px!important;border:1.5px solid rgba(255,255,255,.85)!important;border-radius:9px!important;font-size:19px!important;line-height:1!important;font-weight:800!important}
 html #xphone-floating-entry small{display:block!important;margin-top:2px!important;font-size:9px!important;line-height:11px!important;color:#fff!important}
 html #xphone-topbar-entry{display:inline-flex;align-items:center;gap:6px;padding:7px 10px;cursor:pointer}
-html #xphone-overlay .xphone-resize-handle{position:absolute!important;right:0!important;bottom:0!important;width:30px!important;height:30px!important;z-index:10!important;cursor:nwse-resize!important;touch-action:none!important;background:linear-gradient(135deg,transparent 0 42%,#778493 43% 49%,transparent 50% 58%,#778493 59% 65%,transparent 66%)!important}
+html #xphone-overlay .xphone-resize-handle{position:absolute!important;right:0!important;bottom:0!important;width:30px!important;height:30px!important;z-index:10!important;cursor:nwse-resize!important;touch-action:none!important;background:transparent!important}
 
 /* Settings reset confirmation — inline and mobile-friendly */
 #xphone-settings .xphone-reset-confirm{margin:10px 0;padding:12px;border:1px solid var(--xp-border,#d9dee5);border-radius:12px;background:rgba(120,135,150,.08)}
@@ -202,7 +202,7 @@ html #xphone-overlay #xphone-screen{background:#f6f8fa!important}
 
 /* 1.1.32: movable phone shell and true proportional whole-device resizing */
 html #xphone-overlay>.xphone-shell{position:absolute!important;display:block!important;flex:none!important;box-sizing:border-box!important;margin:0!important;min-width:220px!important;min-height:220px!important;border:6px solid #17191d!important;border-radius:30px!important;overflow:hidden!important;transform:none!important;animation:none!important;touch-action:manipulation!important}
-.xphone-content{position:absolute;left:6px;top:6px;width:308px;height:608px;display:flex;flex-direction:column;overflow:hidden;transform:scale(var(--xp-phone-scale,1));transform-origin:top left;background:#f8f9fb}
+.xphone-content{position:absolute;left:0;top:0;width:308px;height:608px;display:flex;flex-direction:column;overflow:hidden;transform:scale(var(--xp-phone-scale,1));transform-origin:top left;background:#f8f9fb}
 .xphone-content>.xphone-screen{width:100%;flex:1 1 auto;min-height:0;overflow:auto}
 .xphone-drag-handle{position:absolute;left:0;right:0;top:0;height:46px;z-index:9;cursor:grab;touch-action:none;background:transparent}
 .xphone-drag-handle:active{cursor:grabbing}
@@ -249,3 +249,8 @@ html #xphone-overlay>.xphone-shell{position:absolute!important;display:block!imp
 
 /* X-OS 1.1.36 system settings */
 .xp-system-settings{padding-bottom:18px}.xp-settings-heading{display:flex;flex-direction:column;gap:4px;margin-bottom:12px}.xp-settings-heading strong{font-size:17px}.xp-settings-heading small,.xp-settings-note{font-size:10px;color:#9299a1;line-height:1.5}.xp-settings-card{background:#fff;border:1px solid #edf0f2;border-radius:12px;padding:12px;margin:10px 0}.xp-settings-card-title{font-size:12px;font-weight:800;margin-bottom:9px;color:#333b43}.xp-settings-info{display:flex;justify-content:space-between;gap:8px;padding:6px 0;font-size:10px;border-bottom:1px solid #f1f2f3}.xp-settings-info span{color:#8a929a}.xp-settings-info b{color:#39434d;text-align:right}.xp-settings-toggle{display:flex;align-items:center;gap:8px;padding:8px 0;font-size:11px;color:#4b535b}.xp-settings-toggle input{accent-color:#71879a}.xp-settings-field{display:flex;flex-direction:column;gap:5px;margin:10px 0;font-size:10px;color:#747d86}.xp-settings-field input:not([type=range]),.xp-settings-field select{width:100%;min-width:0;box-sizing:border-box;border:1px solid #e3e7ea;border-radius:7px;padding:9px;background:#f9fafb;color:#333;font-size:12px}.xp-settings-field input[type=range]{width:100%;accent-color:#71879a}.xp-settings-actions{display:flex;gap:8px;margin:10px 0}.xp-settings-actions button{flex:1;border:0;border-radius:8px;padding:9px;background:#71879a;color:#fff;font-size:11px}.xp-settings-actions button+button{background:#edf0f2;color:#4d5963}.xp-settings-note{display:block;margin-top:7px}.xp-system-settings p{font-size:11px;line-height:1.6;color:#68727b}
+
+
+/* X-OS 1.1.45: align the scaled screen to the phone's inner frame; keep resize hit-area invisible */
+html #xphone-overlay .xphone-content{left:0!important;top:0!important}
+html #xphone-overlay .xphone-resize-handle{background:transparent!important;border:0!important;box-shadow:none!important}
