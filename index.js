@@ -1190,7 +1190,7 @@
     const character=context.characters&&context.characters[context.characterId]||null;
     const cardName=String(character&&character.name||'').trim();
     const isMainCharacter=contact.name==='{{char}}'||(cardName&&contact.name===cardName);
-    const cardDetails=isMainCharacter?['角色名：'+(character.name||''),'角色描述：'+(character.description||character.data&&character.data.description||''),'性格：'+(character.personality||character.data&&character.data.personality||''),'背景：'+(character.scenario||character.data&&character.data.scenario||'')].join('\n'):'联系人身份：'+String(contact.note||'当前剧情中的联系人');
+    const cardDetails=isMainCharacter?['角色名：'+(character.name||''),'角色描述：'+(character.description||character.data&&character.data.description||''),'性格：'+(character.personality||character.data&&character.data.personality||''),'背景：'+(character.scenario||character.data&&character.data.scenario||'')].join('\n'):'联系人身份：'+String(contact.note||'当前剧情中的联系人')+'\n人物剧情资料：'+String(((state.importedProfile&&state.importedProfile.characters)||[]).find(x=>x.name===contact.name)?.description||'')+'\n人物关系：'+String(((state.importedProfile&&state.importedProfile.characters)||[]).find(x=>x.name===contact.name)?.relation||'')+'\n已知开场信息：'+String(contact.openingMessage||'')+'\n当前剧情概述：'+String(state.importedProfile&&state.importedProfile.summary||'');
     const history=(state.chats[contactId]||[]).slice(-18).map(m=>(m.from==='me'?'我':String(m.user||contact.name))+'：'+String(m.text||'')).join('\n');
     const prompt=['你正在为 X-OS 手机中的微信联系人生成一条真实聊天回复。','你扮演的联系人是：'+contact.name,cardDetails,'当前关系：已经通过好友申请，双方是微信好友。','最近聊天记录：\n'+history,'用户刚刚发送：'+userText,'请严格以联系人本人身份回复，遵守角色卡与剧情事实。不要替用户说话，不要描述界面或生成说明，不要输出多个备选，不要使用“作为AI”。','回复应像真实微信消息，符合人物语气和关系，可以简短，也可以根据上下文自然展开。只输出消息正文。'].join('\n\n');
     try{
@@ -1449,7 +1449,7 @@
       }
       state.liveMessages=state.liveMessages.slice(-200);
       if(!state.importedLiveRooms.some(room=>room.id===state.activeLiveId)) state.activeLiveId='main';
-      state.importedProfile = {summary:String(profile.summary||'').slice(0,1000),userRole:String(profile.userRole||'').slice(0,500),charRole:String(profile.charRole||'').slice(0,500),characters:safeChars.map(x=>({name:x.name,relation:x.relation})),importedAt:nowTime(),importedContacts:importedContactIds.length,importedPosts:routedCounts,importedLiveRooms:state.importedLiveRooms.length,importedLiveMessages:importedLiveMessageCount};
+      state.importedProfile = {summary:String(profile.summary||'').slice(0,1000),userRole:String(profile.userRole||'').slice(0,500),charRole:String(profile.charRole||'').slice(0,500),characters:safeChars.map(x=>({name:x.name,relation:x.relation,description:x.description,openingMessage:x.openingMessage})),importedAt:nowTime(),importedContacts:importedContactIds.length,importedPosts:routedCounts,importedLiveRooms:state.importedLiveRooms.length,importedLiveMessages:importedLiveMessageCount};
       persistState(); addNotification('上下文导入','识别完成',`已识别 ${safeChars.length} 位剧情人物，${importedFriendRequestCount} 条好友申请。人物不会自动成为好友。`); renderScreen();
     } catch(error) {
       console.error(`[${EXT_ID}] story context import failed`,error);
