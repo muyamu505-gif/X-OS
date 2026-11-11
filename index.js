@@ -194,6 +194,7 @@
       if (typeof contact.name !== 'string') contact.name = '未命名联系人';
       if (typeof contact.avatar !== 'string') contact.avatar = contact.name.slice(0, 1);
       if (!Array.isArray(base.chats[contact.id])) base.chats[contact.id] = [];
+      if (contact.isGroup) { contact.members = Array.isArray(contact.members) ? contact.members.filter(id => typeof id === 'string' && base.contacts.some(member => member.id === id && !member.isGroup) && id !== contact.id) : []; contact.members = Array.from(new Set(contact.members)); }
     });
     base.stack = base.stack.filter(entry => entry && typeof entry.page === 'string' && pages.has(entry.page)).map(entry => ({
       page: entry.page,
@@ -486,7 +487,7 @@
     const tab = state.wechatTab || 'chats';
     const rows = state.contacts.map(c => {
       const msgs = state.chats[c.id] || []; const last = msgs[msgs.length - 1];
-      return '<button class="xp-contact" data-contact="' + escapeHtml(c.id) + '"><span class="xp-avatar xp-avatar-green">' + escapeHtml(c.avatar) + '</span><span class="xp-contact-main"><strong>' + (c.isGroup?'群聊 · ':'') + escapeHtml(c.name) + '</strong><small>' + escapeHtml(last?.text || c.note) + '</small></span><time>' + escapeHtml(last?.time || '') + '</time>' + (Number(c.unread)>0?'<em class="xp-chat-unread">'+Number(c.unread)+'</em>':'') + '</button>';
+      return '<button class="xp-contact" data-contact="' + escapeHtml(c.id) + '"><span class="xp-avatar xp-avatar-green">' + escapeHtml(c.avatar) + '</span><span class="xp-contact-main"><strong>' + (c.isGroup?'群聊 · ':'') + escapeHtml(c.name) + '</strong><small>' + escapeHtml(last ? (c.isGroup && last.from!=='me' ? String(last.user||'群成员')+'：' : '')+String(last.text||'') : c.note) + '</small></span><time>' + escapeHtml(last?.time || '') + '</time>' + (Number(c.unread)>0?'<em class="xp-chat-unread">'+Number(c.unread)+'</em>':'') + '</button>';
     }).join('');
     const pendingCount=(state.friendRequests||[]).filter(r=>r.status==='pending'&&r.direction==='incoming').length;
     const tabs = [['chats','微信','▤'],['contacts','通讯录','♙'],['discover','发现','◎'],['me','我','●']];
