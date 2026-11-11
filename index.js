@@ -185,7 +185,15 @@
     overlay.addEventListener('submit', handleSubmit);
     overlay.addEventListener('input', handleInput);
     overlay.addEventListener('keydown', event => {
-      if (event.key === 'Escape') closePhone();
+      if (event.key !== 'Escape') return;
+      const dialog = event.target.closest('.xphone-shell, .xp-inline-device')?.querySelector('.xp-action-dialog');
+      if (dialog) {
+        dialog.remove();
+        pendingDialog = null;
+        event.stopPropagation();
+      } else {
+        closePhone();
+      }
     });
     updateClock();
     setInterval(updateClock, 30000);
@@ -215,6 +223,16 @@
     h.addEventListener('pointermove',e=>{if(!d||d.id!==e.pointerId)return;const z=clamp(d.w+e.clientX-d.x,d.h+e.clientY-d.y);shell.style.width=z.width+'px';shell.style.height=z.height+'px';});
     const finish=e=>{if(!d||(e.pointerId!==undefined&&d.id!==e.pointerId))return;const r=shell.getBoundingClientRect();try{localStorage.setItem(key,JSON.stringify({width:Math.round(r.width),height:Math.round(r.height)}));}catch(_){}d=null;updateOverlayGeometry();};
     h.addEventListener('pointerup',finish);h.addEventListener('pointercancel',finish);
+    h.addEventListener('keydown',e=>{
+      if(!['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key))return;
+      e.preventDefault();
+      const r=shell.getBoundingClientRect(),step=e.shiftKey?48:16;
+      const dw=e.key==='ArrowRight'?step:e.key==='ArrowLeft'?-step:0;
+      const dh=e.key==='ArrowDown'?step:e.key==='ArrowUp'?-step:0;
+      const z=clamp(r.width+dw,r.height+dh);
+      shell.style.width=z.width+'px';shell.style.height=z.height+'px';
+      try{localStorage.setItem(key,JSON.stringify({width:Math.round(z.width),height:Math.round(z.height)}));}catch(_){}
+    });
   }
 
   function updateClock() {
