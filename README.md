@@ -32,7 +32,7 @@
 
 ## 版本
 
-当前版本：**1.1.50**
+当前版本：**1.1.51**
 
 扩展源文件：`index.js`、`style.css`、`manifest.json`。
 
@@ -273,3 +273,10 @@
 ### 1.1.50
 - Track livestream follows independently by room instead of sharing one global follow toggle.
 - Migrate the legacy single follow flag to its previously active room when loading older saves.
+
+
+### 1.1.51
+- Remove the white phone title strip and bottom navigation strip from both floating and inline phone views; retain the status area, app-level back actions, and resize/drag handles.
+- Hide visible vertical and horizontal scrollbars throughout the phone while preserving scrolling and touch gestures.
+- Restyle Notes, Calendar, and Wallet with iOS-inspired layouts; add month navigation and year/month-aware calendar events while keeping legacy date-only entries visible.
+- Redesign the in-simulator browser start page with a Safari-inspired address/search bar and favorites. External websites still open in the device browser and are rendered by that browser, not by X-OS.
