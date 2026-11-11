@@ -572,11 +572,19 @@
     const days = new Date(year, month + 1, 0).getDate();
     const firstDay = date.getDay();
     const monthEvents = (state.calendar || []).map((e,i)=>({...e,_index:i})).filter(e => (e.year == null || Number(e.year)===year) && (e.month == null || Number(e.month)===month+1));
+    const todayKey = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+    let selectedKey = /^\\d{4}-\\d{2}-\\d{2}$/.test(state.calendarSelected || '') ? state.calendarSelected : (year===now.getFullYear() && month===now.getMonth() ? todayKey : `${year}-${String(month+1).padStart(2,'0')}-01`);
+    if (!selectedKey.startsWith(`${year}-${String(month+1).padStart(2,'0')}-`)) selectedKey = `${year}-${String(month+1).padStart(2,'0')}-01`;
+    state.calendarSelected = selectedKey;
+    const selectedDay = Number(selectedKey.slice(-2));
     const cells = [...Array(firstDay).fill(''), ...Array.from({length:days},(_,i)=>String(i+1))];
     const week = ['日','一','二','三','四','五','六'];
-    const daysHtml = cells.map(d=>{const event=monthEvents.some(e=>Number(e.day)===Number(d));const today=Number(d)===now.getDate()&&year===now.getFullYear()&&month===now.getMonth();return `<span class="xp-cal-day ${event?'has-event':''} ${today?'today':''}">${d}${event?'<i></i>':''}</span>`;}).join('');
-    const events = monthEvents.sort((a,b)=>Number(a.day)-Number(b.day)).map(e=>`<div class="xp-calendar-event"><span><b>${escapeHtml(e.day)}日　${escapeHtml(e.title)}</b><small>${escapeHtml(e.desc||'')}</small></span><button type="button" data-delete-calendar="${e._index}" aria-label="删除日程">×</button></div>`).join('');
-    return `<section class="xp-page xp-calendar"><div class="xp-ios-calendar-head"><div><span class="xp-ios-eyebrow">CALENDAR</span><h2>日历</h2></div><button type="button" data-action="calendar-today">今天</button></div><div class="xp-calendar-month-nav"><button type="button" data-action="calendar-prev" aria-label="上个月">‹</button><strong>${year}年 ${month+1}月</strong><button type="button" data-action="calendar-next" aria-label="下个月">›</button></div><div class="xp-calendar-week">${week.map(d=>`<span>${d}</span>`).join('')}</div><div class="xp-calendar-grid">${daysHtml}</div><div class="xp-ios-agenda-head"><strong>日程安排</strong><small>${monthEvents.length} 项</small></div><div class="xp-calendar-events">${events || '<div class="xp-empty">这个月还没有日程</div>'}</div><form class="xp-calendar-add" data-form="calendar"><input type="hidden" name="year" value="${year}"><input type="hidden" name="month" value="${month+1}"><input name="day" type="number" min="1" max="${days}" placeholder="日期" required><input name="title" maxlength="32" placeholder="新建日程" required><input name="desc" maxlength="60" placeholder="备注（可选）"><button type="submit">＋ 添加日程</button></form></section>`;
+    const daysHtml = cells.map(day=>{if(!day)return '<span class="xp-cal-day is-empty" aria-hidden="true"></span>';const event=monthEvents.some(e=>Number(e.day)===Number(day));const today=Number(day)===now.getDate()&&year===now.getFullYear()&&month===now.getMonth();const selected=Number(day)===selectedDay;return `<button type="button" class="xp-cal-day ${event?'has-event':''} ${today?'today':''} ${selected?'selected':''}" data-calendar-day="${day}" aria-pressed="${selected}">${day}${event?'<i></i>':''}</button>`;}).join('');
+    const selectedEvents = monthEvents.filter(e=>Number(e.day)===selectedDay).sort((a,b)=>Number(a.day)-Number(b.day));
+    const events = selectedEvents.map(e=>`<div class="xp-calendar-event"><span><b>${escapeHtml(e.day)}日　${escapeHtml(e.title)}</b><small>${escapeHtml(e.desc||'')}</small></span><button type="button" data-delete-calendar="${e._index}" aria-label="删除日程">×</button></div>`).join('');
+    const selectedDate = new Date(year,month,selectedDay);
+    const selectedLabel = new Intl.DateTimeFormat('zh-CN',{month:'long',day:'numeric',weekday:'long'}).format(selectedDate);
+    return `<section class="xp-page xp-calendar"><div class="xp-ios-calendar-head"><div><span class="xp-ios-eyebrow">CALENDAR</span><h2>日历</h2></div><button type="button" data-action="calendar-today">今天</button></div><div class="xp-calendar-month-nav"><button type="button" data-action="calendar-prev" aria-label="上个月">‹</button><strong>${year}年 ${month+1}月</strong><button type="button" data-action="calendar-next" aria-label="下个月">›</button></div><div class="xp-calendar-week">${week.map(d=>`<span>${d}</span>`).join('')}</div><div class="xp-calendar-grid">${daysHtml}</div><div class="xp-ios-agenda-head"><strong>${escapeHtml(selectedLabel)}</strong><small>${selectedEvents.length} 项</small></div><div class="xp-calendar-events">${events || '<div class="xp-empty">这一天没有日程</div>'}</div><form class="xp-calendar-add" data-form="calendar"><input type="hidden" name="year" value="${year}"><input type="hidden" name="month" value="${month+1}"><input name="day" type="number" min="1" max="${days}" value="${selectedDay}" placeholder="日期" required><input name="title" maxlength="32" placeholder="新建日程" required><input name="desc" maxlength="60" placeholder="备注（可选）"><button type="submit">＋ 添加日程</button></form></section>`;
   }
 
   function renderNotes() {
@@ -695,6 +703,15 @@
     if (favoritePhoto) { const p = state.photos.find(x => x.id === favoritePhoto.dataset.favoritePhoto); if (p) p.favorite = !p.favorite; renderScreen(); persistState(); return; }
     const deletePhoto = event.target.closest('[data-delete-photo]');
     if (deletePhoto) { state.photos = state.photos.filter(p => p.id !== deletePhoto.dataset.deletePhoto); renderScreen(); persistState(); return; }
+    const calendarDay = event.target.closest('[data-calendar-day]');
+    if (calendarDay) {
+      const p = /^([0-9]{4})-([0-9]{2})$/.exec(state.calendarView || '');
+      const now = new Date();
+      const year = p ? Number(p[1]) : now.getFullYear();
+      const month = p ? Number(p[2]) : now.getMonth()+1;
+      state.calendarSelected = `${year}-${String(month).padStart(2,'0')}-${String(Number(calendarDay.dataset.calendarDay)).padStart(2,'0')}`;
+      renderScreen(); persistState(); return;
+    }
     const deleteCalendar = event.target.closest('[data-delete-calendar]');
     if (deleteCalendar) { const index = Number(deleteCalendar.dataset.deleteCalendar); if (Number.isInteger(index) && index >= 0 && index < state.calendar.length) state.calendar.splice(index, 1); renderScreen(); persistState(); return; }
     const browserShortcut = event.target.closest('[data-browser-shortcut]');
@@ -717,7 +734,7 @@
       case 'notifications': setPage('notifications'); break;
       case 'calendar-prev': { const p=/^(\d{4})-(\d{2})$/.exec(state.calendarView||''); const d=p?new Date(Number(p[1]),Number(p[2])-2,1):new Date(new Date().getFullYear(),new Date().getMonth()-1,1); state.calendarView=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; renderScreen(); persistState(); break; }
       case 'calendar-next': { const p=/^(\d{4})-(\d{2})$/.exec(state.calendarView||''); const d=p?new Date(Number(p[1]),Number(p[2]),1):new Date(new Date().getFullYear(),new Date().getMonth()+1,1); state.calendarView=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; renderScreen(); persistState(); break; }
-      case 'calendar-today': state.calendarView=''; renderScreen(); persistState(); break;
+      case 'calendar-today': { state.calendarView=''; const n=new Date(); state.calendarSelected=`${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`; renderScreen(); persistState(); break; }
       case 'wechat-list': setPage('wechat', 'wechat'); break;
       case 'wechat-moments': setPage('wechat-moments', 'wechat'); break;
       case 'wechat-moment-compose': openActionDialog('wechat-moment-compose','发表朋友圈','分享此刻的生活',inlineHost,'这一刻的想法……'); break;
