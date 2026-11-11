@@ -32,10 +32,15 @@
 
 ## 版本
 
-当前版本：**1.1.76**
+当前版本：**1.1.77**
 
 扩展源文件：`index.js`、`style.css`、`manifest.json`。
 
+
+### 1.1.77
+- Extract explicitly narrated incoming one-to-one WeChat messages from the active story context and import them only into existing accepted-friend conversations; no unsolicited NPC messages are invented and unaccepted characters never gain a chat.
+- Deduplicate imported incoming messages by stable source keys, persist them in chat history, and synchronize unread counts and notification-center entries.
+- When an incoming friend request is accepted, reuse an existing contact by name instead of creating a duplicate; if the story supplied an explicit opening message, deliver it once in the newly established conversation.
 
 ### 1.1.76
 - Add character-driven one-to-one WeChat replies using the active SillyTavern `generateRaw` interface; replies use recent conversation, the current character card, and imported NPC profile context.
