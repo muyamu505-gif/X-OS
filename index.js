@@ -727,7 +727,7 @@
   }
 
   function renderScreen() {
-    const titles = { home: '手机', notifications: '通知中心', wechat: '微信', 'wechat-moments': '朋友圈', chat: '微信', weibo: '微博', red: '小红书', xplatform: 'X平台', live: '直播间', wallet: '钱包', photos: '相册', browser: '浏览器', calendar: '日历', notes: '备忘录', settings: '设置' };
+    const titles = { home: '手机', notifications: '通知中心', wechat: '微信', 'wechat-moments': '朋友圈', 'wechat-favorites': '我的收藏', chat: '微信', weibo: '微博', red: '小红书', xplatform: 'X平台', live: '直播间', wallet: '钱包', photos: '相册', browser: '浏览器', calendar: '日历', notes: '备忘录', settings: '设置' };
     const renderers = { home: renderHome, notifications: renderNotifications, wechat: renderWechat, 'wechat-moments': renderWechatMoments, 'wechat-favorites': renderWechatFavorites, chat: renderChat, weibo: renderWeibo, red: renderRed, xplatform: renderXPlatform, live: renderLive, wallet: renderWallet, photos: renderPhotos, browser: renderBrowser, calendar: renderCalendar, notes: renderNotes, settings: renderSettings };
     const renderer = renderers[state.page] || renderHome;
     if (phoneScreen && overlay) {
@@ -1095,10 +1095,10 @@
       renderScreen(); persistState();
     }
     if (event.target.matches('[data-notes]')) {
-      state.notes = event.target.value; const note = (state.notesList || []).find(n => n.id === state.activeNoteId); if (note) { note.content = state.notes; note.updatedAt = nowTime(); if (!note.title || note.title === '新建备忘录') note.title = state.notes.split(/\n/)[0].slice(0,32) || '无标题'; }
+      state.notes = event.target.value; const note = (state.notesList || []).find(n => n.id === state.activeNoteId); if (note) { note.content = state.notes; note.updatedAt = nowTime(); if (!note.title || note.title === '新建备忘录') note.title = state.notes.split(/\n/)[0].slice(0,32) || '无标题'; const row = Array.from(event.target.closest('.xp-notes-page')?.querySelectorAll('[data-note-open]') || []).find(el => el.dataset.noteOpen === note.id); if (row) { const preview = row.querySelector('small'); if (preview) preview.textContent = state.notes.slice(0,48) || '没有其他内容'; const title = row.querySelector('strong'); if (title) title.textContent = note.title; } }
       const count = event.target.closest('.xp-notes-page')?.querySelector('[data-notes-count]'); if (count) count.textContent = String(state.notes.length); persistState();
     }
-    if (event.target.matches('[data-note-title]')) { const note = (state.notesList || []).find(n => n.id === state.activeNoteId); if (note) { note.title = event.target.value.slice(0,60); note.updatedAt = nowTime(); persistState(); } }
+    if (event.target.matches('[data-note-title]')) { const note = (state.notesList || []).find(n => n.id === state.activeNoteId); if (note) { note.title = event.target.value.slice(0,60); note.updatedAt = nowTime(); const row = Array.from(event.target.closest('.xp-notes-page')?.querySelectorAll('[data-note-open]') || []).find(el => el.dataset.noteOpen === note.id); const title = row?.querySelector('strong'); if (title) title.textContent = note.title || '无标题'; persistState(); } }
     if (event.target.matches('[data-weibo-search]')) {
       const query = event.target.value.trim().toLocaleLowerCase();
       event.target.closest('.xp-weibo')?.querySelectorAll('.xp-social-post').forEach(post => {
