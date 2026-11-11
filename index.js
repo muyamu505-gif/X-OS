@@ -111,12 +111,14 @@
     const contextAtChange = currentContext();
     const metadataAtChange = contextAtChange?.chatMetadata;
     const chatIdAtChange = contextAtChange?.chatId;
+    // Update the active chat's metadata immediately. If the user switches chats
+    // during the debounce window, the latest state is still attached to the old chat object.
+    if (metadataAtChange) metadataAtChange[META_KEY] = snapshot;
     clearTimeout(saveTimer);
     saveTimer = setTimeout(async () => {
       const activeContext = currentContext();
       // Never let a delayed save from the previous chat overwrite the newly opened chat.
       if (!contextAtChange?.chatMetadata || activeContext?.chatMetadata !== metadataAtChange || activeContext?.chatId !== chatIdAtChange) return;
-      metadataAtChange[META_KEY] = snapshot;
       try { await activeContext.saveMetadata?.(); } catch (error) { console.warn(`[${EXT_ID}] chat metadata save failed`, error); }
     }, 350);
   }
