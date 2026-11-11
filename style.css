@@ -153,3 +153,8 @@ html #xphone-overlay #xphone-screen{background:#f6f8fa!important}
 .xp-chat-row{position:relative;padding-right:22px!important}
 .xp-chat-delete{position:absolute;right:0;top:50%;transform:translateY(-50%);width:20px;height:24px;border:0;border-radius:7px;background:transparent;color:#a3abb3;font-size:17px;opacity:.65}
 .xp-chat-delete:active{background:#edf0f2;color:#c45e63}
+
+
+/* X-OS 1.1.22 WeChat conversation clearing */
+.xp-chat-clear{margin-left:auto!important;flex:0 0 auto!important;width:auto!important;height:29px!important;padding:0 9px!important;border:1px solid #e9edf0!important;border-radius:9px!important;background:#fff!important;color:#89939c!important;font-size:10px!important}
+.xp-dialog-confirm-note{padding:12px;border-radius:10px;background:#f7f8fa;color:#697580;font-size:11px;line-height:1.6}
