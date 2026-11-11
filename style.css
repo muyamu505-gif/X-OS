@@ -139,6 +139,7 @@ html #xphone-overlay #xphone-screen{background:#f6f8fa!important}
 .xp-notice-delete{flex:0 0 30px;border:0;border-radius:10px;background:#f2f4f6;color:#8b959e;font-size:18px}
 .xp-notice-tools{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px}
 .xp-notice-tools button{border:0;background:transparent;color:#71808c;font-size:11px;padding:8px 4px}
+.xp-wallet-month{margin:12px 0;padding:13px 14px;border-radius:14px;background:rgba(255,255,255,.72);border:1px solid rgba(130,145,160,.14)}.xp-wallet-month>strong{display:block;font-size:12px;margin-bottom:9px}.xp-wallet-month>small{font-size:11px;color:#8b929c}.xp-wallet-category{display:flex;justify-content:space-between;gap:10px;padding:6px 0;font-size:11px;color:#737b86}.xp-wallet-category b{color:#3d4652;font-weight:600}.xp-wallet-actions{display:flex;gap:9px;margin:12px 0}.xp-wallet-actions button{flex:1;min-height:38px;border:1px solid rgba(130,145,160,.2);border-radius:11px;background:rgba(255,255,255,.82);color:#586777;font-size:12px}.xp-wallet-actions button:first-child{background:#e9f0f7;color:#416b94;font-weight:700}
 .xp-wallet-records{display:flex;flex-direction:column;gap:7px}
 .xp-wallet-record{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border:1px solid #edf0f2;border-radius:12px;background:#fff}
 .xp-wallet-record>span{display:flex;flex-direction:column;gap:4px;min-width:0}
