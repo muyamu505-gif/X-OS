@@ -40,3 +40,8 @@
 ### 1.1.2
 - Fixed phone window viewport positioning and edge clipping on mobile.
 - Reduced the default floating phone size and added a draggable bottom-right resize handle with saved dimensions.
+
+
+### 1.1.3
+- Hardened the phone modal overlay and shell against host-theme/mobile CSS overrides.
+- Reduced the default phone size and enforced viewport-safe bounds.
