@@ -180,7 +180,7 @@
     phoneScreen.style.cssText = 'flex:1 1 auto;min-height:0;overflow:auto;overscroll-behavior:contain;';
     attachPhoneResize(overlay.querySelector('.xphone-shell'));
     window.addEventListener('resize', updateOverlayGeometry);
-    window.visualViewport?.addEventListener('resize', updateOverlayGeometry);
+    window.window.window.visualViewport?.addEventListener('resize', updateOverlayGeometry);
     overlay.addEventListener('click', handleClick);
     overlay.addEventListener('submit', handleSubmit);
     overlay.addEventListener('input', handleInput);
@@ -194,7 +194,7 @@
   function updateOverlayGeometry() {
     if (!overlay) return;
     const width = Math.max(280, document.documentElement.clientWidth || window.innerWidth || 360);
-    const height = Math.max(480, window.visualViewport?.height || window.innerHeight || 640);
+    const height = Math.max(480, window.window.window.visualViewport?.height || window.innerHeight || 640);
     overlay.style.setProperty('width', width + 'px', 'important');
     overlay.style.setProperty('height', height + 'px', 'important');
     overlay.style.setProperty('top', '0px', 'important');
@@ -202,13 +202,13 @@
     const shell = overlay.querySelector('.xphone-shell'); if (!shell) return;
     const maxW = Math.max(260, width - 24), maxH = Math.max(440, height - 24);
     const w = Math.min(parseFloat(shell.style.width) || 320, maxW), h = Math.min(parseFloat(shell.style.height) || 620, maxH);
-    shell.style.setProperty('width', w + 'px', 'important'); shell.style.setProperty('height', h + 'px', 'important');
+    shell.style.width = w + 'px'; shell.style.height = h + 'px';
     shell.style.setProperty('max-width', maxW + 'px', 'important'); shell.style.setProperty('max-height', maxH + 'px', 'important');
   }
 
   function attachPhoneResize(shell) {
     const key = `${EXT_ID}:windowSize`, minW = 260, minH = 440;
-    const clamp = (w,h) => ({width:Math.min(Math.max(minW,(document.documentElement.clientWidth||innerWidth)-24),Math.max(minW,w)),height:Math.min(Math.max(minH,(visualViewport?.height||innerHeight)-24),Math.max(minH,h))});
+    const clamp = (w,h) => ({width:Math.min(Math.max(minW,(document.documentElement.clientWidth||innerWidth)-24),Math.max(minW,w)),height:Math.min(Math.max(minH,(window.window.visualViewport?.height||innerHeight)-24),Math.max(minH,h))});
     try { const saved=JSON.parse(localStorage.getItem(key)||'null'); if(saved&&Number.isFinite(saved.width)&&Number.isFinite(saved.height)){const z=clamp(saved.width,saved.height);shell.style.width=z.width+'px';shell.style.height=z.height+'px';} } catch(_) {}
     const h=shell.querySelector('.xphone-resize-handle'); if(!h)return; let d=null;
     h.addEventListener('pointerdown',e=>{const r=shell.getBoundingClientRect();d={id:e.pointerId,x:e.clientX,y:e.clientY,w:r.width,h:r.height};try{h.setPointerCapture(e.pointerId);}catch(_){}e.preventDefault();});
@@ -517,13 +517,13 @@
       const key=`${EXT_ID}:floatingPosition`,clamp=(v,l,h)=>Math.max(l,Math.min(h,v)),size=54,margin=12;
       let saved=null;try{saved=JSON.parse(localStorage.getItem(key)||'null');}catch(_){}
       let edge=saved?.edge==='left'?'left':'right',yr=Number.isFinite(saved?.y)?saved.y:0.76,x=0,y=0,d=null,moved=false;
-      const place=()=>{const vw=visualViewport?.width||document.documentElement.clientWidth||innerWidth,vh=visualViewport?.height||document.documentElement.clientHeight||innerHeight,ox=visualViewport?.offsetLeft||0,oy=visualViewport?.offsetTop||0;x=edge==='left'?ox+margin:ox+vw-size-margin;y=oy+margin+clamp(yr,0,1)*Math.max(0,vh-size-2*margin);floating.style.setProperty('left',x+'px','important');floating.style.setProperty('top',y+'px','important');};
-      const save=()=>{const vh=visualViewport?.height||innerHeight,oy=visualViewport?.offsetTop||0;yr=clamp((y-oy-margin)/Math.max(1,vh-size-2*margin),0,1);try{localStorage.setItem(key,JSON.stringify({edge,y:yr}));}catch(_){}};
+      const place=()=>{const vw=window.window.visualViewport?.width||document.documentElement.clientWidth||innerWidth,vh=window.window.visualViewport?.height||document.documentElement.clientHeight||innerHeight,ox=window.window.visualViewport?.offsetLeft||0,oy=window.window.visualViewport?.offsetTop||0;x=edge==='left'?ox+margin:ox+vw-size-margin;y=oy+margin+clamp(yr,0,1)*Math.max(0,vh-size-2*margin);floating.style.setProperty('left',x+'px','important');floating.style.setProperty('top',y+'px','important');};
+      const save=()=>{const vh=window.window.visualViewport?.height||innerHeight,oy=window.window.visualViewport?.offsetTop||0;yr=clamp((y-oy-margin)/Math.max(1,vh-size-2*margin),0,1);try{localStorage.setItem(key,JSON.stringify({edge,y:yr}));}catch(_){}};
       floating.addEventListener('pointerdown',e=>{d={id:e.pointerId,sx:e.clientX,sy:e.clientY,x,y,moved:false};try{floating.setPointerCapture(e.pointerId);}catch(_){}});
-      floating.addEventListener('pointermove',e=>{if(!d||d.id!==e.pointerId)return;const dx=e.clientX-d.sx,dy=e.clientY-d.sy;if(Math.hypot(dx,dy)<5&&!d.moved)return;d.moved=true;moved=true;const vw=visualViewport?.width||innerWidth,vh=visualViewport?.height||innerHeight,ox=visualViewport?.offsetLeft||0,oy=visualViewport?.offsetTop||0;x=clamp(d.x+dx,ox+margin,ox+vw-size-margin);y=clamp(d.y+dy,oy+margin,oy+vh-size-margin);floating.style.setProperty('left',x+'px','important');floating.style.setProperty('top',y+'px','important');e.preventDefault();});
-      const finish=e=>{if(!d||(e.pointerId!==undefined&&d.id!==e.pointerId))return;if(d.moved){const vw=visualViewport?.width||innerWidth,ox=visualViewport?.offsetLeft||0;edge=Math.abs(x-ox-margin)<Math.abs(x-(ox+vw-size-margin))?'left':'right';place();save();}d=null;if(moved)setTimeout(()=>{moved=false;},250);};
+      floating.addEventListener('pointermove',e=>{if(!d||d.id!==e.pointerId)return;const dx=e.clientX-d.sx,dy=e.clientY-d.sy;if(Math.hypot(dx,dy)<5&&!d.moved)return;d.moved=true;moved=true;const vw=window.window.visualViewport?.width||innerWidth,vh=window.window.visualViewport?.height||innerHeight,ox=window.window.visualViewport?.offsetLeft||0,oy=window.window.visualViewport?.offsetTop||0;x=clamp(d.x+dx,ox+margin,ox+vw-size-margin);y=clamp(d.y+dy,oy+margin,oy+vh-size-margin);floating.style.setProperty('left',x+'px','important');floating.style.setProperty('top',y+'px','important');e.preventDefault();});
+      const finish=e=>{if(!d||(e.pointerId!==undefined&&d.id!==e.pointerId))return;if(d.moved){const vw=window.window.visualViewport?.width||innerWidth,ox=window.window.visualViewport?.offsetLeft||0;edge=Math.abs(x-ox-margin)<Math.abs(x-(ox+vw-size-margin))?'left':'right';place();save();}d=null;if(moved)setTimeout(()=>{moved=false;},250);};
       floating.addEventListener('pointerup',finish);floating.addEventListener('pointercancel',finish);floating.addEventListener('click',e=>{if(moved){e.preventDefault();return;}openPhone();});
-      window.addEventListener('resize',place);visualViewport?.addEventListener('resize',place);visualViewport?.addEventListener('scroll',place);place();
+      window.addEventListener('resize',place);window.window.visualViewport?.addEventListener('resize',place);window.window.visualViewport?.addEventListener('scroll',place);place();
     }
     const topbar=document.querySelector('#top-bar, #top-settings-holder');
     if(topbar&&!document.getElementById('xphone-topbar-entry')){const btn=document.createElement('div');btn.id='xphone-topbar-entry';btn.className='xphone-topbar-entry menu_button';btn.title='打开手机模拟器';btn.innerHTML='<i class="fa-solid fa-mobile-screen-button"></i><span>手机</span>';btn.addEventListener('click',()=>openPhone());topbar.appendChild(btn);}
