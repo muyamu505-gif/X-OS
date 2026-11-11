@@ -268,3 +268,8 @@
 
 ### 1.1.50
 - Guard the WeChat conversation renderer when the selected contact no longer exists or the address book is empty. Show a recoverable empty state instead of throwing and breaking the phone screen.
+
+
+### 1.1.50
+- Track livestream follows independently by room instead of sharing one global follow toggle.
+- Migrate the legacy single follow flag to its previously active room when loading older saves.
