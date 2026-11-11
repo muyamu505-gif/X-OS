@@ -312,7 +312,7 @@
       const last = msgs[msgs.length - 1];
       return `<button class="xp-contact" data-contact="${escapeHtml(c.id)}"><span class="xp-avatar xp-avatar-green">${escapeHtml(c.avatar)}</span><span class="xp-contact-main"><strong>${escapeHtml(c.name)}</strong><small>${escapeHtml(last?.text || c.note)}</small></span><time>${escapeHtml(last?.time || '')}</time></button>`;
     }).join('');
-    return `<section class="xp-page xp-wechat"><div class="xp-appbar"><div><div class="xp-app-title">微信</div><small>消息</small></div><button class="xp-circle-btn" data-action="wechat-add">＋</button></div><div class="xp-search"><span>⌕</span><input type="search" data-contact-search placeholder="搜索联系人和聊天记录"></div>${rows}<div class="xp-bottom-tabs"><span class="active">微信</span><span>通讯录</span><span>发现</span><span>我</span></div></section>`;
+    return `<section class="xp-page xp-wechat"><div class="xp-appbar"><div><div class="xp-app-title">微信</div><small>消息</small></div><button class="xp-circle-btn" data-action="wechat-add">＋</button></div><div class="xp-search"><span>⌕</span><input type="search" data-contact-search placeholder="搜索联系人和聊天记录"></div>${rows}<div class="xp-empty" data-contact-empty hidden>没有找到联系人或聊天记录</div><div class="xp-bottom-tabs"><span class="active">微信</span><span>通讯录</span><span>发现</span><span>我</span></div></section>`;
   }
 
   function renderChat() {
@@ -559,9 +559,16 @@
     if (event.target.matches('[data-contact-search]')) {
       const query = event.target.value.trim().toLocaleLowerCase();
       const page = event.target.closest('.xp-wechat');
+      let visible = 0;
       page?.querySelectorAll('.xp-contact').forEach(row => {
-        row.hidden = !row.textContent.toLocaleLowerCase().includes(query);
+        const contact = state.contacts.find(item => String(item.id) === row.dataset.contact);
+        const history = contact ? (state.chats[contact.id] || []).map(message => message.text || '').join(' ') : '';
+        const searchable = [row.textContent, contact?.name, contact?.note, history].join(' ').toLocaleLowerCase();
+        row.hidden = !searchable.includes(query);
+        if (!row.hidden) visible++;
       });
+      const empty = page?.querySelector('[data-contact-empty]');
+      if (empty) empty.hidden = visible !== 0;
     }
   }
 
