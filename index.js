@@ -568,13 +568,13 @@
       const searchOk=!query||[item.title,item.category,item.time,item.date,item.month].join(' ').toLocaleLowerCase().includes(query);
       return typeOk&&categoryOk&&searchOk&&(itemMonth===month||!itemMonth);
     });
-    const quote = value => {
+    const quote = (value, protectFormula = true) => {
       let text=String(value??'');
-      if (['=','+','-','@','\t','\r'].includes(text[0])) text="'"+text;
+      if (protectFormula && ['=','+','-','@','\t','\r'].includes(text[0])) text="'"+text;
       return '"'+text.replace(/"/g,'""')+'"';
     };
     const rows=[['日期','时间','项目','类型','分类','金额（钻）'],...matches.map(item=>[item.date||'未记录',item.time||'未记录',item.title||'未命名记录',Number(item.amount)>0?'收入':'支出',item.category||'其他',Number(item.amount)||0])];
-    const csv='\uFEFF'+rows.map(row=>row.map(quote).join(',')).join('\r\n');
+    const csv='\uFEFF'+rows.map(row=>row.map((value,index)=>quote(value,index!==5)).join(',')).join('\r\n');
     try {
       const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
       const url=URL.createObjectURL(blob);
