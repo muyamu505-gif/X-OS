@@ -937,6 +937,7 @@
         '只把当前角色卡、明确提供的世界书内容、聊天记录中有证据的人物与事实写入结果。不要编造未出现的 NPC，不要把示例人物当成固定角色。',
         '角色引用必须使用 {{user}} 表示用户，使用 {{char}} 表示当前主角；其他 NPC 必须使用剧情中真实出现的名字。不要替 {{user}} 或 {{char}} 编造姓名、性别、身份或关系。',
         '仅输出 JSON。若没有明确 NPC，characters 为空数组；若无动态内容，socialPosts 为空数组。不得把模型猜测当事实。',
+        '动态请按内容形态分配平台：朋友圈内容用 moments，微博式短评/热议用 weibo，生活经验/种草笔记用 red，小型公开动态/平台短帖用 x；platform 字段只能填 moments、weibo、red、x。没有明确动态时不要为了填充而创作。',
         '角色卡信息：', JSON.stringify(cardInfo), '角色卡内置世界书（若有）：', JSON.stringify(bookSummary),
         '近期聊天记录：', JSON.stringify(transcript),
         '仅使用上面明确提供的角色卡、选中的世界书和聊天消息；不要假定其他提示词或未激活条目。'
@@ -979,18 +980,29 @@
           if (importedOpening) history[history.indexOf(importedOpening)] = nextMessage; else history.push(nextMessage);
         }
       }
-      // Preserve all user-authored platform content during refresh.
+      // Route context-derived posts to the platform indicated by the extractor.
+      // Existing user-authored posts are never cleared or overwritten.
       const incomingPosts = (Array.isArray(profile.socialPosts)?profile.socialPosts:[]).slice(0,40);
+      const routedCounts = {moments:0,weibo:0,red:0,x:0};
       for (const post of incomingPosts) {
         const author = String(post.author||'').trim().slice(0,48), body = String(post.text||'').trim().slice(0,800);
         if (!author || !body) continue;
-        const key = makeImportKey('post',String(post.platform||'X').toLowerCase()+':'+author+':'+body);
-        if (state.xPosts.some(existing=>existing?.source==='xos-context'&&existing.sourceKey===key) || state.xPosts.some(existing=>String(existing?.user||'').trim()===author&&String(existing?.text||'').trim()===body)) continue;
-        state.xPosts.push({id:'ctxpost_'+key,user:author,avatar:author.slice(0,1),text:body,tag:String(post.platform||'').slice(0,24),likes:0,comments:[],liked:false,room:'main',time:'剧情导入',source:'xos-context',sourceKey:key});
+        const platformRaw = String(post.platform||'x').toLowerCase();
+        const platform = ({moment:'moments',moments:'moments',朋友圈:'moments',wechat:'moments',weibo:'weibo',微博:'weibo',red:'red',xiaohongshu:'red',小红书:'red',x:'x',twitter:'x'})[platformRaw] || 'x';
+        const key = makeImportKey('post',platform+':'+author+':'+body);
+        const target = platform==='moments'?state.moments:platform==='weibo'?state.weiboPosts:platform==='red'?state.redPosts:state.xPosts;
+        if (target.some(existing=>existing?.source==='xos-context'&&existing.sourceKey===key) || target.some(existing=>String(existing?.user||'').trim()===author&&String(existing?.text||existing?.desc||'').trim()===body)) continue;
+        const id = 'ctxpost_'+key, common = {id,user:author,avatar:author.slice(0,1),time:'剧情导入',source:'xos-context',sourceKey:key};
+        if (platform==='moments') state.moments.push({...common,text:body,likes:0,comments:[],liked:false});
+        else if (platform==='weibo') state.weiboPosts.push({...common,text:body,tag:'#日常#',likes:0,commentList:[],comments:0,reposts:0,liked:false});
+        else if (platform==='red') state.redPosts.push({...common,title:String(post.title||body.slice(0,32)).slice(0,64),desc:body,likes:0,comments:[],liked:false,favorite:false,nearby:false,color:'peach'});
+        else state.xPosts.push({...common,text:body,tag:'',likes:0,comments:[],liked:false,room:'main'});
+        routedCounts[platform]++;
       }
+      state.moments = state.moments.slice(-200); state.weiboPosts = state.weiboPosts.slice(-200); state.redPosts = state.redPosts.slice(-200);
       state.xPosts = state.xPosts.slice(-200);
       if (!state.selectedContact || !state.contacts.some(c=>c.id===state.selectedContact)) state.selectedContact = importedContactIds[0] || state.contacts[0]?.id || null;
-      state.importedProfile = {summary:String(profile.summary||'').slice(0,1000),userRole:String(profile.userRole||'').slice(0,500),charRole:String(profile.charRole||'').slice(0,500),characters:safeChars.map(x=>({name:x.name,relation:x.relation})),importedAt:nowTime(),importedContacts:importedContactIds.length,importedPosts:incomingPosts.length};
+      state.importedProfile = {summary:String(profile.summary||'').slice(0,1000),userRole:String(profile.userRole||'').slice(0,500),charRole:String(profile.charRole||'').slice(0,500),characters:safeChars.map(x=>({name:x.name,relation:x.relation})),importedAt:nowTime(),importedContacts:importedContactIds.length,importedPosts:routedCounts};
       persistState(); addNotification('上下文导入','识别完成',`已导入 ${safeChars.length} 位剧情人物。资料仅保存于当前聊天。`); renderScreen();
     } catch(error) {
       console.error(`[${EXT_ID}] story context import failed`,error);
