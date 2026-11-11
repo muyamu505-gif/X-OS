@@ -32,10 +32,15 @@
 
 ## 版本
 
-当前版本：**1.1.62**
+当前版本：**1.1.63**
 
 扩展源文件：`index.js`、`style.css`、`manifest.json`。
 
+
+### 1.1.63
+- Add wallet month navigation with previous/next month and a shortcut back to the current month.
+- Add All/Income/Expense filters for transaction details; monthly totals and expense categories follow the selected month.
+- Keep legacy transactions without date metadata visible in a separate section without assigning them to an inaccurate month.
 
 ### 1.1.59
 - Keep the external close button aligned with the phone when the window is repositioned using keyboard arrow keys.
