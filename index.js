@@ -62,6 +62,7 @@
   let contextReady = false;
   let boundEventSource = null;
   let pendingDialog = null;
+  let pendingWalletRestore = null;
   let notificationSequence = 0;
 
   function structuredCloneSafe(value) {
@@ -305,6 +306,7 @@
     overlay.addEventListener('click', handleClick);
     overlay.addEventListener('submit', handleSubmit);
     overlay.addEventListener('input', handleInput);
+    overlay.addEventListener('change', handleChange);
     overlay.addEventListener('focusin', event => {
       if (!event.target.matches('input, textarea, select, [contenteditable="true"]')) return;
       if (!keyboardFocused) keyboardViewportHeight = Math.max(window.innerHeight || 0, window.visualViewport?.height || 0);
@@ -590,6 +592,31 @@
     persistState();
   }
 
+  function exportWalletBackup() {
+    const payload={format:'xos-wallet-backup',version:1,exportedAt:new Date().toISOString(),wallet:Number(state.wallet)||0,transactions:(state.walletTransactions||[]).map(t=>({id:String(t.id||''),title:String(t.title||''),amount:Number(t.amount)||0,balanceDelta:Number.isFinite(Number(t.balanceDelta))?Number(t.balanceDelta):(Number(t.amount)||0),category:String(t.category||'其他'),time:String(t.time||''),date:String(t.date||''),month:String(t.month||''))};
+    try{const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='X-OS-钱包备份-'+new Date().toISOString().slice(0,10)+'.json';a.style.display='none';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);addNotification('记账','备份已导出','已导出余额和 '+payload.transactions.length+' 笔账单。');}
+    catch(error){addNotification('记账','备份失败',String(error?.message||error).slice(0,100));}persistState();
+  }
+  function handleChange(event){
+    const input=event.target.closest('[data-wallet-restore-file]');if(!input)return;
+    const file=input.files?.[0];input.value='';if(!file)return;
+    if(file.size>2*1024*1024){addNotification('记账','恢复失败','备份文件不能超过 2 MB。');renderScreen();return;}
+    const reader=new FileReader();
+    reader.onload=()=>{try{
+      const data=JSON.parse(String(reader.result||''));
+      if(data?.format!=='xos-wallet-backup'||data?.version!==1||!Number.isSafeInteger(data.wallet)||data.wallet<0||data.wallet>999999999999||!Array.isArray(data.transactions)||data.transactions.length>2000)throw new Error('备份格式不正确或账单数量超出限制。');
+      const transactions=data.transactions.map((t,i)=>{const amount=Number(t?.amount);if(!Number.isSafeInteger(amount)||Math.abs(amount)>999999999)throw new Error('第 '+(i+1)+' 笔账单金额无效。');return{id:String(t.id||('restore-'+Date.now()+'-'+i)).slice(0,100),title:String(t.title||'未命名记录').slice(0,80),amount,balanceDelta:Number.isSafeInteger(Number(t.balanceDelta))?Number(t.balanceDelta):amount,category:String(t.category||'其他').slice(0,30),time:String(t.time||'').slice(0,40),date:/^\d{4}-\d{2}-\d{2}$/.test(String(t.date||''))?String(t.date):'',month:/^\d{4}-\d{2}$/.test(String(t.month||''))?String(t.month):''};});
+      pendingWalletRestore={wallet:data.wallet,transactions};openActionDialog('wallet-restore','恢复钱包备份','将用备份中的余额和 '+transactions.length+' 笔账单替换当前钱包数据。此操作不可撤销。',null);
+    }catch(error){pendingWalletRestore=null;addNotification('记账','恢复失败',String(error?.message||error).slice(0,120));renderScreen();persistState();}};
+    reader.onerror=()=>addNotification('记账','读取失败','无法读取所选备份文件。');reader.readAsText(file,'utf-8');
+  }
+  function renderWalletTrend(monthKey,transactions){
+    const [year,month]=monthKey.split('-').map(Number),points=[];
+    for(let offset=5;offset>=0;offset--){const d=new Date(year,month-1-offset,1),key=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'),rows=transactions.filter(t=>(/^\d{4}-\d{2}$/.test(String(t.month||''))?t.month:(/^\d{4}-\d{2}-\d{2}/.test(String(t.date||''))?t.date.slice(0,7):''))===key);points.push({label:(d.getMonth()+1)+'月',income:rows.filter(t=>Number(t.amount)>0).reduce((n,t)=>n+Number(t.amount),0),expense:rows.filter(t=>Number(t.amount)<0).reduce((n,t)=>n+Math.abs(Number(t.amount)),0)});}
+    const max=Math.max(1,...points.flatMap(p=>[p.income,p.expense]));
+    return '<div class="xp-wallet-trend"><div class="xp-wallet-trend-head"><strong>近六个月收支趋势</strong><small>收入 / 支出 · 钻石</small></div><div class="xp-wallet-trend-bars">'+points.map(p=>'<div class="xp-wallet-trend-month"><div class="xp-wallet-trend-pair"><span class="income" style="height:'+Math.max(2,Math.round(p.income/max*76))+'px" title="收入 '+p.income+'"></span><span class="expense" style="height:'+Math.max(2,Math.round(p.expense/max*76))+'px" title="支出 '+p.expense+'"></span></div><small>'+p.label+'</small></div>').join('')+'</div><div class="xp-wallet-trend-legend"><span><i class="income"></i>收入</span><span><i class="expense"></i>支出</span></div></div>';
+  }
+
   function renderWallet() {
     const now = new Date();
     const validMonth = /^\d{4}-\d{2}$/.test(state.walletViewMonth || '');
@@ -630,7 +657,7 @@
     const legacy = filteredLegacy.length ? '<div class="xp-wallet-legacy"><strong>未标记日期的旧账单</strong><small>这些记录缺少日期，暂不计入月份统计</small>'+filteredLegacy.slice(0,20).map(renderRecord).join('')+'</div>' : '';
     const categorySelect = '<select data-wallet-category-filter aria-label="按分类筛选"><option value="all">全部分类</option>'+categoryOptions.map(x=>'<option value="'+escapeHtml(x)+'" '+(categoryFilter===x?'selected':'')+'>'+escapeHtml(x)+'</option>').join('')+'</select>';
     const filterButtons = [['all','全部'],['income','收入'],['expense','支出']].map(([key,label])=>'<button type="button" data-wallet-filter="'+key+'" class="'+(filter===key?'active':'')+'" aria-pressed="'+(filter===key)+'">'+label+'</button>').join('');
-    return '<section class="xp-page xp-wallet"><div class="xp-ios-ledger-head"><div><span class="xp-ios-eyebrow">WALLET & LEDGER</span><h2>记账</h2></div><button type="button" data-action="wallet-record">全部账单</button></div><div class="xp-wallet-card"><small>当前余额</small><strong>'+Number(state.wallet).toLocaleString('zh-CN')+' <em>钻石</em></strong><span>本地模拟账户 · 不涉及真实支付</span></div><div class="xp-wallet-month-nav"><button type="button" data-action="wallet-prev" aria-label="上个月">‹</button><strong>'+monthLabel+'</strong><button type="button" data-action="wallet-next" aria-label="下个月">›</button><button type="button" data-action="wallet-today">本月</button></div><div class="xp-ledger-summary"><div><small>'+viewYear+'年'+viewMonth+'月收入</small><b>+'+income.toLocaleString('zh-CN')+'</b></div><div><small>'+viewYear+'年'+viewMonth+'月支出</small><b>−'+expense.toLocaleString('zh-CN')+'</b></div></div><div class="xp-wallet-month"><strong>'+monthLabel+'支出分类</strong>'+(categories || '<small>本月暂无支出记录</small>')+'</div><div class="xp-wallet-actions"><button type="button" data-action="wallet-add">＋ 记一笔</button><button type="button" data-action="wallet-recharge">模拟充值说明</button></div><div class="xp-ios-agenda-head"><strong>账单明细</strong><small class="xp-wallet-visible-count">'+filtered.length+' 笔</small></div><div class="xp-wallet-filter">'+filterButtons+'</div><div class="xp-wallet-search"><input type="search" data-wallet-search placeholder="搜索项目名称、分类或日期" value="'+escapeHtml(state.walletSearchQuery||'')+'">'+categorySelect+'</div><div class="xp-wallet-export"><button type="button" data-action="wallet-export">导出当前筛选账单 CSV</button><small>导出当前月份、类型、分类和关键词匹配的记录</small></div><div class="xp-wallet-records">'+(records || '<div class="xp-empty">这个月份暂无符合条件的账单</div>')+'</div>'+legacy+'<p class="xp-muted">礼物、手动记账等操作会记录在这里。</p></section>';
+    return '<section class="xp-page xp-wallet"><div class="xp-ios-ledger-head"><div><span class="xp-ios-eyebrow">WALLET & LEDGER</span><h2>记账</h2></div><button type="button" data-action="wallet-record">全部账单</button></div><div class="xp-wallet-card"><small>当前余额</small><strong>'+Number(state.wallet).toLocaleString('zh-CN')+' <em>钻石</em></strong><span>本地模拟账户 · 不涉及真实支付</span></div><div class="xp-wallet-month-nav"><button type="button" data-action="wallet-prev" aria-label="上个月">‹</button><strong>'+monthLabel+'</strong><button type="button" data-action="wallet-next" aria-label="下个月">›</button><button type="button" data-action="wallet-today">本月</button></div><div class="xp-ledger-summary"><div><small>'+viewYear+'年'+viewMonth+'月收入</small><b>+'+income.toLocaleString('zh-CN')+'</b></div><div><small>'+viewYear+'年'+viewMonth+'月支出</small><b>−'+expense.toLocaleString('zh-CN')+'</b></div></div><div class="xp-wallet-month"><strong>'+monthLabel+'支出分类</strong>'+(categories || '<small>本月暂无支出记录</small>')+'</div>'+renderWalletTrend(monthKey,transactions)+'<div class="xp-wallet-actions"><button type="button" data-action="wallet-add">＋ 记一笔</button><button type="button" data-action="wallet-recharge">模拟充值说明</button></div><div class="xp-ios-agenda-head"><strong>账单明细</strong><small class="xp-wallet-visible-count">'+filtered.length+' 笔</small></div><div class="xp-wallet-filter">'+filterButtons+'</div><div class="xp-wallet-search"><input type="search" data-wallet-search placeholder="搜索项目名称、分类或日期" value="'+escapeHtml(state.walletSearchQuery||'')+'">'+categorySelect+'</div><div class="xp-wallet-export"><button type="button" data-action="wallet-export">导出当前筛选账单 CSV</button><small>导出当前月份、类型、分类和关键词匹配的记录</small></div><div class="xp-wallet-backup"><button type="button" data-action="wallet-backup">导出完整钱包备份</button><button type="button" data-action="wallet-restore-pick">从备份恢复</button><input type="file" accept="application/json,.json" data-wallet-restore-file hidden><small>备份包含余额与全部账单；恢复会覆盖当前钱包数据</small></div><div class="xp-wallet-records">'+(records || '<div class="xp-empty">这个月份暂无符合条件的账单</div>')+'</div>'+legacy+'<p class="xp-muted">礼物、手动记账等操作会记录在这里。</p></section>';
   }
 
   function renderPhotos() {
@@ -786,6 +813,8 @@
     if (favoritePhoto) { const p = state.photos.find(x => x.id === favoritePhoto.dataset.favoritePhoto); if (p) p.favorite = !p.favorite; renderScreen(); persistState(); return; }
     const deletePhoto = event.target.closest('[data-delete-photo]');
     if (deletePhoto) { state.photos = state.photos.filter(p => p.id !== deletePhoto.dataset.deletePhoto); renderScreen(); persistState(); return; }
+    const walletBackup=event.target.closest('[data-action="wallet-backup"]');if(walletBackup){exportWalletBackup();return;}
+    const walletRestorePick=event.target.closest('[data-action="wallet-restore-pick"]');if(walletRestorePick){event.target.closest('.xp-wallet')?.querySelector('[data-wallet-restore-file]')?.click();return;}
     const walletExport = event.target.closest('[data-action="wallet-export"]');
     if (walletExport) { exportWalletCsv(); return; }
     const walletEdit = event.target.closest('[data-wallet-edit]');
@@ -871,7 +900,7 @@
     if (!root) return;
     root.querySelector('.xp-action-dialog')?.remove();
     pendingDialog = { kind, extra, root };
-    root.insertAdjacentHTML('beforeend', `<div class="xp-action-dialog"><form class="xp-dialog-card" data-form="dialog"><button type="button" class="xp-dialog-close" data-action="dialog-close" aria-label="关闭">×</button><strong>${escapeHtml(title)}</strong><p>${escapeHtml(description)}</p>${kind === 'wallet-edit' ? (()=>{const t=(state.walletTransactions||[]).find(x=>String(x.id)===String(extra));const a=Math.abs(Number(t?.amount)||0);return t ? '<select name="direction"><option value="expense" '+(Number(t.amount)<0?'selected':'')+'>支出</option><option value="income" '+(Number(t.amount)>0?'selected':'')+'>收入</option></select><select name="category">'+['日常','餐饮','购物','交通','娱乐','礼物','工资','其他'].map(x=>'<option '+((t.category||'其他')===x?'selected':'')+'>'+x+'</option>').join('')+'</select><input name="amount" type="number" min="1" max="999999999" step="1" value="'+a+'" required><input name="title" maxlength="32" value="'+escapeHtml(t.title||'')+'" required>' : '<p>找不到这笔账单。</p>'})() : kind === 'wallet-delete' ? `<div class="xp-dialog-confirm-note">这笔账单将从明细中移除。若回滚后余额会变成负数，系统会阻止删除。</div><input type="hidden" name="value" value="confirm">` : kind === 'wechat-contact-edit' ? `<input name="contactName" maxlength="24" value="${escapeHtml(state.contacts.find(c=>c.id===extra)?.name||'')}" placeholder="联系人昵称"><input name="contactNote" maxlength="40" value="${escapeHtml(state.contacts.find(c=>c.id===extra)?.note||'')}" placeholder="备注"><input type="hidden" name="value" value="save">` : kind === 'gift' ? `<select name="value"><option value="小心心">小心心 · 10钻</option><option value="玫瑰">玫瑰 · 99钻</option><option value="星海">星海 · 520钻</option></select>` : kind === 'wallet-add' ? `<select name="direction"><option value="expense">支出</option><option value="income">收入</option></select><select name="category"><option>日常</option><option>餐饮</option><option>购物</option><option>交通</option><option>娱乐</option><option>礼物</option><option>工资</option><option>其他</option></select><input name="amount" type="number" min="1" max="999999999" step="1" placeholder="金额（钻）" required><input name="title" maxlength="32" placeholder="项目名称" required>` : kind === 'clear-chat' ? `<div class="xp-dialog-confirm-note">此操作会删除与该联系人的全部本地聊天记录，且无法撤销。</div><input type="hidden" name="value" value="confirm">` : `<textarea name="value" maxlength="300" placeholder="${escapeHtml(placeholder || '')}" ${kind === 'comment' ? 'required' : ''}></textarea>`}<button class="xp-dialog-submit" type="submit">${kind === 'wallet-edit' ? '保存修改' : kind === 'wallet-delete' ? '确认删除' : kind === 'gift' ? '确认赠送' : kind === 'comment' ? '发表评论' : kind === 'clear-chat' ? '确认清空' : '发布'}</button></form></div>`);
+    root.insertAdjacentHTML('beforeend', `<div class="xp-action-dialog"><form class="xp-dialog-card" data-form="dialog"><button type="button" class="xp-dialog-close" data-action="dialog-close" aria-label="关闭">×</button><strong>${escapeHtml(title)}</strong><p>${escapeHtml(description)}</p>${kind === 'wallet-edit' ? (()=>{const t=(state.walletTransactions||[]).find(x=>String(x.id)===String(extra));const a=Math.abs(Number(t?.amount)||0);return t ? '<select name="direction"><option value="expense" '+(Number(t.amount)<0?'selected':'')+'>支出</option><option value="income" '+(Number(t.amount)>0?'selected':'')+'>收入</option></select><select name="category">'+['日常','餐饮','购物','交通','娱乐','礼物','工资','其他'].map(x=>'<option '+((t.category||'其他')===x?'selected':'')+'>'+x+'</option>').join('')+'</select><input name="amount" type="number" min="1" max="999999999" step="1" value="'+a+'" required><input name="title" maxlength="32" value="'+escapeHtml(t.title||'')+'" required>' : '<p>找不到这笔账单。</p>'})() : kind === 'wallet-delete' ? `<div class="xp-dialog-confirm-note">这笔账单将从明细中移除。若回滚后余额会变成负数，系统会阻止删除。</div><input type="hidden" name="value" value="confirm">` : kind === 'wallet-restore' ? `<div class="xp-dialog-confirm-note">恢复后将覆盖当前余额和全部账单。请确认已提前备份当前数据。</div><input type="hidden" name="value" value="confirm">` : kind === 'wechat-contact-edit' ? `<input name="contactName" maxlength="24" value="${escapeHtml(state.contacts.find(c=>c.id===extra)?.name||'')}" placeholder="联系人昵称"><input name="contactNote" maxlength="40" value="${escapeHtml(state.contacts.find(c=>c.id===extra)?.note||'')}" placeholder="备注"><input type="hidden" name="value" value="save">` : kind === 'gift' ? `<select name="value"><option value="小心心">小心心 · 10钻</option><option value="玫瑰">玫瑰 · 99钻</option><option value="星海">星海 · 520钻</option></select>` : kind === 'wallet-add' ? `<select name="direction"><option value="expense">支出</option><option value="income">收入</option></select><select name="category"><option>日常</option><option>餐饮</option><option>购物</option><option>交通</option><option>娱乐</option><option>礼物</option><option>工资</option><option>其他</option></select><input name="amount" type="number" min="1" max="999999999" step="1" placeholder="金额（钻）" required><input name="title" maxlength="32" placeholder="项目名称" required>` : kind === 'clear-chat' ? `<div class="xp-dialog-confirm-note">此操作会删除与该联系人的全部本地聊天记录，且无法撤销。</div><input type="hidden" name="value" value="confirm">` : `<textarea name="value" maxlength="300" placeholder="${escapeHtml(placeholder || '')}" ${kind === 'comment' ? 'required' : ''}></textarea>`}<button class="xp-dialog-submit" type="submit">${kind === 'wallet-edit' ? '保存修改' : kind === 'wallet-delete' ? '确认删除' : kind === 'wallet-restore' ? '确认覆盖恢复' : kind === 'gift' ? '确认赠送' : kind === 'comment' ? '发表评论' : kind === 'clear-chat' ? '确认清空' : '发布'}</button></form></div>`);
     root.querySelector('.xp-action-dialog textarea, .xp-action-dialog select')?.focus();
   }
 
@@ -886,7 +915,7 @@
   function closeActionDialog(event) {
     const root = event.target.closest('.xphone-shell, .xp-inline-device');
     root?.querySelector('.xp-action-dialog')?.remove();
-    if (!root || pendingDialog?.root === root) pendingDialog = null;
+    if (!root || pendingDialog?.root === root) { if(pendingDialog?.kind==='wallet-restore') pendingWalletRestore=null; pendingDialog = null; }
   }
 
   function completeDialog(event, data) {
@@ -902,7 +931,8 @@
     const walletCategory = String(data.get('category') || '其他').trim();
     root?.querySelector('.xp-action-dialog')?.remove();
     pendingDialog = null;
-    if (kind === 'wallet-add') {
+    if (kind === 'wallet-restore' && value === 'confirm' && pendingWalletRestore) { state.wallet=pendingWalletRestore.wallet;state.walletTransactions=pendingWalletRestore.transactions;pendingWalletRestore=null;addNotification('记账','钱包恢复成功','已恢复余额和账单记录。');
+    } else if (kind === 'wallet-add') {
       if (!Number.isSafeInteger(walletAmount) || walletAmount <= 0 || walletAmount > 999999999 || !walletTitle) {
         addNotification('记账','记录无效','请填写有效的正整数金额和项目名称。');
       } else {
