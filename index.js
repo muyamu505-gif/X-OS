@@ -1601,8 +1601,7 @@
     if(reason)throw new Error(String(reason).slice(0,240));
     throw new Error('接口已返回数据，但响应中没有识别到文本字段（choices[0].message.content / choices[0].text / output_text）');
   }
-  function normalizeApiBase(){let base=String(systemSettings.apiBase||'').trim().replace(/\\/+$/,'');if(!base)throw new Error('请填写 API 地址');base=base.replace(/\\/(chat\\/completions|completions|models)$/i,'');return base.replace(/\\/+$/,'');}
-const base=String(systemSettings.apiBase||'').trim().replace(/\/+$/,'');if(!base)throw new Error('请填写 API 地址');return base;}
+  function normalizeApiBase(){let base=String(systemSettings.apiBase||'').trim().replace(/\/+$/,'');if(!base)throw new Error('请填写 API 地址');base=base.replace(/\/(chat\/completions|completions|models)$/i,'');return base.replace(/\/+$/,'');}
   function setApiRuntimeStatus(kind,message){apiRuntimeStatus={kind,message:String(message||'').slice(0,260)};const node=document.querySelector('[data-api-status]');if(node){node.className='xp-api-status '+kind;node.textContent=apiRuntimeStatus.message;}}
   function apiTimeout(){return Math.max(10000,Math.min(180000,Number(systemSettings.apiTimeoutMs)||45000));}
   function apiRetryCount(){return Math.max(0,Math.min(3,Number(systemSettings.apiRetries)||0));}
