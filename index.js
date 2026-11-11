@@ -1137,7 +1137,7 @@
       saveSystemSettings();
     }
 
-    if (event.target.matches('[data-friend-search]')) { state.friendSearchQuery=event.target.value; const cursor=event.target.selectionStart; renderScreen(); const input=phoneScreen?.querySelector('[data-friend-search]')||document.querySelector('.xphone-inline-screen [data-friend-search]'); if(input){input.focus();input.setSelectionRange(cursor,cursor);} persistState(); }
+    if (event.target.matches('[data-friend-search]')) { const screen=event.target.closest('.xphone-inline-screen')||phoneScreen; state.friendSearchQuery=event.target.value; const cursor=event.target.selectionStart; renderScreen(); const input=screen?.querySelector('[data-friend-search]'); if(input){input.focus();input.setSelectionRange(cursor,cursor);} persistState(); }
     if (event.target.matches('[data-wallet-search]')) {
       state.walletSearchQuery = event.target.value;
       const query = state.walletSearchQuery.trim().toLocaleLowerCase();
