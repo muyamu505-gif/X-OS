@@ -513,7 +513,7 @@
     if(!floating){
       floating=document.createElement('button');floating.id='xphone-floating-entry';floating.type='button';
       floating.setAttribute('aria-label','打开 X 手机模拟器');floating.title='X 手机 · 点击打开，拖动移动';
-      floating.innerHTML='<span class="xphone-fab-mark">X</span><small>手机</small>';document.body.appendChild(floating);
+      floating.innerHTML='<span class="xphone-fab-mark">X</span><small>手机</small>';document.documentElement.appendChild(floating);
       const key=`${EXT_ID}:floatingPosition`,clamp=(v,l,h)=>Math.max(l,Math.min(h,v)),size=54,margin=12;
       let saved=null;try{saved=JSON.parse(localStorage.getItem(key)||'null');}catch(_){}
       let edge=saved?.edge==='left'?'left':'right',yr=Number.isFinite(saved?.y)?saved.y:0.76,x=0,y=0,d=null,moved=false;
