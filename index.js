@@ -336,8 +336,8 @@
   function renderChat() {
     const contact = state.contacts.find(c => c.id === state.selectedContact) || state.contacts[0];
     const msgs = state.chats[contact.id] || [];
-    const bubbles = msgs.map((m, index) => `<div class="xp-chat-row ${m.from === 'me' ? 'mine' : ''}"><span class="xp-chat-avatar">${m.from === 'me' ? '我' : escapeHtml(m.avatar || contact.avatar)}</span><div class="xp-chat-bubble">${contact.isGroup && m.from !== 'me' ? `<b class="xp-chat-sender">${escapeHtml(m.user || '群成员')}</b>` : ''}${escapeHtml(m.text)}<small>${escapeHtml(m.time || '')}</small></div><button type="button" class="xp-chat-delete" data-delete-chat-message="${index}" aria-label="删除这条消息" title="删除消息">×</button></div>`).join('');
-    return `<section class="xp-page xp-chat-page"><div class="xp-chat-title"><button type="button" data-action="wechat-list" aria-label="返回微信">‹</button><span>${escapeHtml(contact.name)}<small>${contact.isGroup ? `${(contact.members || []).length + 1} 位成员` : (contact.online ? '在线' : '最近在线')}</small></span><button type="button" class="xp-chat-clear" data-action="wechat-chat-info" aria-label="聊天信息" title="聊天信息">···</button><button type="button" class="xp-chat-clear" data-action="clear-chat" aria-label="清空聊天记录" title="清空聊天记录">清空</button></div><div class="xp-chat-history">${bubbles || '<div class="xp-empty">还没有聊天记录</div>'}</div><form class="xp-chat-compose" data-form="wechat"><input name="message" autocomplete="off" placeholder="发送消息…" maxlength="300"><button type="submit">发送</button></form></section>`;
+    const bubbles = msgs.map((m, index) => `<div class="xp-chat-row ${m.from === 'me' ? 'mine' : ''}"><span class="xp-chat-avatar">${m.from === 'me' ? '我' : escapeHtml(m.avatar || contact.avatar)}</span><div class="xp-chat-bubble">${contact.isGroup && m.from !== 'me' ? `<b class="xp-chat-sender">${escapeHtml(m.user || '群成员')}</b>` : ''}${m.kind && m.kind !== 'text' ? `<span class="xp-chat-attachment">${({image:'▧ 图片消息',voice:'◖ 语音消息',file:'▤ 文件消息'}[m.kind] || '消息')}</span><span>${escapeHtml(m.text)}</span>` : escapeHtml(m.text)}<small>${escapeHtml(m.time || '')}</small></div><button type="button" class="xp-chat-delete" data-delete-chat-message="${index}" aria-label="删除这条消息" title="删除消息">×</button></div>`).join('');
+    return `<section class="xp-page xp-chat-page"><div class="xp-chat-title"><button type="button" data-action="wechat-list" aria-label="返回微信">‹</button><span>${escapeHtml(contact.name)}<small>${contact.isGroup ? `${(contact.members || []).length + 1} 位成员` : (contact.online ? '在线' : '最近在线')}</small></span><button type="button" class="xp-chat-clear" data-action="wechat-chat-info" aria-label="聊天信息" title="聊天信息">···</button><button type="button" class="xp-chat-clear" data-action="clear-chat" aria-label="清空聊天记录" title="清空聊天记录">清空</button></div><div class="xp-chat-history">${bubbles || '<div class="xp-empty">还没有聊天记录</div>'}</div><form class="xp-chat-compose" data-form="wechat"><select name="messageKind" aria-label="消息类型"><option value="text">文字</option><option value="image">图片</option><option value="voice">语音</option><option value="file">文件</option></select><input name="message" autocomplete="off" placeholder="发送消息…" maxlength="300"><button type="submit">发送</button></form></section>`;
   }
 
   function renderWeibo() {
@@ -499,7 +499,7 @@
       case 'gift': openActionDialog('gift', '赠送礼物', '选择一份礼物支持主播。将扣除模拟钻石，不涉及真实支付。', inlineHost); break;
       case 'wechat-add': openActionDialog('wechat-add', '添加联系人', '创建一个本地模拟联系人', inlineHost, '输入联系人昵称……'); break;
       case 'wechat-group-create': openActionDialog('wechat-group-create','发起群聊','创建群聊并邀请当前通讯录中的联系人（本地模拟）',inlineHost,'输入群聊名称……'); break;
-      case 'wechat-chat-info': { const c=state.contacts.find(x=>x.id===state.selectedContact); const members=(c?.members||[]).map(id=>state.contacts.find(x=>x.id===id)?.name).filter(Boolean); openInfoDialog(c?.isGroup?'群聊信息':'联系人资料',c?.isGroup?`群名称：${c.name}\n群成员：我、${members.join('、')||'暂无'}\n成员人数：${members.length+1}`:`昵称：${c?.name||''}\n备注：${c?.note||'无'}\n状态：${c?.online?'在线':'最近在线'}`,inlineHost); break; }
+      case 'wechat-chat-info': { const c=state.contacts.find(x=>x.id===state.selectedContact); const members=(c?.members||[]).map(id=>state.contacts.find(x=>x.id===id)?.name).filter(Boolean); if(c?.isGroup){openInfoDialog('群聊信息',`群名称：${c.name}\n群成员：我、${members.join('、')||'暂无'}\n成员人数：${members.length+1}`,inlineHost);}else{openActionDialog('wechat-contact-edit','编辑联系人资料','修改昵称与备注（仅保存在本地）',inlineHost,'',c?.id||'');} break; }
       case 'weibo-compose': openActionDialog('weibo-compose', '发布微博', '分享此刻想说的话', inlineHost, '写一条微博动态……'); break;
       case 'red-compose': openActionDialog('red-compose', '发布笔记', '记录生活灵感与日常', inlineHost, '写一篇小红书笔记……'); break;
       case 'weibo-comment': {
@@ -518,7 +518,7 @@
     if (!root) return;
     root.querySelector('.xp-action-dialog')?.remove();
     pendingDialog = { kind, extra, root };
-    root.insertAdjacentHTML('beforeend', `<div class="xp-action-dialog"><form class="xp-dialog-card" data-form="dialog"><button type="button" class="xp-dialog-close" data-action="dialog-close" aria-label="关闭">×</button><strong>${escapeHtml(title)}</strong><p>${escapeHtml(description)}</p>${kind === 'gift' ? `<select name="value"><option value="小心心">小心心 · 10钻</option><option value="玫瑰">玫瑰 · 99钻</option><option value="星海">星海 · 520钻</option></select>` : kind === 'clear-chat' ? `<div class="xp-dialog-confirm-note">此操作会删除与该联系人的全部本地聊天记录，且无法撤销。</div><input type="hidden" name="value" value="confirm">` : `<textarea name="value" maxlength="300" placeholder="${escapeHtml(placeholder || '')}" ${kind === 'comment' ? 'required' : ''}></textarea>`}<button class="xp-dialog-submit" type="submit">${kind === 'gift' ? '确认赠送' : kind === 'comment' ? '发表评论' : kind === 'clear-chat' ? '确认清空' : '发布'}</button></form></div>`);
+    root.insertAdjacentHTML('beforeend', `<div class="xp-action-dialog"><form class="xp-dialog-card" data-form="dialog"><button type="button" class="xp-dialog-close" data-action="dialog-close" aria-label="关闭">×</button><strong>${escapeHtml(title)}</strong><p>${escapeHtml(description)}</p>${kind === 'wechat-contact-edit' ? `<input name="contactName" maxlength="24" value="${escapeHtml(state.contacts.find(c=>c.id===extra)?.name||'')}" placeholder="联系人昵称"><input name="contactNote" maxlength="40" value="${escapeHtml(state.contacts.find(c=>c.id===extra)?.note||'')}" placeholder="备注"><input type="hidden" name="value" value="save">` : kind === 'gift' ? `<select name="value"><option value="小心心">小心心 · 10钻</option><option value="玫瑰">玫瑰 · 99钻</option><option value="星海">星海 · 520钻</option></select>` : kind === 'clear-chat' ? `<div class="xp-dialog-confirm-note">此操作会删除与该联系人的全部本地聊天记录，且无法撤销。</div><input type="hidden" name="value" value="confirm">` : `<textarea name="value" maxlength="300" placeholder="${escapeHtml(placeholder || '')}" ${kind === 'comment' ? 'required' : ''}></textarea>`}<button class="xp-dialog-submit" type="submit">${kind === 'gift' ? '确认赠送' : kind === 'comment' ? '发表评论' : kind === 'clear-chat' ? '确认清空' : '发布'}</button></form></div>`);
     root.querySelector('.xp-action-dialog textarea, .xp-action-dialog select')?.focus();
   }
 
@@ -541,6 +541,8 @@
     if (!pendingDialog || pendingDialog.root !== formRoot) return;
     const { kind, extra, root } = pendingDialog;
     const value = String(data.get('value') || '').trim();
+    const contactName = String(data.get('contactName') || '').trim();
+    const contactNote = String(data.get('contactNote') || '').trim();
     root?.querySelector('.xp-action-dialog')?.remove();
     pendingDialog = null;
     if (kind === 'clear-chat' && value === 'confirm') {
@@ -558,6 +560,8 @@
     } else if (kind === 'comment' && value) {
       const post = state.weiboPosts.find(p => p.id === extra);
       if (post) { post.comments = Number(post.comments || 0) + 1; post.lastComment = value; }
+    } else if (kind === 'wechat-contact-edit' && value === 'save') {
+      const c=state.contacts.find(x=>x.id===extra&&!x.isGroup);if(c){if(contactName)c.name=contactName;c.note=contactNote||'好友';c.avatar=c.avatar||c.name.slice(0,1);}
     } else if (kind === 'wechat-group-create' && value) {
       const name=value.slice(0,24);const duplicate=state.contacts.find(c=>c.isGroup&&String(c.name||'').trim().toLocaleLowerCase()===name.toLocaleLowerCase());
       if(duplicate){addNotification('微信','群聊已存在',`“${name}”已在通讯录中。`);}else{const members=state.contacts.filter(c=>!c.isGroup).map(c=>c.id);const id=`group${Date.now()}`;state.contacts.unshift({id,name,note:`群聊 · ${members.length+1}人`,avatar:'群',online:true,isGroup:true,members});state.chats[id]=[];state.selectedContact=id;state.wechatTab='chats';state.page='chat';state.app='wechat';state.stack.push({page:'wechat',app:'wechat',selectedContact:null});addNotification('微信','群聊已创建',`已创建群聊：${name}`);}
@@ -628,9 +632,10 @@
     if (type === 'dialog') { completeDialog(event, data);
     } else if (type === 'wechat') {
       const text = String(data.get('message') || '').trim();
+      const kind = String(data.get('messageKind') || 'text');
       if (!text || !state.selectedContact) return;
       const arr = state.chats[state.selectedContact] || (state.chats[state.selectedContact] = []);
-      arr.push({ from: 'me', text, time: nowTime() });
+      arr.push({ from: 'me', text, kind: ['text','image','voice','file'].includes(kind)?kind:'text', time: nowTime() });
       if (arr.length > 200) arr.splice(0, arr.length - 200);
       const contactIndex = state.contacts.findIndex(contact => contact.id === state.selectedContact);
       if (contactIndex > 0) state.contacts.unshift(state.contacts.splice(contactIndex, 1)[0]);
