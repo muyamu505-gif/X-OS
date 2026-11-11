@@ -4,7 +4,7 @@
   "js": "index.js",
   "css": "style.css",
   "author": "muyamu505-gif",
-  "version": "1.1.41",
+  "version": "1.1.42",
   "homePage": "https://github.com/muyamu505-gif/X-OS",
   "auto_update": true,
   "minimum_client_version": "1.12.0"
