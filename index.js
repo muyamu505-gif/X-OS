@@ -47,6 +47,7 @@
     xFollowing: [],
     xPosts: [],
     liveMessages: [],
+    liveGiftRecords: [],
     importedLiveRooms: [],
     activeLiveId: 'main',
     liveViewers: null,
@@ -154,7 +155,7 @@
   function mergeDefaults(saved) {
     const base = structuredCloneSafe(DEFAULT_STATE);
     if (!saved || typeof saved !== 'object' || Array.isArray(saved)) return base;
-    const arrayKeys = ['stack', 'notifications', 'moments', 'wechatFavorites', 'notesList', 'contacts', 'wechatDirectory', 'friendRequests', 'weiboPosts', 'redPosts', 'liveMessages', 'importedLiveRooms', 'browserResults', 'photos', 'calendar', 'walletTransactions', 'xPosts'];
+    const arrayKeys = ['stack', 'notifications', 'moments', 'wechatFavorites', 'notesList', 'contacts', 'wechatDirectory', 'friendRequests', 'weiboPosts', 'redPosts', 'liveMessages', 'liveGiftRecords', 'importedLiveRooms', 'browserResults', 'photos', 'calendar', 'walletTransactions', 'xPosts'];
     const stringArrayKeys = ['weiboFollowing', 'redFollowing', 'xFollowing', 'followedLiveRooms'];
     const objectKeys = ['chats'];
     const stringKeys = ['page', 'wechatTab', 'weiboTab', 'redTab', 'xTab', 'activeLiveId', 'selectedContact', 'selectedRedPostId', 'selectedWeiboPostId', 'selectedXUser', 'friendRequestTab', 'friendSearchQuery', 'chatTypingContact', 'chatSearchQuery', 'notes', 'activeNoteId', 'browserUrl', 'browserQuery', 'selectedAlbum', 'calendarView', 'walletViewMonth', 'walletTypeFilter', 'walletCategoryFilter', 'walletSearchQuery', 'weiboSearchQuery', 'redSearchQuery', 'xSearchQuery'];
@@ -606,7 +607,7 @@
 
   function getLiveRooms() {
     const imported = (Array.isArray(state.importedLiveRooms)?state.importedLiveRooms:[]).map(room=>({
-      id:String(room.id||''),name:String(room.name||'直播间'),title:String(room.title||'直播内容'),category:String(room.category||'直播'),description:String(room.description||''),host:String(room.host||'')
+      id:String(room.id||''),name:String(room.name||'直播间'),title:String(room.title||'直播内容'),category:String(room.category||'直播'),description:String(room.description||''),host:String(room.host||''),viewers:Number.isFinite(room.viewers)?room.viewers:null,heat:Number.isFinite(room.heat)?room.heat:null,viewerList:Array.isArray(room.viewerList)?room.viewerList.filter(v=>typeof v==='string'&&v.trim()).map(v=>v.trim()).slice(0,100):[]
     }));
     const fallback = {id:'main',name:'{{char}}',title:'当前角色直播间',category:'剧情直播',description:'直播画面与互动以当前剧情为准',host:'{{char}}'};
     return [fallback,...imported.filter(room=>room.id!=='main')];
@@ -620,7 +621,9 @@
     const viewers=Number.isFinite(room.viewers)?room.viewers.toLocaleString('zh-CN')+' 人在线':'人数未记录';
     const heat=Number.isFinite(room.heat)?room.heat.toLocaleString('zh-CN'):'未记录';
     const isRoomFollowed = (state.followedLiveRooms || []).includes(room.id);
-    return `<section class="xp-page xp-live-room"><div class="xp-live-video"><span class="xp-live-tag">● LIVE</span><span class="xp-live-video-label">${escapeHtml(room.title)}</span><small>${escapeHtml(room.description||'直播画面以当前剧情描述为准')}</small></div><div class="xp-live-room-info"><div><strong>${escapeHtml(room.title)}</strong><small>${escapeHtml(room.name)}　·　${escapeHtml(room.category)}　·　${viewers}</small></div><button data-action="follow" class="xp-follow ${isRoomFollowed?'following':''}">${isRoomFollowed?'已关注':'＋ 关注'}</button></div><div class="xp-live-metrics"><span>热度 <b>${heat}</b></span><span>本地模拟礼物 <b>${state.giftsSent}</b></span><span>余额 <b>${state.wallet}</b> 钻石</span></div><div class="xp-barrage-list">${lines||'<div class="xp-empty">暂无剧情弹幕，发送一条参与互动吧</div>'}</div><form class="xp-live-compose" data-form="barrage"><input name="message" autocomplete="off" placeholder="和主播聊两句…" maxlength="100"><button type="submit">发送</button><button type="button" data-action="gift">礼物</button></form></section>`;
+    const roomGifts=(state.liveGiftRecords||[]).filter(g=>g.roomId===room.id);
+    const roomGiftCount=roomGifts.reduce((n,g)=>n+(Number(g.quantity)||1),0);
+    return `<section class="xp-page xp-live-room"><div class="xp-live-video"><span class="xp-live-tag">● LIVE</span><span class="xp-live-video-label">${escapeHtml(room.title)}</span><small>${escapeHtml(room.description||'直播画面以当前剧情描述为准')}</small></div><div class="xp-live-room-info"><div><strong>${escapeHtml(room.title)}</strong><small>${escapeHtml(room.name)}　·　${escapeHtml(room.category)}　·　${viewers}</small><button type="button" data-live-host-profile="${escapeHtml(room.host||room.name)}">查看主播主页 ›</button></div><button data-action="follow" class="xp-follow ${isRoomFollowed?'following':''}">${isRoomFollowed?'已关注':'＋ 关注'}</button></div><div class="xp-live-metrics"><span>热度 <b>${heat}</b></span><span>本房间礼物 <b>${roomGiftCount}</b></span><span>余额 <b>${state.wallet}</b> 钻石</span></div><div class="xp-live-tools"><button type="button" data-live-gift-records>礼物记录（${roomGifts.length}）</button><button type="button" data-live-viewers>观众列表（${room.viewerList.length||'未记录'}）</button></div><div class="xp-barrage-list">${lines||'<div class="xp-empty">暂无剧情弹幕，发送一条参与互动吧</div>'}</div><form class="xp-live-compose" data-form="barrage"><input name="message" autocomplete="off" placeholder="和主播聊两句…" maxlength="100"><button type="submit">发送</button><button type="button" data-action="gift">礼物</button></form></section>`;
   }
 
   function walletRowMatchesFilters(row, page) {
@@ -899,6 +902,9 @@
     if (followWeibo) { const name=followWeibo.dataset.followWeibo; state.weiboFollowing=state.weiboFollowing||[]; state.weiboFollowing=state.weiboFollowing.includes(name)?state.weiboFollowing.filter(x=>x!==name):[...state.weiboFollowing,name]; renderScreen(); persistState(); return; }
     const shareWeibo = event.target.closest('[data-share-weibo]');
     if (shareWeibo) { const original=state.weiboPosts.find(p=>p.id===shareWeibo.dataset.shareWeibo); if(original){ original.reposts=(Number(original.reposts)||0)+1; state.weiboPosts.unshift({id:`wr${Date.now()}`,user:'{{user}}',avatar:'{{user}}',text:original.text,tag:original.tag||'#转发#',likes:0,comments:0,commentList:[],liked:false,reposts:0,repostOf:original.id,time:'刚刚'}); state.weiboPosts=state.weiboPosts.slice(0,100); addNotification('微博','转发成功',`你转发了 @${original.user} 的动态。`); } renderScreen(); persistState(); return; }
+    const liveHostProfile=event.target.closest('[data-live-host-profile]');if(liveHostProfile){state.selectedXUser=liveHostProfile.dataset.liveHostProfile;setPage('x-profile','live');persistState();return;}
+    const liveGiftRecords=event.target.closest('[data-live-gift-records]');if(liveGiftRecords){const id=state.activeLiveId||'main';const records=(state.liveGiftRecords||[]).filter(g=>g.roomId===id).slice(0,30);openInfoDialog('本房间礼物记录',records.map(g=>`${g.time||'时间未记录'} · ${g.sender||'我'} 送出 ${g.gift||'礼物'} ×${Number(g.quantity)||1} · ${Number(g.price)||0}钻`).join('\n')||'本房间还没有礼物记录。',inlineHost);return;}
+    const liveViewers=event.target.closest('[data-live-viewers]');if(liveViewers){const room=getLiveRooms().find(r=>r.id===(state.activeLiveId||'main'));const names=room?.viewerList||[];openInfoDialog('观众列表',names.length?names.map((name,i)=>`${i+1}. ${name}`).join('\n'):'当前剧情没有提供具体观众名单，暂不虚构观众。',inlineHost);return;}
     const xProfile=event.target.closest('[data-x-profile]');if(xProfile){state.selectedXUser=xProfile.dataset.xProfile;setPage('x-profile','xplatform');persistState();return;}
     const xTab=event.target.closest('[data-x-tab]');
     if(xTab){state.xTab=xTab.dataset.xTab;setPage('xplatform','xplatform',false);persistState();return;}
@@ -1158,9 +1164,13 @@
         state.wallet -= price;
         state.giftsSent += 1;
         const localDate = new Date(Date.now() - new Date().getTimezoneOffset()*60000).toISOString().slice(0,10);
-        state.walletTransactions.unshift({ id: `tx${Date.now()}`, title: `赠送礼物：${value}`, amount: -price, balanceDelta: -price, category: '礼物', time: nowTime(), date: localDate, month: localDate.slice(0,7) });
+        const giftRoom=getLiveRooms().find(r=>r.id===(state.activeLiveId||'main'))||getLiveRooms()[0];
+        const giftTime=nowTime();
+        const giftRecord={id:`gift_${Date.now()}_${Math.random().toString(36).slice(2,7)}`,roomId:giftRoom.id,roomTitle:giftRoom.title,recipient:giftRoom.host||giftRoom.name,sender:'{{user}}',gift:value,quantity:1,price,time:giftTime};
+        state.liveGiftRecords=state.liveGiftRecords||[];state.liveGiftRecords.unshift(giftRecord);state.liveGiftRecords=state.liveGiftRecords.slice(0,300);
+        state.walletTransactions.unshift({ id: `tx${Date.now()}`, title: `赠送礼物：${value}（${giftRoom.host||giftRoom.name}）`, amount: -price, balanceDelta: -price, category: '礼物', roomId:giftRoom.id, recipient:giftRoom.host||giftRoom.name, time: giftTime, date: localDate, month: localDate.slice(0,7) });
         state.walletTransactions = state.walletTransactions.slice(0, 100);
-        state.liveMessages.push({ user: '系统', text: `你送出了 ${value} ×1`, roomId: state.activeLiveId || 'main' });
+        state.liveMessages.push({ user: '系统', text: `你送出了 ${value} ×1`, roomId: giftRoom.id });
         state.liveMessages = state.liveMessages.slice(-200);
       }
     }
