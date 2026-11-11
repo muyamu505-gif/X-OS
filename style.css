@@ -489,3 +489,7 @@ html #xphone-overlay .xphone-resize-handle{background:transparent!important;bord
 
 /* WeChat forwarded message source label */
 .xp-chat-forward{align-self:center;flex:0 0 22px;width:22px;height:26px;padding:0;border:0;border-radius:7px;background:transparent;color:#7890a4;font-size:17px;opacity:.78}.xp-chat-forward:active{background:#e9f0f5}.xp-chat-forwarded{margin:0 0 6px;color:#8294a2;font-size:10px;line-height:1.4}.xp-forward-label{display:flex;flex-direction:column;gap:8px;margin:10px 0;color:#60778b;font-size:12px}.xp-forward-label select{width:100%;padding:10px;border:1px solid #e2e9ee;border-radius:9px;background:#f7f9fb;color:#40566a;font-size:13px}
+
+
+/* WeChat friend discovery and verification flow */
+.xp-friend-import-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:10px 12px;padding:11px 12px;border:1px solid #e6edf2;border-radius:11px;background:#f5f8fa}.xp-friend-import-bar>div{display:flex;min-width:0;flex-direction:column;gap:4px}.xp-friend-import-bar b{color:#526d83;font-size:12px;font-weight:600}.xp-friend-import-bar small{color:#91a0ac;font-size:10px;line-height:1.4}.xp-friend-import-bar button{flex:0 0 auto;padding:7px 10px;border:1px solid #dce6ed;border-radius:8px;background:#fff;color:#637f95;font-size:11px}.xp-friend-import-bar button:disabled{opacity:.45}.xp-friend-response{display:block;margin-top:3px;color:#71899c!important}.xp-friend-pending.is-final{color:#8496a4;background:#eef2f5}
