@@ -32,10 +32,15 @@
 
 ## 版本
 
-当前版本：**1.1.80**
+当前版本：**1.1.81**
 
 扩展源文件：`index.js`、`style.css`、`manifest.json`。
 
+
+### 1.1.81
+- Add persistent WeChat quoted replies: quote a specific message, preview its author and text above the composer, and store the reply relationship as structured `replyTo` metadata on the sent message.
+- Give existing chat messages stable IDs during migration and assign IDs to newly generated, sent, and story-imported messages so quoted references remain attached to the correct message.
+- Clear a pending quote when switching conversations, cancelling the quote, or deleting the referenced original message.
 
 ### 1.1.80
 - Extend story extraction for each NPC with evidence-based personality, voice/speaking style, key facts, relationship and description fields. Empty or unsupported fields remain blank rather than being invented.
