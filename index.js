@@ -216,20 +216,25 @@
   }
 
   let gestureTapTimer = null;
+  let gestureTapTarget = null;
 
   function handleGestureNavigation(event) {
     const control = event.target.closest('[data-xp-gesture-nav]');
     if (!control) return false;
     event.preventDefault();
     event.stopPropagation();
-    if (gestureTapTimer) {
+    if (gestureTapTimer && gestureTapTarget === control) {
       clearTimeout(gestureTapTimer);
       gestureTapTimer = null;
+      gestureTapTarget = null;
       state.page = 'home'; state.app = null; state.stack = []; state.selectedContact = null;
       renderScreen(); persistState();
     } else {
+      if (gestureTapTimer) clearTimeout(gestureTapTimer);
+      gestureTapTarget = control;
       gestureTapTimer = setTimeout(() => {
         gestureTapTimer = null;
+        gestureTapTarget = null;
         goBack();
       }, 280);
     }
@@ -308,6 +313,7 @@
       }, 250);
     });
     overlay.addEventListener('keydown', event => {
+      if ((event.key === 'Enter' || event.key === ' ') && handleGestureNavigation(event)) return;
       if (event.key !== 'Escape') return;
       const dialog = event.target.closest('.xphone-shell, .xp-inline-device')?.querySelector('.xp-action-dialog');
       if (dialog) {
@@ -1132,6 +1138,7 @@
       button.addEventListener('click', () => { host.hidden = !host.hidden; button.textContent = host.hidden ? '▣ 展开手机' : '▣ 收起手机'; if (!host.hidden) renderScreen(); });
       host.addEventListener('click', handleClick);
       host.addEventListener('keydown', event => {
+        if ((event.key === 'Enter' || event.key === ' ') && handleGestureNavigation(event)) return;
         if (event.key !== 'Escape') return;
         const dialog = host.querySelector('.xp-action-dialog');
         if (dialog) { dialog.remove(); if (pendingDialog?.root === host.querySelector('.xp-inline-device')) pendingDialog = null; event.stopPropagation(); }
