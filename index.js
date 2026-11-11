@@ -236,21 +236,21 @@
 
   function updateOverlayGeometry() {
     if (!overlay) return;
-    const width = Math.max(280, document.documentElement.clientWidth || window.innerWidth || 360);
-    const height = Math.max(480, window.visualViewport?.height || window.innerHeight || 640);
+    const width = Math.max(1, document.documentElement.clientWidth || window.innerWidth || 360);
+    const height = Math.max(1, window.visualViewport?.height || window.innerHeight || 640);
     overlay.style.setProperty('width', width + 'px', 'important');
     overlay.style.setProperty('height', height + 'px', 'important');
     overlay.style.setProperty('top', '0px', 'important');
     overlay.style.setProperty('left', '0px', 'important');
     const shell = overlay.querySelector('.xphone-shell'); if (!shell) return;
-    const maxW = Math.max(260, width - 24), maxH = Math.max(440, height - 24);
-    const w = Math.min(parseFloat(shell.style.width) || 320, maxW), h = Math.min(parseFloat(shell.style.height) || 620, maxH);
+    const maxW = Math.max(220, width - 24), maxH = Math.max(220, height - 24);
+    const w = Math.min(Math.max(220, parseFloat(shell.style.width) || 320), maxW), h = Math.min(Math.max(220, parseFloat(shell.style.height) || 620), maxH);
     shell.style.width = w + 'px'; shell.style.height = h + 'px';
     shell.style.setProperty('max-width', maxW + 'px', 'important'); shell.style.setProperty('max-height', maxH + 'px', 'important');
   }
 
   function attachPhoneResize(shell) {
-    const key = `${EXT_ID}:windowSize`, minW = 260, minH = 440;
+    const key = `${EXT_ID}:windowSize`, minW = 220, minH = 220;
     const clamp = (w,h) => ({width:Math.min(Math.max(minW,(document.documentElement.clientWidth||innerWidth)-24),Math.max(minW,w)),height:Math.min(Math.max(minH,(window.visualViewport?.height||innerHeight)-24),Math.max(minH,h))});
     try { const saved=JSON.parse(localStorage.getItem(key)||'null'); if(saved&&Number.isFinite(saved.width)&&Number.isFinite(saved.height)){const z=clamp(saved.width,saved.height);shell.style.width=z.width+'px';shell.style.height=z.height+'px';} } catch(_) {}
     const h=shell.querySelector('.xphone-resize-handle'); if(!h)return; let d=null;
