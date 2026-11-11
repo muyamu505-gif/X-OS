@@ -895,11 +895,17 @@
       state.photos = state.photos.slice(0, 200);
       renderScreen(); persistState();
     } else if (type === 'calendar') {
-      const day = Math.max(1, Math.min(31, Number(data.get('day')) || 1));
+      const day = Number(data.get('day'));
       const title = String(data.get('title') || '').trim();
-      if (!title) return;
       const year = Number(data.get('year')) || new Date().getFullYear();
       const month = Number(data.get('month')) || new Date().getMonth()+1;
+      const daysInMonth = new Date(year, month, 0).getDate();
+      if (!title) return;
+      if (!Number.isInteger(year) || year < 1 || year > 9999 || !Number.isInteger(month) || month < 1 || month > 12 || !Number.isInteger(day) || day < 1 || day > daysInMonth) {
+        addNotification('日历','日期无效',`请检查日期，${year}年${month}月只有 ${daysInMonth > 0 ? daysInMonth : '有效'} 天。`);
+        renderScreen();
+        return;
+      }
       state.calendar.push({ year, month, day, title, desc: String(data.get('desc') || '').trim() });
       if (state.calendar.length > 200) state.calendar = state.calendar.slice(-200);
       state.calendar.sort((a,b) => (Number(a.year)||0)-(Number(b.year)||0) || (Number(a.month)||0)-(Number(b.month)||0) || Number(a.day)-Number(b.day));
