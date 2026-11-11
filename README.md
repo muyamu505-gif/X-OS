@@ -32,7 +32,7 @@
 
 ## 版本
 
-当前版本：**1.1.28**
+当前版本：**1.1.29**
 
 扩展源文件：`index.js`、`style.css`、`manifest.json`。
 
@@ -152,3 +152,8 @@
 ### 1.1.28
 - Add local group creation from the WeChat Contacts tab, with existing contacts invited automatically.
 - Group conversations show member counts and sender labels; add a chat-info view for groups and contacts.
+
+
+### 1.1.29
+- Add editable local contact names and notes from the chat information menu.
+- Add simulated text, image, voice, and file message types to the WeChat composer; attachment types are represented locally without uploading files.
