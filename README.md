@@ -32,7 +32,7 @@
 
 ## 版本
 
-当前版本：**1.1.30**
+当前版本：**1.1.31**
 
 扩展源文件：`index.js`、`style.css`、`manifest.json`。
 
@@ -163,3 +163,8 @@
 - Fix Android soft-keyboard viewport resizing so focusing an input does not permanently shrink the phone window.
 - Restore phone geometry after input focus ends and keep focused fields visible inside the phone.
 - Remove viewport-relative max-height from the inline phone screen to prevent its lower half collapsing on keyboard open.
+
+
+### 1.1.31
+- Expanded Xiaohongshu interactions: functional Recommend/Following/Nearby tabs, per-note follow/unfollow, favorites, and local comments.
+- Persisted the new Xiaohongshu tab and following list; older saved posts are migrated safely with optional comment/favorite defaults.
