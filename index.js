@@ -404,7 +404,16 @@
     const contactButton = event.target.closest('[data-contact]');
     if (contactButton) { state.selectedContact = contactButton.dataset.contact; setPage('chat', 'wechat'); return; }
     const notice = event.target.closest('[data-notice]');
-    if (notice) { const n = state.notifications.find(x => x.id === notice.dataset.notice); if (n) { n.unread = false; setPage(n.app === '微信' ? 'wechat' : n.app === '微博' ? 'weibo' : 'xplatform'); } persistState(); return; }
+    if (notice) {
+      const n = state.notifications.find(x => x.id === notice.dataset.notice);
+      if (n) {
+        n.unread = false;
+        const pages = { '微信': 'wechat', '微博': 'weibo', '小红书': 'red', 'X平台': 'xplatform', '直播间': 'live', '钱包': 'wallet', '相册': 'photos', '日历': 'calendar', '备忘录': 'notes', '浏览器': 'browser' };
+        setPage(pages[n.app] || 'notifications');
+      }
+      persistState();
+      return;
+    }
     const likePost = event.target.closest('[data-like-post]');
     if (likePost) { const p = state.weiboPosts.find(x => x.id === likePost.dataset.likePost); if (p) { p.liked = !p.liked; p.likes += p.liked ? 1 : -1; renderScreen(); persistState(); } return; }
     const likeRed = event.target.closest('[data-like-red]');
@@ -463,7 +472,7 @@
     const root = inlineHost?.querySelector('.xp-inline-device') || overlay?.querySelector('.xphone-shell');
     if (!root) return;
     root.querySelector('.xp-action-dialog')?.remove();
-    pendingDialog = null;
+    if (pendingDialog?.root === root) pendingDialog = null;
     root.insertAdjacentHTML('beforeend', `<div class="xp-action-dialog"><div class="xp-dialog-card"><button type="button" class="xp-dialog-close" data-action="dialog-close" aria-label="关闭">×</button><strong>${escapeHtml(title)}</strong><p>${escapeHtml(description)}</p><button type="button" class="xp-dialog-submit" data-action="dialog-close">知道了</button></div></div>`);
   }
 
