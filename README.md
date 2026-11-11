@@ -32,7 +32,7 @@
 
 ## 版本
 
-当前版本：**1.1.36**
+当前版本：**1.1.37**
 
 扩展源文件：`index.js`、`style.css`、`manifest.json`。
 
@@ -191,3 +191,10 @@
 - Add an on-device system settings page for current SillyTavern context detection, context-scope toggles, and API configuration.
 - Store system/API settings separately from per-chat simulator data; API keys are not written to chat metadata.
 - Add an OpenAI-compatible API connectivity test; the SillyTavern generation bridge remains the next integration step.
+
+
+### 1.1.37
+- Remove built-in role-specific NPCs and sample social content from fresh chat defaults; empty contacts and feeds are now valid states.
+- Add explicit current-story import using SillyTavern `generateQuietPrompt()` and the active chat context.
+- Import character-card fields, recent chat messages, and available character-book data according to context toggles; generated contacts and posts are stored only in the current chat metadata.
+- Add current chat context status and role-aware import controls to the phone settings page.
