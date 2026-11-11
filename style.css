@@ -362,3 +362,7 @@ html #xphone-overlay .xphone-resize-handle{background:transparent!important;bord
 .xp-gesture-nav:active span{transform:scaleX(.88);opacity:.72}
 .xp-gesture-nav:focus-visible{outline:2px solid #3478d4;outline-offset:-4px;border-radius:8px}
 .xp-gesture-nav span{transition:transform .12s ease,opacity .12s ease}
+
+/* Browser footer is informational because pages are opened by the device browser. */
+.xp-safari-footer{display:flex;align-items:center;justify-content:center;gap:8px;margin:18px 12px 8px;padding:12px 10px;color:#8a929d;font-size:11px;border-top:1px solid #e8ebef}
+.xp-safari-footer span:first-child{font-size:13px;color:#6f9c83}
