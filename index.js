@@ -573,7 +573,7 @@
     const firstDay = date.getDay();
     const monthEvents = (state.calendar || []).map((e,i)=>({...e,_index:i})).filter(e => (e.year == null || Number(e.year)===year) && (e.month == null || Number(e.month)===month+1));
     const todayKey = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
-    let selectedKey = /^\\d{4}-\\d{2}-\\d{2}$/.test(state.calendarSelected || '') ? state.calendarSelected : (year===now.getFullYear() && month===now.getMonth() ? todayKey : `${year}-${String(month+1).padStart(2,'0')}-01`);
+    let selectedKey = /^\d{4}-\d{2}-\d{2}$/.test(state.calendarSelected || '') ? state.calendarSelected : (year===now.getFullYear() && month===now.getMonth() ? todayKey : `${year}-${String(month+1).padStart(2,'0')}-01`);
     if (!selectedKey.startsWith(`${year}-${String(month+1).padStart(2,'0')}-`)) selectedKey = `${year}-${String(month+1).padStart(2,'0')}-01`;
     state.calendarSelected = selectedKey;
     const selectedDay = Number(selectedKey.slice(-2));
