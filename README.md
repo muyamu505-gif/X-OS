@@ -32,7 +32,7 @@
 
 ## 版本
 
-当前版本：**1.1.1**
+当前版本：**1.1.21**
 
 扩展源文件：`index.js`、`style.css`、`manifest.json`。
 
@@ -116,3 +116,8 @@
 ### 1.1.20
 - Add persistent local wallet transaction history; each successful simulated gift records its amount and time, and the wallet shows recent entries.
 - Add individual notification deletion and a clear-all action while retaining mark-all-read.
+
+
+### 1.1.21
+- Add per-message deletion in WeChat conversations and a clear empty-chat state.
+- Add a back-to-conversation-list control in the chat header.
