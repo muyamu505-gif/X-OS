@@ -49,6 +49,13 @@
     redTab: 'recommend',
     redFollowing: ['一颗晚睡的栗子'],
     followed: false,
+    xTab: 'recommend',
+    xFollowing: ['沉沦'],
+    xPosts: [
+      {id:'xp1',user:'沉沦',avatar:'沉',text:'今晚临时加播，想聊聊天的可以来。',time:'刚刚',likes:2860,comments:[],liked:false,room:'main'},
+      {id:'xp2',user:'今晚冲分车队',avatar:'游',text:'差一个队友，今晚目标上分。',time:'12分钟前',likes:842,comments:[],liked:false,room:'game'},
+      {id:'xp3',user:'深夜情绪电台',avatar:'声',text:'今晚主题：那些没来得及说出口的话。',time:'半小时前',likes:1206,comments:[],liked:false,room:'voice'}
+    ],
     liveMessages: [
       { user: '汽水不加冰', text: '主播晚上好！' },
       { user: '晚风', text: '今天是闲聊局吗' },
@@ -101,9 +108,9 @@
   function mergeDefaults(saved) {
     const base = structuredCloneSafe(DEFAULT_STATE);
     if (!saved || typeof saved !== 'object' || Array.isArray(saved)) return base;
-    const arrayKeys = ['stack', 'notifications', 'moments', 'contacts', 'weiboPosts', 'weiboFollowing', 'redPosts', 'redFollowing', 'liveMessages', 'browserResults', 'photos', 'calendar', 'walletTransactions'];
+    const arrayKeys = ['stack', 'notifications', 'moments', 'contacts', 'weiboPosts', 'weiboFollowing', 'redPosts', 'redFollowing', 'liveMessages', 'browserResults', 'photos', 'calendar', 'walletTransactions', 'xPosts', 'xFollowing'];
     const objectKeys = ['chats'];
-    const stringKeys = ['page', 'wechatTab', 'weiboTab', 'redTab', 'selectedContact', 'notes', 'browserUrl', 'browserQuery', 'selectedAlbum'];
+    const stringKeys = ['page', 'wechatTab', 'weiboTab', 'redTab', 'xTab', 'activeLiveId', 'selectedContact', 'notes', 'browserUrl', 'browserQuery', 'selectedAlbum'];
     const booleanKeys = ['followed'];
     const numberKeys = ['liveViewers', 'liveHeat', 'wallet', 'giftsSent'];
     for (const key of arrayKeys) {
@@ -121,6 +128,7 @@
     if (!pages.has(base.page)) base.page = 'home';
     if (!['chats','contacts','discover','me'].includes(base.wechatTab)) base.wechatTab = 'chats';
     if (!['recommend','following','mine'].includes(base.weiboTab)) base.weiboTab = 'recommend';
+    if (!['recommend','following','game','voice','beauty'].includes(base.xTab)) base.xTab = 'recommend';
     // The chat renderer always needs a contact to display; recover the built-in
     // starter contacts if an old or damaged save contains an empty contact list.
     if (!base.contacts.length) base.contacts = structuredCloneSafe(DEFAULT_STATE.contacts);
@@ -425,12 +433,25 @@
   }
 
   function renderXPlatform() {
-    return `<section class="xp-page xp-xplatform"><div class="xp-x-top"><div class="xp-x-logo">X</div><div><strong>X平台</strong><small>综合直播社区</small></div><button data-action="notifications">♧</button></div><div class="xp-x-tabs"><b>推荐</b><span>关注</span><span>游戏</span><span>语音</span><span>颜值</span></div><article class="xp-live-card"><div class="xp-live-cover"><span class="xp-live-tag">● LIVE</span><span class="xp-live-count">${Number(state.liveViewers).toLocaleString('zh-CN')} 人在线</span><div class="xp-live-cover-title">深夜闲聊｜今天不想早睡</div></div><div class="xp-live-info"><strong>沉沦的直播间</strong><small>聊天 · 日常　　热度 ${Number(state.liveHeat).toLocaleString('zh-CN')}</small><button data-action="enter-live">进入直播间　›</button></div></article><div class="xp-x-section-title">热门直播</div><button type="button" class="xp-mini-live" data-action="enter-live"><span class="xp-mini-thumb game">GAME</span><span><b>今晚冲分车队</b><small>游戏 · 3.2万人在线</small></span><i>›</i></button><button type="button" class="xp-mini-live" data-action="enter-live"><span class="xp-mini-thumb voice">VOICE</span><span><b>深夜情绪电台</b><small>语音 · 8.6千人在线</small></span><i>›</i></button><div class="xp-x-bottom"><button type="button" data-action="x-home">首页</button><button type="button" data-action="follow">关注</button><button type="button" data-action="enter-live">＋</button><button type="button" data-action="notifications">消息</button><button type="button" data-action="wallet">我的</button></div></section>`;
+    const rooms = [
+      {id:'main',name:'沉沦的直播间',title:'深夜闲聊｜今天不想早睡',category:'聊天 · 日常',viewers:state.liveViewers,heat:state.liveHeat,tag:'颜值',cover:'LIVE'},
+      {id:'game',name:'今晚冲分车队',title:'今晚冲分车队｜差一个队友',category:'游戏 · 竞技',viewers:32000,heat:428000,tag:'游戏',cover:'GAME'},
+      {id:'voice',name:'深夜情绪电台',title:'深夜情绪电台｜听你说说话',category:'语音 · 情感',viewers:8600,heat:168000,tag:'语音',cover:'VOICE'}
+    ];
+    const tab=state.xTab||'recommend', following=state.xFollowing||[];
+    const filtered=(state.xPosts||[]).filter(p=>tab==='following'?following.includes(p.user)||p.user==='我':tab==='game'?p.room==='game':tab==='voice'?p.room==='voice':tab==='beauty'?p.room==='main':true);
+    const posts=filtered.map(p=>{const cs=Array.isArray(p.comments)?p.comments:[];return `<article class="xp-x-post"><div class="xp-x-post-author"><span>${escapeHtml(p.avatar||p.user?.[0]||'用')}</span><b>${escapeHtml(p.user)}</b><small>${escapeHtml(p.time||'刚刚')}</small>${p.user!=='我'? `<button data-x-follow="${escapeHtml(p.user)}">${following.includes(p.user)?'已关注':'＋关注'}</button>`:''}</div><p>${escapeHtml(p.text)}</p><div class="xp-x-post-actions"><button data-x-like="${escapeHtml(p.id)}" class="${p.liked?'is-liked':''}">♡ ${Number(p.likes)||0}</button><button data-x-comment="${escapeHtml(p.id)}">评论 ${cs.length}</button><button data-x-enter-room="${escapeHtml(p.room||'main')}">进入直播间 ↗</button></div>${cs.slice(-2).map(c=>`<div class="xp-x-comment"><b>${escapeHtml(c.user||'用户')}：</b>${escapeHtml(c.text)}</div>`).join('')}</article>`;}).join('');
+    const tabs=[['recommend','推荐'],['following','关注'],['game','游戏'],['voice','语音'],['beauty','颜值']].map(([id,n])=>`<button data-x-tab="${id}" class="${tab===id?'active':''}">${n}</button>`).join('');
+    const cards=rooms.map(r=>`<article class="xp-live-card"><div class="xp-live-cover xp-live-cover-${r.id}"><span class="xp-live-tag">● LIVE</span><span class="xp-live-count">${Number(r.viewers).toLocaleString('zh-CN')} 人在线</span><div class="xp-live-cover-title">${escapeHtml(r.title)}</div></div><div class="xp-live-info"><strong>${escapeHtml(r.name)}</strong><small>${escapeHtml(r.category)}　热度 ${Number(r.heat).toLocaleString('zh-CN')}</small><button data-x-enter-room="${r.id}">进入直播间　›</button></div></article>`).join('');
+    return `<section class="xp-page xp-xplatform"><div class="xp-x-top"><div class="xp-x-logo">X</div><div><strong>X平台</strong><small>综合直播社区</small></div><button data-action="notifications">♧</button></div><div class="xp-x-tabs">${tabs}</div><div class="xp-x-section-title">正在直播</div>${cards}<div class="xp-x-section-title">动态广场 <button data-action="x-compose">＋ 发布动态</button></div>${posts||'<div class="xp-empty">这里暂时没有动态</div>'}<div class="xp-x-bottom"><button data-action="x-home">首页</button><button data-x-tab="following">关注</button><button data-action="x-compose">＋</button><button data-action="notifications">消息</button><button data-action="x-profile">我的</button></div></section>`;
   }
 
   function renderLive() {
-    const lines = state.liveMessages.slice(-30).map(m => `<div class="xp-barrage"><b>${escapeHtml(m.user)}：</b>${escapeHtml(m.text)}</div>`).join('');
-    return `<section class="xp-page xp-live-room"><div class="xp-live-video"><span class="xp-live-tag">● LIVE</span><span class="xp-live-video-label">主播画面区域</span><small>这里显示由剧情描述的直播画面</small></div><div class="xp-live-room-info"><div><strong>深夜闲聊｜今天不想早睡</strong><small>沉沦　·　聊天分区　·　${Number(state.liveViewers).toLocaleString('zh-CN')} 人在线</small></div><button data-action="follow" class="xp-follow ${state.followed ? 'following' : ''}">${state.followed ? '已关注' : '＋ 关注'}</button></div><div class="xp-live-metrics"><span>热度 <b>${Number(state.liveHeat).toLocaleString('zh-CN')}</b></span><span>本地模拟礼物 <b>${state.giftsSent}</b></span><span>余额 <b>${state.wallet}</b> 钻石</span></div><div class="xp-barrage-list">${lines}</div><form class="xp-live-compose" data-form="barrage"><input name="message" autocomplete="off" placeholder="和主播聊两句…" maxlength="100"><button type="submit">发送</button><button type="button" data-action="gift">礼物</button></form></section>`;
+    const roomId=state.activeLiveId||'main';
+    const rooms={main:{name:'沉沦',title:'深夜闲聊｜今天不想早睡',category:'聊天分区',viewers:state.liveViewers,heat:state.liveHeat},game:{name:'今晚冲分车队',title:'今晚冲分车队｜差一个队友',category:'游戏分区',viewers:32000,heat:428000},voice:{name:'深夜情绪电台',title:'深夜情绪电台｜听你说说话',category:'语音分区',viewers:8600,heat:168000}};
+    const room=rooms[roomId]||rooms.main;
+    const lines=state.liveMessages.slice(-30).map(m=>`<div class="xp-barrage"><b>${escapeHtml(m.user)}：</b>${escapeHtml(m.text)}</div>`).join('');
+    return `<section class="xp-page xp-live-room"><div class="xp-live-video"><span class="xp-live-tag">● LIVE</span><span class="xp-live-video-label">${escapeHtml(room.title)}</span><small>这里显示由剧情描述的直播画面</small></div><div class="xp-live-room-info"><div><strong>${escapeHtml(room.title)}</strong><small>${escapeHtml(room.name)}　·　${room.category}　·　${Number(room.viewers).toLocaleString('zh-CN')} 人在线</small></div><button data-action="follow" class="xp-follow ${state.followed?'following':''}">${state.followed?'已关注':'＋ 关注'}</button></div><div class="xp-live-metrics"><span>热度 <b>${Number(room.heat).toLocaleString('zh-CN')}</b></span><span>本地模拟礼物 <b>${state.giftsSent}</b></span><span>余额 <b>${state.wallet}</b> 钻石</span></div><div class="xp-barrage-list">${lines}</div><form class="xp-live-compose" data-form="barrage"><input name="message" autocomplete="off" placeholder="和主播聊两句…" maxlength="100"><button type="submit">发送</button><button type="button" data-action="gift">礼物</button></form></section>`;
   }
 
   function renderWallet() {
@@ -532,6 +553,16 @@
     if (followWeibo) { const name=followWeibo.dataset.followWeibo; state.weiboFollowing=state.weiboFollowing||[]; state.weiboFollowing=state.weiboFollowing.includes(name)?state.weiboFollowing.filter(x=>x!==name):[...state.weiboFollowing,name]; renderScreen(); persistState(); return; }
     const shareWeibo = event.target.closest('[data-share-weibo]');
     if (shareWeibo) { const original=state.weiboPosts.find(p=>p.id===shareWeibo.dataset.shareWeibo); if(original){ original.reposts=(Number(original.reposts)||0)+1; state.weiboPosts.unshift({id:`wr${Date.now()}`,user:'我',avatar:'我',text:original.text,tag:original.tag||'#转发#',likes:0,comments:0,commentList:[],liked:false,reposts:0,repostOf:original.id,time:'刚刚'}); state.weiboPosts=state.weiboPosts.slice(0,100); addNotification('微博','转发成功',`你转发了 @${original.user} 的动态。`); } renderScreen(); persistState(); return; }
+    const xTab=event.target.closest('[data-x-tab]');
+    if(xTab){state.xTab=xTab.dataset.xTab;setPage('xplatform','xplatform',false);persistState();return;}
+    const xFollow=event.target.closest('[data-x-follow]');
+    if(xFollow){const name=xFollow.dataset.xFollow;state.xFollowing=state.xFollowing||[];state.xFollowing=state.xFollowing.includes(name)?state.xFollowing.filter(n=>n!==name):[...state.xFollowing,name];renderScreen();persistState();return;}
+    const xLike=event.target.closest('[data-x-like]');
+    if(xLike){const p=(state.xPosts||[]).find(p=>p.id===xLike.dataset.xLike);if(p){p.liked=!p.liked;p.likes=Math.max(0,(Number(p.likes)||0)+(p.liked?1:-1));}renderScreen();persistState();return;}
+    const xComment=event.target.closest('[data-x-comment]');
+    if(xComment){openActionDialog('x-comment','评论动态','评论会保存在本地 X 平台动态中',inlineHost,'写下评论……',xComment.dataset.xComment);return;}
+    const xEnter=event.target.closest('[data-x-enter-room]');
+    if(xEnter){state.activeLiveId=xEnter.dataset.xEnterRoom;setPage('live','xplatform');return;}
     const likeRed = event.target.closest('[data-like-red]');
     if (likeRed) { const p = state.redPosts.find(x => x.id === likeRed.dataset.likeRed); if (p) { p.liked = !p.liked; p.likes += p.liked ? 1 : -1; renderScreen(); persistState(); } return; }
     const redTab = event.target.closest('[data-red-tab]');
@@ -580,8 +611,10 @@
       case 'clear-chat': openActionDialog('clear-chat', '清空聊天记录', '确定删除与当前联系人的全部聊天记录吗？', inlineHost); break;
       case 'clear-notices': state.notifications.forEach(n => n.unread = false); renderScreen(); persistState(); break;
       case 'delete-all-notices': state.notifications = []; renderScreen(); persistState(); break;
-      case 'enter-live': setPage('live', 'xplatform'); break;
+      case 'enter-live': state.activeLiveId='main'; setPage('live', 'xplatform'); break;
       case 'x-home': setPage('xplatform', 'xplatform'); break;
+      case 'x-compose': openActionDialog('x-compose','发布 X 平台动态','发布内容会显示在动态广场',inlineHost,'分享此刻的动态……'); break;
+      case 'x-profile': openInfoDialog('我的 X 平台主页',`已关注：${(state.xFollowing||[]).length} 人\n我的动态：${(state.xPosts||[]).filter(p=>p.user==='我').length} 条\n收到的点赞：${(state.xPosts||[]).filter(p=>p.user==='我').reduce((n,p)=>n+(Number(p.likes)||0),0)}\n直播间：沉沦的直播间\n以上为本地模拟资料。`,inlineHost); break;
       case 'wallet': setPage('wallet', 'xplatform'); break;
       case 'follow': state.followed = !state.followed; renderScreen(); persistState(); break;
       case 'gift': openActionDialog('gift', '赠送礼物', '选择一份礼物支持主播。将扣除模拟钻石，不涉及真实支付。', inlineHost); break;
@@ -643,6 +676,10 @@
     } else if (kind === 'weibo-compose' && value) {
       state.weiboPosts.unshift({ id: `w${Date.now()}`, user: '我', avatar: '我', text: value, tag: '#我的动态#', likes: 0, comments: 0, commentList: [], liked: false, reposts: 0, time: '刚刚' });
       state.weiboPosts = state.weiboPosts.slice(0, 100);
+    } else if (kind === 'x-compose' && value) {
+      state.xPosts=state.xPosts||[];state.xPosts.unshift({id:`xp${Date.now()}`,user:'我',avatar:'我',text:value,time:'刚刚',likes:0,comments:[],liked:false,room:'main'});state.xPosts=state.xPosts.slice(0,100);
+    } else if (kind === 'x-comment' && value) {
+      const post=(state.xPosts||[]).find(p=>p.id===extra);if(post){post.comments=Array.isArray(post.comments)?post.comments:[];post.comments.push({user:'我',text:value,time:nowTime()});post.comments=post.comments.slice(-50);}
     } else if (kind === 'red-compose' && value) {
       state.redPosts.unshift({ id: `r${Date.now()}`, user: '我', title: value, desc: '刚刚发布 · 本地模拟笔记', likes: 0, liked: false, favorite: false, comments: [], color: 'peach' });
       state.redPosts = state.redPosts.slice(0, 100);
