@@ -1,50 +1,37 @@
-# X-OS｜X手机模拟器
+# X手机模拟器（X-OS）
 
-一个独立的 SillyTavern 手机模拟器扩展。角色卡与本扩展完全分开；本仓库只提供扩展本身。
+适用于 SillyTavern 的独立 UI 扩展。手机模拟器与角色卡分离，扩展不会读取、修改或上传角色卡 JSON。
 
-## 直接安装（推荐）
+## 安装
 
-在 SillyTavern 中打开 **扩展 → 安装扩展（Install Extension）**，粘贴下面的仓库地址：
+1. 打开 SillyTavern。
+2. 进入 **Extensions（扩展） → Install Extension（安装扩展）**。
+3. 在 Git Repository URL 中粘贴：
 
-```
-https://github.com/muyamu505-gif/X-OS
-```
+   `https://github.com/muyamu505-gif/X-OS`
 
-选择安装目标后安装即可。SillyTavern 通过 Git 克隆仓库，因此服务器端需要已安装 Git。
+4. 安装完成后刷新 SillyTavern 页面。
+
+需要安装 Git，并使用支持第三方扩展的 SillyTavern 版本（最低版本以 manifest.json 为准）。
 
 ## 功能
 
-- 酒馆界面悬浮手机入口。
-- AI 回复中出现 `[[PHONE]]` 或 `【打开手机】` 时，在该条消息下方显示可展开的手机面板。
-- 仿 Android 手机桌面、状态栏、通知中心。
-- 微信、微博、小红书、X平台等本地模拟应用。
-- 应用切换、返回、未读通知和本地状态保存。
-- 相册、钱包、浏览器、日历、备忘录等入口。
-
-## 目录结构
-
-仓库根目录提供 SillyTavern 所需的 `manifest.json`。实际扩展脚本与样式位于：
-
-- `X-Phone-Simulator-Extension/index.js`
-- `X-Phone-Simulator-Extension/style.css`
-
-## 使用提示
-
-让角色在需要展示手机入口的回复中输出以下任一标记：
-
-- `[[PHONE]]`
-- `【打开手机】`
-
-扩展会在该条 AI 消息下方添加“展开手机”按钮。
+- 桌面悬浮入口，以及 AI 消息标记 `[[PHONE]]` / `【打开手机】` 展开内嵌手机。
+- 浅灰蓝 Android 风格系统界面、通知中心、应用切换和返回导航。
+- 微信：联系人、聊天记录和本地发送消息。
+- 微博、小红书：动态浏览、点赞、评论与发布模拟内容。
+- X 平台：直播大厅、直播间弹幕、关注和模拟礼物。
+- 相册：素材条目、分类与收藏。
+- 浏览器：模拟搜索与应用内跳转。
+- 日历：添加日程；备忘录：自动保存。
+- 聊天数据优先保存于当前 SillyTavern 聊天元数据。
 
 ## 数据与隐私
 
-所有应用内容均为本地虚构模拟，不会连接真实微信、微博、小红书或 X平台服务。消息、动态、点赞、弹幕、关注、礼物和充值都只修改本地模拟状态，不会发生真实支付。扩展不会自动读取或修改角色卡 JSON。
+所有社交内容、直播互动、礼物和钱包余额均为本地剧情模拟，不连接真实社交平台、支付渠道或外部 API。不要将模拟钱包视为真实账户。
 
-## 手动安装
+## 版本
 
-如果不使用 URL 安装，可将仓库克隆到 SillyTavern 的扩展目录。请确保仓库根目录的 `manifest.json` 保留在扩展文件夹根部。
+当前版本：**1.1.1**
 
-## 许可
-
-代码按 AGPL-3.0-or-later 提供，详见 `X-Phone-Simulator-Extension/LICENSE`。
+扩展源文件：`index.js`、`style.css`、`manifest.json`。
