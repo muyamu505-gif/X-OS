@@ -1192,7 +1192,7 @@
     if(!context||typeof context.generateRaw!=='function'){addNotification('微信','暂时无法生成群聊回复','当前酒馆没有可用的文本生成接口；你的消息已保存。');renderScreen();persistState();return;}
     state.chatTypingContact=groupId;renderScreen();persistState();
     const profile=(state.importedProfile&&state.importedProfile.characters)||[];
-    const memberProfiles=members.map(c=>{const p=profile.find(x=>x.name===c.name);return {name:c.name,note:c.note||'',description:p&&p.description||'',relation:p&&p.relation||''};});
+    const memberProfiles=members.map(c=>{const p=profile.find(x=>x.name===c.name)||{};return {name:c.name,note:c.note||'',description:c.storyDescription||p.description||'',personality:c.storyPersonality||p.personality||'',voice:c.storyVoice||p.voice||'',relation:c.storyRelation||p.relation||'',knownFacts:c.storyNotes||p.notes||''};});
     const history=(state.chats[groupId]||[]).slice(-24).map(m=>(m.from==='me'?'我':String(m.user||'群成员'))+'：'+String(m.text||'')).join('\n');
     const prompt=[
       '你正在生成 X-OS 微信群聊中的角色发言。群名：'+group.name,
