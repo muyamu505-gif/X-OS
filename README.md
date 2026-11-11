@@ -32,7 +32,7 @@
 
 ## 版本
 
-当前版本：**1.1.47**
+当前版本：**1.1.48**
 
 扩展源文件：`index.js`、`style.css`、`manifest.json`。
 
@@ -254,3 +254,8 @@
 
 ### 1.1.47
 - Remove fabricated default viewer and heat counts from the generic livestream room; unknown values remain explicitly unrecorded instead of displaying zero or sample numbers.
+
+
+### 1.1.48
+- Start with an empty X-platform following list instead of automatically following the `{{char}}` template macro.
+- Sanitize legacy saved following lists to remove `{{user}}` and `{{char}}` macros; template placeholders are not creator accounts.
