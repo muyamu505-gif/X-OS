@@ -32,10 +32,15 @@
 
 ## 版本
 
-当前版本：**1.1.66**
+当前版本：**1.1.67**
 
 扩展源文件：`index.js`、`style.css`、`manifest.json`。
 
+
+### 1.1.67
+- Add monthly spending budgets and per-category budget limits to the wallet.
+- Show progress bars and visible overspending warnings for monthly and category limits.
+- Include configured budgets in wallet JSON backups and restore them with the wallet data.
 
 ### 1.1.66
 - Add a six-month income/expense trend chart to the wallet.
