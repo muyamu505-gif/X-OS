@@ -1523,7 +1523,7 @@
       }
       state.liveMessages=state.liveMessages.slice(-200);
       if(!state.importedLiveRooms.some(room=>room.id===state.activeLiveId)) state.activeLiveId='main';
-      state.importedProfile = {summary:String(profile.summary||'').slice(0,1000),userRole:String(profile.userRole||'').slice(0,500),charRole:String(profile.charRole||'').slice(0,500),characters:safeChars.map(x=>({name:x.name,relation:x.relation,description:x.description,openingMessage:x.openingMessage})),importedAt:nowTime(),importedContacts:importedContactIds.length,importedPosts:routedCounts,importedLiveRooms:state.importedLiveRooms.length,importedLiveMessages:importedLiveMessageCount,importedWechatMessages:importedWechatMessageCount};
+      state.importedProfile = {summary:String(profile.summary||'').slice(0,1000),userRole:String(profile.userRole||'').slice(0,500),charRole:String(profile.charRole||'').slice(0,500),characters:safeChars.map(x=>({name:x.name,relation:x.relation,description:x.description,personality:x.personality,voice:x.voice,notes:x.notes,openingMessage:x.openingMessage})),importedAt:nowTime(),importedContacts:importedContactIds.length,importedPosts:routedCounts,importedLiveRooms:state.importedLiveRooms.length,importedLiveMessages:importedLiveMessageCount,importedWechatMessages:importedWechatMessageCount};
       persistState(); addNotification('上下文导入','识别完成',`已识别 ${safeChars.length} 位剧情人物、${importedFriendRequestCount} 条好友申请、${importedWechatMessageCount} 条好友私聊消息。未成为好友的角色不会建立聊天。`); renderScreen();
     } catch(error) {
       console.error(`[${EXT_ID}] story context import failed`,error);
