@@ -32,7 +32,7 @@
 
 ## 版本
 
-当前版本：**1.1.38**
+当前版本：**1.1.39**
 
 扩展源文件：`index.js`、`style.css`、`manifest.json`。
 
@@ -203,3 +203,8 @@
 - Correct the SillyTavern generation/import helper placement and verify top-level event handlers can call it.
 - Abort context imports if the active chat changes while generation is in progress, preventing cross-chat data leakage.
 - Use the documented `generateQuietPrompt()` availability check for the built-in SillyTavern API mode.
+
+### 1.1.39
+- Use SillyTavern `generateRaw()` for context import so the user's context-scope switches are respected and unrelated chat prompt content is not implicitly attached.
+- Load selected global World Info books through the documented context API and include only selected entries plus the active card's embedded character book.
+- Keep the context import payload explicitly limited to the chosen character-card fields, selected worldbooks, and configured recent chat messages.
