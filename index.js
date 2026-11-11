@@ -46,6 +46,7 @@
     photos: [],
     selectedAlbum: '最近项目',
     calendar: [],
+    calendarView: '',
     importedProfile: null
   };
 
@@ -130,7 +131,7 @@
     const arrayKeys = ['stack', 'notifications', 'moments', 'contacts', 'weiboPosts', 'redPosts', 'liveMessages', 'importedLiveRooms', 'browserResults', 'photos', 'calendar', 'walletTransactions', 'xPosts'];
     const stringArrayKeys = ['weiboFollowing', 'redFollowing', 'xFollowing', 'followedLiveRooms'];
     const objectKeys = ['chats'];
-    const stringKeys = ['page', 'wechatTab', 'weiboTab', 'redTab', 'xTab', 'activeLiveId', 'selectedContact', 'notes', 'browserUrl', 'browserQuery', 'selectedAlbum'];
+    const stringKeys = ['page', 'wechatTab', 'weiboTab', 'redTab', 'xTab', 'activeLiveId', 'selectedContact', 'notes', 'browserUrl', 'browserQuery', 'selectedAlbum', 'calendarView'];
     const booleanKeys = [];
     const numberKeys = ['liveViewers', 'liveHeat', 'wallet', 'giftsSent'];
     for (const key of arrayKeys) {
@@ -256,9 +257,7 @@
         <div class="xphone-content">
           <div class="xphone-notch"><span></span></div>
           <div class="xphone-status"><span class="xp-clock">09:41</span><span class="xp-status-right">5G　●●●　▰</span></div>
-          <header class="xphone-header"><button class="xp-head-btn" data-action="back" aria-label="返回">‹</button><div class="xp-head-title">手机</div><button class="xp-head-btn" data-action="notifications" aria-label="通知">♧<i class="xp-notice-dot"></i></button></header>
           <main class="xphone-screen" id="xphone-screen"></main>
-          <nav class="xphone-bottom-nav"><button data-action="back">‹</button><button data-action="home">○</button><button data-action="close">×</button></nav>
         </div>
         <div class="xphone-drag-handle" role="button" tabindex="0" aria-label="拖动手机顶部移动位置" title="拖动手机顶部移动"></div>
         <div class="xphone-resize-handle" role="button" tabindex="0" aria-label="拖动右下角整体缩放手机" title="拖动调整整体大小"></div>
@@ -512,8 +511,10 @@
   }
 
   function renderWallet() {
-    const records = (state.walletTransactions || []).slice(0,8).map(item => `<div class="xp-wallet-record"><span><b>${escapeHtml(item.title)}</b><small>${escapeHtml(item.time)}</small></span><strong class="${item.amount < 0 ? 'is-minus' : 'is-plus'}">${item.amount > 0 ? '+' : ''}${item.amount}</strong></div>`).join('');
-    return `<section class="xp-page xp-wallet"><div class="xp-appbar"><div class="xp-app-title">钱包</div></div><div class="xp-wallet-card"><small>模拟账户余额</small><strong>${Number(state.wallet).toLocaleString('zh-CN')} <em>钻石</em></strong><span>仅供剧情模拟，不涉及真实支付</span></div><div class="xp-wallet-actions"><button data-action="wallet-record">完整账单</button><button data-action="wallet-recharge">模拟充值</button></div><div class="xp-section-heading">最近记录</div><div class="xp-wallet-records">${records || '<div class="xp-empty">暂无账单记录</div>'}</div><p class="xp-muted">本地模拟钱包不会连接任何支付渠道。</p></section>`;
+    const records = (state.walletTransactions || []).slice(0,30).map(item => `<div class="xp-ios-ledger-row"><span class="xp-ledger-icon">${Number(item.amount)<0?'↗':'＋'}</span><span class="xp-ledger-main"><b>${escapeHtml(item.title)}</b><small>${escapeHtml(item.time)}</small></span><strong class="${item.amount < 0 ? 'is-minus' : 'is-plus'}">${item.amount > 0 ? '+' : ''}${Number(item.amount).toLocaleString('zh-CN')}</strong></div>`).join('');
+    const income=(state.walletTransactions||[]).filter(x=>Number(x.amount)>0).reduce((n,x)=>n+Number(x.amount),0);
+    const expense=(state.walletTransactions||[]).filter(x=>Number(x.amount)<0).reduce((n,x)=>n+Math.abs(Number(x.amount)),0);
+    return `<section class="xp-page xp-wallet"><div class="xp-ios-ledger-head"><div><span class="xp-ios-eyebrow">WALLET & LEDGER</span><h2>记账</h2></div><button type="button" data-action="wallet-record">全部账单</button></div><div class="xp-wallet-card"><small>当前余额</small><strong>${Number(state.wallet).toLocaleString('zh-CN')} <em>钻石</em></strong><span>本地模拟账户 · 不涉及真实支付</span></div><div class="xp-ledger-summary"><div><small>累计收入</small><b>+${income.toLocaleString('zh-CN')}</b></div><div><small>累计支出</small><b>−${expense.toLocaleString('zh-CN')}</b></div></div><div class="xp-ios-agenda-head"><strong>最近交易</strong><small>${(state.walletTransactions||[]).length} 笔</small></div><div class="xp-wallet-records">${records || '<div class="xp-empty">暂无账单记录</div>'}</div><p class="xp-muted">礼物、模拟充值等操作会记录在这里。</p></section>`;
   }
 
   function renderPhotos() {
@@ -526,21 +527,27 @@
   }
 
   function renderBrowser() {
-    const results = (state.browserResults || []).map(r => `<button class="xp-browser-result" data-browser-result="${escapeHtml(r.id)}"><span>${escapeHtml(r.site)}</span><b>${escapeHtml(r.title)}</b><small>${escapeHtml(r.desc)}</small></button>`).join('');
-    return `<section class="xp-page xp-browser"><div class="xp-appbar"><div class="xp-app-title">浏览器</div><span class="xp-browser-private">外部网页搜索</span></div><form data-form="browser" class="xp-browser-form"><input name="url" value="${escapeHtml(state.browserQuery || '')}" placeholder="搜索网页或输入网址"><button type="submit">搜索</button></form><div class="xp-browser-home"><div class="xp-browser-logo">◉</div><strong>使用手机浏览器打开网页</strong><p>搜索内容会跳转到设备的外部浏览器，不会在模拟器里加载网页。</p><div class="xp-browser-shortcuts"><button type="button" data-browser-shortcut="https://www.google.com/">Google</button><button type="button" data-browser-shortcut="https://www.baidu.com/">百度</button><button type="button" data-browser-shortcut="https://www.bing.com/">Bing</button></div><div class="xp-browser-suggest"><span>提示</span><b>输入关键词进行 Google 搜索，或输入完整网址直接访问</b></div></div></section>`;
+    return `<section class="xp-page xp-browser"><div class="xp-safari-top"><div><span class="xp-ios-eyebrow">SAFARI</span><h2>浏览</h2></div><span class="xp-browser-private">隐私浏览 · 外部打开</span></div><form data-form="browser" class="xp-browser-form"><span>⌕</span><input name="url" value="${escapeHtml(state.browserQuery || '')}" placeholder="搜索或输入网站名称"><button type="submit" aria-label="搜索">↗</button></form><div class="xp-browser-section-title">个人收藏</div><div class="xp-safari-favorites"><button type="button" data-browser-shortcut="https://www.google.com/"><i class="safari-fav-google">G</i><span>Google</span></button><button type="button" data-browser-shortcut="https://www.baidu.com/"><i class="safari-fav-baidu">度</i><span>百度</span></button><button type="button" data-browser-shortcut="https://www.bing.com/"><i class="safari-fav-bing">b</i><span>Bing</span></button></div><div class="xp-safari-privacy-card"><span>◉</span><b>安全浏览</b><p>输入网址或关键词后，将在设备的浏览器中打开。网页内容由外部浏览器加载。</p></div><div class="xp-safari-bottom"><span>‹</span><span>›</span><span>＋</span><span>▢</span><span>☰</span></div></section>`;
   }
 
   function renderCalendar() {
-    const date = new Date();
-    const year = date.getFullYear(), month = date.getMonth();
+    const now = new Date();
+    const parts = /^([0-9]{4})-([0-9]{2})$/.exec(state.calendarView || '');
+    const year = parts ? Number(parts[1]) : now.getFullYear();
+    const month = parts ? Number(parts[2])-1 : now.getMonth();
+    const date = new Date(year, month, 1);
     const days = new Date(year, month + 1, 0).getDate();
-    const firstDay = new Date(year, month, 1).getDay();
-    const cells = [...Array(firstDay).fill(''), ...Array.from({length: days}, (_,i)=>String(i+1))];
-    return `<section class="xp-page xp-calendar"><div class="xp-appbar"><div><div class="xp-app-title">日历</div><small>安排好每一个重要时刻</small></div><span class="xp-calendar-year">${year}</span></div><div class="xp-calendar-month">${year}年 ${month+1}月</div><div class="xp-calendar-week">日　一　二　三　四　五　六</div><div class="xp-calendar-grid">${cells.map(d=>`<span class="${d && state.calendar.some(e=>Number(e.day)===Number(d)) ? 'has-event' : ''} ${Number(d)===date.getDate() ? 'today' : ''}">${d}</span>`).join('')}</div><div class="xp-section-heading">近期安排 <small>${state.calendar.length} 项</small></div><div class="xp-calendar-events">${state.calendar.map((e,i)=>`<div class="xp-calendar-event"><span><b>${escapeHtml(e.day)}日　${escapeHtml(e.title)}</b><small>${escapeHtml(e.desc)}</small></span><button type="button" data-delete-calendar="${i}" aria-label="删除日程">×</button></div>`).join('') || '<div class="xp-empty">暂无安排</div>'}</div><form class="xp-calendar-add" data-form="calendar"><input name="day" type="number" min="1" max="31" placeholder="日期" required><input name="title" maxlength="32" placeholder="事项 / 时间" required><input name="desc" maxlength="60" placeholder="备注"><button type="submit">添加日程</button></form></section>`;
+    const firstDay = date.getDay();
+    const monthEvents = (state.calendar || []).map((e,i)=>({...e,_index:i})).filter(e => (e.year == null || Number(e.year)===year) && (e.month == null || Number(e.month)===month+1));
+    const cells = [...Array(firstDay).fill(''), ...Array.from({length:days},(_,i)=>String(i+1))];
+    const week = ['日','一','二','三','四','五','六'];
+    const daysHtml = cells.map(d=>{const event=monthEvents.some(e=>Number(e.day)===Number(d));const today=Number(d)===now.getDate()&&year===now.getFullYear()&&month===now.getMonth();return `<span class="xp-cal-day ${event?'has-event':''} ${today?'today':''}">${d}${event?'<i></i>':''}</span>`;}).join('');
+    const events = monthEvents.sort((a,b)=>Number(a.day)-Number(b.day)).map(e=>`<div class="xp-calendar-event"><span><b>${escapeHtml(e.day)}日　${escapeHtml(e.title)}</b><small>${escapeHtml(e.desc||'')}</small></span><button type="button" data-delete-calendar="${e._index}" aria-label="删除日程">×</button></div>`).join('');
+    return `<section class="xp-page xp-calendar"><div class="xp-ios-calendar-head"><div><span class="xp-ios-eyebrow">CALENDAR</span><h2>日历</h2></div><button type="button" data-action="calendar-today">今天</button></div><div class="xp-calendar-month-nav"><button type="button" data-action="calendar-prev" aria-label="上个月">‹</button><strong>${year}年 ${month+1}月</strong><button type="button" data-action="calendar-next" aria-label="下个月">›</button></div><div class="xp-calendar-week">${week.map(d=>`<span>${d}</span>`).join('')}</div><div class="xp-calendar-grid">${daysHtml}</div><div class="xp-ios-agenda-head"><strong>日程安排</strong><small>${monthEvents.length} 项</small></div><div class="xp-calendar-events">${events || '<div class="xp-empty">这个月还没有日程</div>'}</div><form class="xp-calendar-add" data-form="calendar"><input type="hidden" name="year" value="${year}"><input type="hidden" name="month" value="${month+1}"><input name="day" type="number" min="1" max="${days}" placeholder="日期" required><input name="title" maxlength="32" placeholder="新建日程" required><input name="desc" maxlength="60" placeholder="备注（可选）"><button type="submit">＋ 添加日程</button></form></section>`;
   }
 
   function renderNotes() {
-    return `<section class="xp-page xp-notes-page"><div class="xp-appbar"><div><div class="xp-app-title">备忘录</div><small>随手记下，不遗漏灵感</small></div><span class="xp-notes-saved"><span data-notes-count>${String(state.notes || '').length}</span> 字 · 自动保存</span></div><div class="xp-notes-paper"><div class="xp-notes-date">${new Intl.DateTimeFormat('zh-CN',{dateStyle:'full'}).format(new Date())}</div><textarea class="xp-notes" data-notes placeholder="写点什么……">${escapeHtml(state.notes)}</textarea></div><p class="xp-muted">内容自动保存在当前聊天。</p></section>`;
+    return `<section class="xp-page xp-notes-page"><div class="xp-ios-notes-head"><div><span class="xp-ios-eyebrow">NOTES</span><h2>备忘录</h2></div><span class="xp-notes-saved"><span data-notes-count>${String(state.notes || '').length}</span> 字 · 已自动保存</span></div><div class="xp-notes-paper"><div class="xp-notes-date">${new Intl.DateTimeFormat('zh-CN',{dateStyle:'full'}).format(new Date())}</div><textarea class="xp-notes" data-notes placeholder="开始书写……">${escapeHtml(state.notes)}</textarea></div><div class="xp-notes-footer"><span>Aa</span><span>☑</span><span>▦</span><span>✎</span><small>仅保存在当前聊天</small></div></section>`;
   }
 
   function renderScreen() {
@@ -548,19 +555,11 @@
     const renderers = { home: renderHome, notifications: renderNotifications, wechat: renderWechat, 'wechat-moments': renderWechatMoments, chat: renderChat, weibo: renderWeibo, red: renderRed, xplatform: renderXPlatform, live: renderLive, wallet: renderWallet, photos: renderPhotos, browser: renderBrowser, calendar: renderCalendar, notes: renderNotes, settings: renderSettings };
     const renderer = renderers[state.page] || renderHome;
     if (phoneScreen && overlay) {
-      const title = overlay.querySelector('.xp-head-title');
-      if (title) title.textContent = titles[state.page] || '手机';
       phoneScreen.innerHTML = renderer();
-      const dot = overlay.querySelector('.xp-notice-dot');
-      if (dot) dot.style.display = state.notifications.some(n => n.unread) ? 'block' : 'none';
     }
     document.querySelectorAll('.xphone-inline-host:not([hidden])').forEach(host => {
       const screen = host.querySelector('.xphone-inline-screen');
-      const title = host.querySelector('.xp-inline-title');
       if (screen) screen.innerHTML = renderer();
-      if (title) title.textContent = titles[state.page] || '手机';
-      const dot = host.querySelector('.xp-inline-dot');
-      if (dot) dot.style.display = state.notifications.some(n => n.unread) ? 'inline-block' : 'none';
     });
   }
 
@@ -663,6 +662,9 @@
       case 'back': goBack(); break;
       case 'home': state.stack = []; setPage('home', null, false); break;
       case 'notifications': setPage('notifications'); break;
+      case 'calendar-prev': { const p=/^(\\d{4})-(\\d{2})$/.exec(state.calendarView||''); const d=p?new Date(Number(p[1]),Number(p[2])-2,1):new Date(new Date().getFullYear(),new Date().getMonth()-1,1); state.calendarView=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; renderScreen(); persistState(); break; }
+      case 'calendar-next': { const p=/^(\\d{4})-(\\d{2})$/.exec(state.calendarView||''); const d=p?new Date(Number(p[1]),Number(p[2]),1):new Date(new Date().getFullYear(),new Date().getMonth()+1,1); state.calendarView=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; renderScreen(); persistState(); break; }
+      case 'calendar-today': state.calendarView=''; renderScreen(); persistState(); break;
       case 'wechat-list': setPage('wechat', 'wechat'); break;
       case 'wechat-moments': setPage('wechat-moments', 'wechat'); break;
       case 'wechat-moment-compose': openActionDialog('wechat-moment-compose','发表朋友圈','分享此刻的生活',inlineHost,'这一刻的想法……'); break;
@@ -867,9 +869,11 @@
       const day = Math.max(1, Math.min(31, Number(data.get('day')) || 1));
       const title = String(data.get('title') || '').trim();
       if (!title) return;
-      state.calendar.push({ day, title, desc: String(data.get('desc') || '').trim() });
+      const year = Number(data.get('year')) || new Date().getFullYear();
+      const month = Number(data.get('month')) || new Date().getMonth()+1;
+      state.calendar.push({ year, month, day, title, desc: String(data.get('desc') || '').trim() });
       if (state.calendar.length > 200) state.calendar = state.calendar.slice(-200);
-      state.calendar.sort((a,b) => Number(a.day)-Number(b.day));
+      state.calendar.sort((a,b) => (Number(a.year)||0)-(Number(b.year)||0) || (Number(a.month)||0)-(Number(b.month)||0) || Number(a.day)-Number(b.day));
       renderScreen(); persistState();
     }
   }
@@ -1101,7 +1105,7 @@
       button.className = 'xphone-inline-entry'; button.type = 'button'; button.textContent = '▣ 展开手机';
       const host = document.createElement('div');
       host.className = 'xphone-inline-host'; host.hidden = true;
-      host.innerHTML = `<div class="xp-inline-device"><div class="xp-inline-status"><span>● ${new Date().toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit', hour12:false})}</span><span>5G　▰</span></div><div class="xp-inline-toolbar"><button data-action="back">‹</button><strong class="xp-inline-title">手机</strong><span><i class="xp-inline-dot"></i><button data-action="close">×</button></span></div><div class="xphone-inline-screen"></div><div class="xp-inline-nav"><button data-action="back">‹</button><button data-action="home">○</button><button data-action="close">×</button></div></div>`;
+      host.innerHTML = `<div class="xp-inline-device"><div class="xp-inline-status"><span>● ${new Date().toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit', hour12:false})}</span><span>5G　▰</span></div><div class="xphone-inline-screen"></div></div>`;
       button.addEventListener('click', () => { host.hidden = !host.hidden; button.textContent = host.hidden ? '▣ 展开手机' : '▣ 收起手机'; if (!host.hidden) renderScreen(); });
       host.addEventListener('click', handleClick);
       host.addEventListener('keydown', event => {
