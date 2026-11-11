@@ -32,7 +32,7 @@
 
 ## 版本
 
-当前版本：**1.1.42**
+当前版本：**1.1.43**
 
 扩展源文件：`index.js`、`style.css`、`manifest.json`。
 
@@ -226,3 +226,9 @@
 - Route story-derived social posts to WeChat Moments, Weibo, Xiaohongshu, or X according to their content type instead of placing every post in X.
 - Keep platform-specific post structures and interaction fields compatible with each app.
 - Show per-platform import counts in the current-chat import summary.
+
+
+### 1.1.43
+- Extract story-supported livestream rooms only when a current card, selected worldbook, or chat explicitly establishes an active/planned stream.
+- Render extracted rooms in the X Platform live list and room view; avoid invented viewer counts and heat for story-derived rooms.
+- Keep a neutral generic current-character room fallback without hardcoded sample hosts or fixed NPC streamers.
