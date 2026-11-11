@@ -568,7 +568,8 @@
     const filter = ['all','income','expense'].includes(state.walletTypeFilter) ? state.walletTypeFilter : 'all';
     state.walletTypeFilter = filter;
     const filtered = monthTransactions.filter(item => filter === 'all' || (filter === 'income' ? Number(item.amount)>0 : Number(item.amount)<0));
-    const renderRecord = item => '<div class="xp-ios-ledger-row"><span class="xp-ledger-icon">'+(Number(item.amount)<0?'↗':'＋')+'</span><span class="xp-ledger-main"><b>'+escapeHtml(item.title||'未命名记录')+'</b><small>'+escapeHtml(item.category||'其他')+' · '+escapeHtml(item.time||'时间未记录')+'</small></span><strong class="'+(Number(item.amount)<0?'is-minus':'is-plus')+'">'+(Number(item.amount)>0?'+':'')+(Number(item.amount)||0).toLocaleString('zh-CN')+'</strong></div>';
+    transactions.forEach((item,index)=>{if(!item.id)item.id='legacy-'+index+'-'+String(item.amount||0);});
+    const renderRecord = item => '<div class="xp-ios-ledger-row"><span class="xp-ledger-icon">'+(Number(item.amount)<0?'↗':'＋')+'</span><span class="xp-ledger-main"><b>'+escapeHtml(item.title||'未命名记录')+'</b><small>'+escapeHtml(item.category||'其他')+' · '+escapeHtml(item.time||'时间未记录')+'</small></span><strong class="'+(Number(item.amount)<0?'is-minus':'is-plus')+'">'+(Number(item.amount)>0?'+':'')+(Number(item.amount)||0).toLocaleString('zh-CN')+'</strong><span class="xp-ledger-controls"><button type="button" data-wallet-edit="'+escapeHtml(item.id)+'" aria-label="编辑账单">编辑</button><button type="button" data-wallet-delete="'+escapeHtml(item.id)+'" aria-label="删除账单">删除</button></span></div>';
     const records = filtered.slice(0,50).map(renderRecord).join('');
     const legacy = legacyTransactions.length ? '<div class="xp-wallet-legacy"><strong>未标记日期的旧账单</strong><small>这些记录缺少日期，暂不计入月份统计</small>'+legacyTransactions.slice(0,20).map(renderRecord).join('')+'</div>' : '';
     const filterButtons = [['all','全部'],['income','收入'],['expense','支出']].map(([key,label])=>'<button type="button" data-wallet-filter="'+key+'" class="'+(filter===key?'active':'')+'" aria-pressed="'+(filter===key)+'">'+label+'</button>').join('');
@@ -728,6 +729,10 @@
     if (favoritePhoto) { const p = state.photos.find(x => x.id === favoritePhoto.dataset.favoritePhoto); if (p) p.favorite = !p.favorite; renderScreen(); persistState(); return; }
     const deletePhoto = event.target.closest('[data-delete-photo]');
     if (deletePhoto) { state.photos = state.photos.filter(p => p.id !== deletePhoto.dataset.deletePhoto); renderScreen(); persistState(); return; }
+    const walletEdit = event.target.closest('[data-wallet-edit]');
+    if (walletEdit) { openActionDialog('wallet-edit','编辑账单','修改金额会同步调整模拟余额',inlineHost,'',walletEdit.dataset.walletEdit); return; }
+    const walletDelete = event.target.closest('[data-wallet-delete]');
+    if (walletDelete) { openActionDialog('wallet-delete','删除这笔账单','删除后将尝试回滚对应余额变化；若余额不足以回滚，记录会保留。',inlineHost,'',walletDelete.dataset.walletDelete); return; }
     const walletFilter = event.target.closest('[data-wallet-filter]');
     if (walletFilter) { state.walletTypeFilter = walletFilter.dataset.walletFilter; renderScreen(); persistState(); return; }
     const calendarDay = event.target.closest('[data-calendar-day]');
@@ -807,7 +812,7 @@
     if (!root) return;
     root.querySelector('.xp-action-dialog')?.remove();
     pendingDialog = { kind, extra, root };
-    root.insertAdjacentHTML('beforeend', `<div class="xp-action-dialog"><form class="xp-dialog-card" data-form="dialog"><button type="button" class="xp-dialog-close" data-action="dialog-close" aria-label="关闭">×</button><strong>${escapeHtml(title)}</strong><p>${escapeHtml(description)}</p>${kind === 'wechat-contact-edit' ? `<input name="contactName" maxlength="24" value="${escapeHtml(state.contacts.find(c=>c.id===extra)?.name||'')}" placeholder="联系人昵称"><input name="contactNote" maxlength="40" value="${escapeHtml(state.contacts.find(c=>c.id===extra)?.note||'')}" placeholder="备注"><input type="hidden" name="value" value="save">` : kind === 'gift' ? `<select name="value"><option value="小心心">小心心 · 10钻</option><option value="玫瑰">玫瑰 · 99钻</option><option value="星海">星海 · 520钻</option></select>` : kind === 'wallet-add' ? `<select name="direction"><option value="expense">支出</option><option value="income">收入</option></select><select name="category"><option>日常</option><option>餐饮</option><option>购物</option><option>交通</option><option>娱乐</option><option>礼物</option><option>工资</option><option>其他</option></select><input name="amount" type="number" min="1" max="999999999" step="1" placeholder="金额（钻）" required><input name="title" maxlength="32" placeholder="项目名称" required>` : kind === 'clear-chat' ? `<div class="xp-dialog-confirm-note">此操作会删除与该联系人的全部本地聊天记录，且无法撤销。</div><input type="hidden" name="value" value="confirm">` : `<textarea name="value" maxlength="300" placeholder="${escapeHtml(placeholder || '')}" ${kind === 'comment' ? 'required' : ''}></textarea>`}<button class="xp-dialog-submit" type="submit">${kind === 'gift' ? '确认赠送' : kind === 'comment' ? '发表评论' : kind === 'clear-chat' ? '确认清空' : '发布'}</button></form></div>`);
+    root.insertAdjacentHTML('beforeend', `<div class="xp-action-dialog"><form class="xp-dialog-card" data-form="dialog"><button type="button" class="xp-dialog-close" data-action="dialog-close" aria-label="关闭">×</button><strong>${escapeHtml(title)}</strong><p>${escapeHtml(description)}</p>${kind === 'wallet-edit' ? (()=>{const t=(state.walletTransactions||[]).find(x=>String(x.id)===String(extra));const a=Math.abs(Number(t?.amount)||0);return t ? '<select name="direction"><option value="expense" '+(Number(t.amount)<0?'selected':'')+'>支出</option><option value="income" '+(Number(t.amount)>0?'selected':'')+'>收入</option></select><select name="category">'+['日常','餐饮','购物','交通','娱乐','礼物','工资','其他'].map(x=>'<option '+((t.category||'其他')===x?'selected':'')+'>'+x+'</option>').join('')+'</select><input name="amount" type="number" min="1" max="999999999" step="1" value="'+a+'" required><input name="title" maxlength="32" value="'+escapeHtml(t.title||'')+'" required>' : '<p>找不到这笔账单。</p>'})() : kind === 'wallet-delete' ? `<div class="xp-dialog-confirm-note">这笔账单将从明细中移除。若回滚后余额会变成负数，系统会阻止删除。</div><input type="hidden" name="value" value="confirm">` : ${kind === 'wechat-contact-edit' ? `<input name="contactName" maxlength="24" value="${escapeHtml(state.contacts.find(c=>c.id===extra)?.name||'')}" placeholder="联系人昵称"><input name="contactNote" maxlength="40" value="${escapeHtml(state.contacts.find(c=>c.id===extra)?.note||'')}" placeholder="备注"><input type="hidden" name="value" value="save">` : kind === 'gift' ? `<select name="value"><option value="小心心">小心心 · 10钻</option><option value="玫瑰">玫瑰 · 99钻</option><option value="星海">星海 · 520钻</option></select>` : kind === 'wallet-add' ? `<select name="direction"><option value="expense">支出</option><option value="income">收入</option></select><select name="category"><option>日常</option><option>餐饮</option><option>购物</option><option>交通</option><option>娱乐</option><option>礼物</option><option>工资</option><option>其他</option></select><input name="amount" type="number" min="1" max="999999999" step="1" placeholder="金额（钻）" required><input name="title" maxlength="32" placeholder="项目名称" required>` : kind === 'clear-chat' ? `<div class="xp-dialog-confirm-note">此操作会删除与该联系人的全部本地聊天记录，且无法撤销。</div><input type="hidden" name="value" value="confirm">` : `<textarea name="value" maxlength="300" placeholder="${escapeHtml(placeholder || '')}" ${kind === 'comment' ? 'required' : ''}></textarea>`}<button class="xp-dialog-submit" type="submit">${kind === 'wallet-edit' ? '保存修改' : kind === 'wallet-delete' ? '确认删除' : kind === 'gift' ? '确认赠送' : kind === 'comment' ? '发表评论' : kind === 'clear-chat' ? '确认清空' : '发布'}</button></form></div>`);
     root.querySelector('.xp-action-dialog textarea, .xp-action-dialog select')?.focus();
   }
 
@@ -850,6 +855,20 @@
         state.wallet = Math.max(0, Number(state.wallet)||0) + signedAmount;
         addNotification('记账',walletDirection==='income'?'收入已记录':'支出已记录',`${walletTitle}：${signedAmount>0?'+':''}${signedAmount}钻`);
       }
+    } else if (kind === 'wallet-edit') {
+      const tx=(state.walletTransactions||[]).find(x=>String(x.id)===String(extra));
+      if(tx){
+        const amount=Number(data.get('amount'));
+        const title=String(data.get('title')||'').trim();
+        const direction=String(data.get('direction')||'expense');
+        const category=String(data.get('category')||'其他').trim()||'其他';
+        if(!Number.isSafeInteger(amount)||amount<=0||amount>999999999||!title){addNotification('记账','修改失败','请填写有效的正整数金额和项目名称。');}
+        else {const nextAmount=direction==='income'?amount:-amount;const nextBalance=(Number(state.wallet)||0)+(nextAmount-(Number(tx.amount)||0));if(nextBalance<0){addNotification('记账','余额不足','这次修改会使模拟余额变成负数，未修改账单。');}else{state.wallet=nextBalance;tx.amount=nextAmount;tx.title=title;tx.category=category;addNotification('记账','账单已更新',title+'：'+(nextAmount>0?'+':'')+nextAmount+'钻');}}
+      }else addNotification('记账','修改失败','找不到这笔账单，可能已被移除。');
+    } else if (kind === 'wallet-delete' && value === 'confirm') {
+      const index=(state.walletTransactions||[]).findIndex(x=>String(x.id)===String(extra));
+      if(index>=0){const tx=state.walletTransactions[index];const nextBalance=(Number(state.wallet)||0)-(Number(tx.amount)||0);if(nextBalance<0){addNotification('记账','无法删除','回滚这笔收入会导致余额为负数，账单已保留。');}else{state.wallet=nextBalance;state.walletTransactions.splice(index,1);addNotification('记账','账单已删除','已删除：'+(tx.title||'未命名记录'));}}
+      else addNotification('记账','删除失败','找不到这笔账单，可能已被移除。');
     } else if (kind === 'clear-chat' && value === 'confirm') {
       if (state.selectedContact) state.chats[state.selectedContact] = [];
     } else if (kind === 'wechat-moment-compose' && value) {
