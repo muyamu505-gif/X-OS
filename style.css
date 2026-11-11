@@ -94,3 +94,33 @@
     border-radius:30px;
   }
 }
+
+
+/* X-OS 1.1.3: harden the modal layer against host-theme and mobile layout overrides. */
+#xphone-overlay.xphone-overlay{
+  position:fixed!important;inset:0!important;z-index:2147483000!important;
+  box-sizing:border-box!important;isolation:isolate!important;overflow:hidden!important;
+  align-items:center!important;justify-content:center!important;
+  padding:max(12px,env(safe-area-inset-top)) 12px max(12px,env(safe-area-inset-bottom))!important;
+}
+#xphone-overlay.xphone-open{display:flex!important}
+#xphone-overlay:not(.xphone-open){display:none!important}
+#xphone-overlay>.xphone-backdrop{
+  position:absolute!important;inset:0!important;z-index:0!important;
+  background:rgba(8,10,14,.72)!important;backdrop-filter:blur(5px)!important;
+}
+#xphone-overlay>.xphone-shell{
+  position:relative!important;z-index:1!important;box-sizing:border-box!important;
+  width:min(320px,calc(100vw - 32px))!important;
+  height:min(620px,calc(100dvh - 48px))!important;
+  min-width:min(260px,calc(100vw - 32px))!important;
+  min-height:min(440px,calc(100dvh - 48px))!important;
+  max-width:calc(100vw - 24px)!important;max-height:calc(100dvh - 24px)!important;
+  margin:auto!important;overflow:hidden!important;display:flex!important;flex-direction:column!important;
+  border:6px solid #17191d!important;border-radius:30px!important;background:#f8f9fb!important;
+}
+#xphone-overlay #xphone-screen{flex:1 1 auto!important;min-height:0!important;overflow:auto!important;background:#f7f8fa!important}
+#xphone-overlay .xp-wallpaper{min-height:100%!important;box-sizing:border-box!important}
+@media(max-width:520px){
+ #xphone-overlay>.xphone-shell{width:min(320px,calc(100vw - 32px))!important;height:min(620px,calc(100dvh - 48px))!important}
+}
