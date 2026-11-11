@@ -32,10 +32,15 @@
 
 ## 版本
 
-当前版本：**1.1.79**
+当前版本：**1.1.80**
 
 扩展源文件：`index.js`、`style.css`、`manifest.json`。
 
+
+### 1.1.80
+- Extend story extraction for each NPC with evidence-based personality, voice/speaking style, key facts, relationship and description fields. Empty or unsupported fields remain blank rather than being invented.
+- Persist extracted persona fields to existing contacts as well as the searchable friend directory, without replacing user-authored contact notes.
+- Use each contact's own persona and relationship details when generating one-to-one and group-chat replies; remove the generic assumption that every contact has the same relationship with the user.
 
 ### 1.1.79
 - Enable multi-member WeChat group replies through the active SillyTavern generation interface. The model may let up to three existing group members respond in one turn, each under their own name and persona; unknown speakers are discarded.
