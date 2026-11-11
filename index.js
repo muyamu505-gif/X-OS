@@ -115,6 +115,14 @@
     return null;
   }
 
+  function canGenerateText() {
+    if (systemSettings.apiMode === 'openai') {
+      return !!(String(systemSettings.apiBase || '').trim() && String(systemSettings.apiKey || '').trim() && String(systemSettings.apiModel || '').trim());
+    }
+    const context = currentContext();
+    return !!(context && (typeof context.generateRaw === 'function' || typeof context.generateQuietPrompt === 'function'));
+  }
+
   function getContextSummary() {
     const c = currentContext(), chat = Array.isArray(c?.chat) ? c.chat : [];
     const character = getCurrentCharacterRecord(c);
