@@ -18,6 +18,7 @@
     selectedContact: null,
     selectedRedPostId: '',
     selectedWeiboPostId: '',
+    selectedXUser: '',
     chatSearchQuery: '',
     notifications: [],
     wechatTab: 'chats',
@@ -146,7 +147,7 @@
     const arrayKeys = ['stack', 'notifications', 'moments', 'wechatFavorites', 'notesList', 'contacts', 'weiboPosts', 'redPosts', 'liveMessages', 'importedLiveRooms', 'browserResults', 'photos', 'calendar', 'walletTransactions', 'xPosts'];
     const stringArrayKeys = ['weiboFollowing', 'redFollowing', 'xFollowing', 'followedLiveRooms'];
     const objectKeys = ['chats'];
-    const stringKeys = ['page', 'wechatTab', 'weiboTab', 'redTab', 'xTab', 'activeLiveId', 'selectedContact', 'selectedRedPostId', 'selectedWeiboPostId', 'chatSearchQuery', 'notes', 'activeNoteId', 'browserUrl', 'browserQuery', 'selectedAlbum', 'calendarView', 'walletViewMonth', 'walletTypeFilter', 'walletCategoryFilter', 'walletSearchQuery', 'weiboSearchQuery', 'redSearchQuery', 'xSearchQuery'];
+    const stringKeys = ['page', 'wechatTab', 'weiboTab', 'redTab', 'xTab', 'activeLiveId', 'selectedContact', 'selectedRedPostId', 'selectedWeiboPostId', 'selectedXUser', 'chatSearchQuery', 'notes', 'activeNoteId', 'browserUrl', 'browserQuery', 'selectedAlbum', 'calendarView', 'walletViewMonth', 'walletTypeFilter', 'walletCategoryFilter', 'walletSearchQuery', 'weiboSearchQuery', 'redSearchQuery', 'xSearchQuery'];
     const booleanKeys = [];
     const numberKeys = ['liveViewers', 'liveHeat', 'wallet', 'giftsSent'];
     for (const key of arrayKeys) {
@@ -561,10 +562,18 @@
     const rooms = getLiveRooms().map((room,index)=>({...room,viewers:room.id==='main'?state.liveViewers:null,heat:room.id==='main'?state.liveHeat:null,tag:room.category,cover:'LIVE'}));
     const tab=state.xTab||'recommend', following=state.xFollowing||[];
     const filtered=(state.xPosts||[]).filter(p=>tab==='following'?following.includes(p.user)||p.user==='{{user}}':tab==='game'?p.room==='game':tab==='voice'?p.room==='voice':tab==='beauty'?p.room==='main':true).filter(p=>!state.xSearchQuery||[p.user,p.text].join(' ').toLocaleLowerCase().includes(state.xSearchQuery.toLocaleLowerCase()));
-    const posts=filtered.map(p=>{const cs=Array.isArray(p.comments)?p.comments:[];return `<article class="xp-x-post"><div class="xp-x-post-author"><span>${escapeHtml(p.avatar||p.user?.[0]||'用')}</span><b>${escapeHtml(p.user)}</b><small>${escapeHtml(p.time||'刚刚')}</small>${p.user!=='{{user}}'? `<button data-x-follow="${escapeHtml(p.user)}">${following.includes(p.user)?'已关注':'＋关注'}</button>`:''}</div><p>${escapeHtml(p.text)}</p><div class="xp-x-post-actions"><button data-x-like="${escapeHtml(p.id)}" class="${p.liked?'is-liked':''}">♡ ${Number(p.likes)||0}</button><button data-x-comment="${escapeHtml(p.id)}">评论 ${cs.length}</button><button data-x-enter-room="${escapeHtml(p.room||'main')}">进入直播间 ↗</button></div>${cs.slice(-2).map(c=>`<div class="xp-x-comment"><b>${escapeHtml(c.user||'用户')}：</b>${escapeHtml(c.text)}</div>`).join('')}</article>`;}).join('');
+    const posts=filtered.map(p=>{const cs=Array.isArray(p.comments)?p.comments:[];return `<article class="xp-x-post"><div class="xp-x-post-author"><span>${escapeHtml(p.avatar||p.user?.[0]||'用')}</span><button class="xp-x-author-open" data-x-profile="${escapeHtml(p.user)}">${escapeHtml(p.user)}</button><small>${escapeHtml(p.time||'刚刚')}</small>${p.user!=='{{user}}'? `<button data-x-follow="${escapeHtml(p.user)}">${following.includes(p.user)?'已关注':'＋关注'}</button>`:''}</div><p>${escapeHtml(p.text)}</p><div class="xp-x-post-actions"><button data-x-like="${escapeHtml(p.id)}" class="${p.liked?'is-liked':''}">♡ ${Number(p.likes)||0}</button><button data-x-comment="${escapeHtml(p.id)}">评论 ${cs.length}</button><button data-x-enter-room="${escapeHtml(p.room||'main')}">进入直播间 ↗</button></div>${cs.slice(-2).map(c=>`<div class="xp-x-comment"><b>${escapeHtml(c.user||'用户')}：</b>${escapeHtml(c.text)}</div>`).join('')}</article>`;}).join('');
     const tabs=[['recommend','推荐'],['following','关注'],['game','游戏'],['voice','语音'],['beauty','颜值']].map(([id,n])=>`<button data-x-tab="${id}" class="${tab===id?'active':''}">${n}</button>`).join('');
     const cards=rooms.map(r=>`<article class="xp-live-card"><div class="xp-live-cover xp-live-cover-${r.id}"><span class="xp-live-tag">● LIVE</span>${r.viewers===null?'<span class="xp-live-count">剧情记录</span>':`<span class="xp-live-count">${Number(r.viewers).toLocaleString('zh-CN')} 人在线</span>`}<div class="xp-live-cover-title">${escapeHtml(r.title)}</div></div><div class="xp-live-info"><strong>${escapeHtml(r.name)}</strong><small>${escapeHtml(r.category)}${r.heat===null?'':'　热度 '+Number(r.heat).toLocaleString('zh-CN')}</small><button data-x-enter-room="${escapeHtml(r.id)}">进入直播间　›</button></div></article>`).join('');
     return `<section class="xp-page xp-xplatform"><div class="xp-x-top"><div class="xp-x-logo">X</div><div><strong>X平台</strong><small>综合直播社区</small></div><button data-action="notifications">♧</button></div><div class="xp-social-search"><span>⌕</span><input type="search" data-x-search value="${escapeHtml(state.xSearchQuery || '')}" placeholder="搜索主播、动态或关键词"></div><div class="xp-x-tabs">${tabs}</div><div class="xp-x-section-title">正在直播</div>${cards}<div class="xp-x-section-title">动态广场 <button data-action="x-compose">＋ 发布动态</button></div>${posts||'<div class="xp-empty">这里暂时没有动态</div>'}<div class="xp-x-bottom"><button data-action="x-home">首页</button><button data-x-tab="following">关注</button><button data-action="x-compose">＋</button><button data-action="notifications">消息</button><button data-action="x-profile">我的</button></div></section>`;
+  }
+
+  function renderXProfile() {
+    const name=state.selectedXUser||'{{char}}', following=state.xFollowing||[];
+    const mine=(state.xPosts||[]).filter(p=>p.user===name);
+    const rooms=getLiveRooms().filter(r=>r.host===name||r.name===name);
+    const isSelf=name==='{{user}}';
+    return `<section class="xp-page xp-x-profile"><header class="xp-x-profile-head"><button data-action="back">‹</button><strong>主播主页</strong><span></span></header><div class="xp-x-profile-card"><div class="xp-x-profile-avatar">${escapeHtml(name.slice(0,1)||'主')}</div><h2>${escapeHtml(name)}</h2><small>${isSelf?'我的 X 平台主页':'X 平台主播'}</small><div class="xp-x-profile-stats"><span><b>${mine.length}</b>动态</span><span><b>${following.includes(name)?'已关注':'—'}</b>关注状态</span><span><b>${mine.reduce((n,p)=>n+(Number(p.likes)||0),0)}</b>获赞</span></div>${!isSelf?`<button class="xp-x-profile-follow" data-x-follow="${escapeHtml(name)}">${following.includes(name)?'已关注 · 取消关注':'＋ 关注主播'}</button>`:''}</div><div class="xp-x-profile-section"><strong>直播间</strong>${rooms.map(r=>`<article class="xp-x-profile-room"><div><b>${escapeHtml(r.title)}</b><small>${escapeHtml(r.category)} · ${escapeHtml(r.name)}</small></div><button data-x-enter-room="${escapeHtml(r.id)}">进入直播间 ›</button></article>`).join('')||'<div class="xp-empty">当前没有关联的直播间</div>'}</div><div class="xp-x-profile-section"><strong>主播动态</strong>${mine.map(p=>`<article class="xp-x-profile-post"><small>${escapeHtml(p.time||'刚刚')}</small><p>${escapeHtml(p.text)}</p><span>♡ ${Number(p.likes)||0}　评论 ${(p.comments||[]).length}</span></article>`).join('')||'<div class="xp-empty">暂时没有公开动态</div>'}</div></section>`;
   }
 
   function getLiveRooms() {
@@ -750,7 +759,7 @@
 
   function renderScreen() {
     const titles = { home: '手机', notifications: '通知中心', wechat: '微信', 'wechat-moments': '朋友圈', 'wechat-favorites': '我的收藏', chat: '微信', weibo: '微博', 'weibo-detail': '微博详情', red: '小红书', xplatform: 'X平台', live: '直播间', wallet: '钱包', photos: '相册', browser: '浏览器', calendar: '日历', notes: '备忘录', settings: '设置' };
-    const renderers = { home: renderHome, notifications: renderNotifications, wechat: renderWechat, 'wechat-moments': renderWechatMoments, 'wechat-favorites': renderWechatFavorites, chat: renderChat, weibo: renderWeibo, 'weibo-detail': renderWeiboDetail, red: renderRed, 'red-detail': renderRedDetail, xplatform: renderXPlatform, live: renderLive, wallet: renderWallet, photos: renderPhotos, browser: renderBrowser, calendar: renderCalendar, notes: renderNotes, settings: renderSettings };
+    const renderers = { home: renderHome, notifications: renderNotifications, wechat: renderWechat, 'wechat-moments': renderWechatMoments, 'wechat-favorites': renderWechatFavorites, chat: renderChat, weibo: renderWeibo, 'weibo-detail': renderWeiboDetail, red: renderRed, 'x-profile': renderXProfile, 'red-detail': renderRedDetail, xplatform: renderXPlatform, live: renderLive, wallet: renderWallet, photos: renderPhotos, browser: renderBrowser, calendar: renderCalendar, notes: renderNotes, settings: renderSettings };
     const renderer = renderers[state.page] || renderHome;
     if (phoneScreen && overlay) {
       phoneScreen.innerHTML = renderer();
@@ -855,6 +864,7 @@
     if (followWeibo) { const name=followWeibo.dataset.followWeibo; state.weiboFollowing=state.weiboFollowing||[]; state.weiboFollowing=state.weiboFollowing.includes(name)?state.weiboFollowing.filter(x=>x!==name):[...state.weiboFollowing,name]; renderScreen(); persistState(); return; }
     const shareWeibo = event.target.closest('[data-share-weibo]');
     if (shareWeibo) { const original=state.weiboPosts.find(p=>p.id===shareWeibo.dataset.shareWeibo); if(original){ original.reposts=(Number(original.reposts)||0)+1; state.weiboPosts.unshift({id:`wr${Date.now()}`,user:'{{user}}',avatar:'{{user}}',text:original.text,tag:original.tag||'#转发#',likes:0,comments:0,commentList:[],liked:false,reposts:0,repostOf:original.id,time:'刚刚'}); state.weiboPosts=state.weiboPosts.slice(0,100); addNotification('微博','转发成功',`你转发了 @${original.user} 的动态。`); } renderScreen(); persistState(); return; }
+    const xProfile=event.target.closest('[data-x-profile]');if(xProfile){state.selectedXUser=xProfile.dataset.xProfile;setPage('x-profile','xplatform');persistState();return;}
     const xTab=event.target.closest('[data-x-tab]');
     if(xTab){state.xTab=xTab.dataset.xTab;setPage('xplatform','xplatform',false);persistState();return;}
     const xFollow=event.target.closest('[data-x-follow]');
@@ -940,7 +950,7 @@
       case 'enter-live': state.activeLiveId='main'; setPage('live', 'xplatform'); break;
       case 'x-home': setPage('xplatform', 'xplatform'); break;
       case 'x-compose': openActionDialog('x-compose','发布 X 平台动态','发布内容会显示在动态广场',inlineHost,'分享此刻的动态……'); break;
-      case 'x-profile': openInfoDialog('我的 X 平台主页',`已关注：${(state.xFollowing||[]).length} 人\n我的动态：${(state.xPosts||[]).filter(p=>p.user==='{{user}}').length} 条\n收到的点赞：${(state.xPosts||[]).filter(p=>p.user==='{{user}}').reduce((n,p)=>n+(Number(p.likes)||0),0)}\n直播间：{{char}}的直播间\n以上为本地模拟资料。`,inlineHost); break;
+      case 'x-profile': state.selectedXUser='{{user}}'; setPage('x-profile','xplatform'); persistState(); break;
       case 'wallet': setPage('wallet', 'xplatform'); break;
       case 'follow': { const id=state.activeLiveId||'main'; state.followedLiveRooms=state.followedLiveRooms||[]; state.followedLiveRooms=state.followedLiveRooms.includes(id)?state.followedLiveRooms.filter(roomId=>roomId!==id):[...state.followedLiveRooms,id]; renderScreen(); persistState(); break; }
       case 'gift': openActionDialog('gift', '赠送礼物', '选择一份礼物支持主播。将扣除模拟钻石，不涉及真实支付。', inlineHost); break;
