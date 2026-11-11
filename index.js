@@ -103,9 +103,21 @@
     if (c.characterId === undefined || c.characterId === null || c.characterId < 0) return c.groupId ? '群组聊天' : '未选择角色卡';
     return c.name || c.characterName || c.characters?.[c.characterId]?.name || '当前角色卡';
   }
+  function getCurrentCharacterRecord(context = currentContext()) {
+    if (!context) return null;
+    const characters = context.characters;
+    const id = context.characterId;
+    if (id !== undefined && id !== null && Number(id) >= 0) {
+      if (Array.isArray(characters)) return characters[Number(id)] || null;
+      if (characters && typeof characters === 'object') return characters[id] || null;
+    }
+    if (context.character && typeof context.character === 'object') return context.character;
+    return null;
+  }
+
   function getContextSummary() {
     const c = currentContext(), chat = Array.isArray(c?.chat) ? c.chat : [];
-    const character = c?.characters?.[c?.characterId] || null;
+    const character = getCurrentCharacterRecord(c);
     const book = character?.data?.character_book || character?.character_book || null;
     const worldInfo = c?.chatMetadata?.world_info || c?.worldInfo || c?.world_info || null;
     return { characterName: getCurrentCharacterName(), messages: chat.length, hasCharacter: !!character, hasWorldbook: !!(book || worldInfo), hasGenerator: systemSettings.apiMode==='openai' ? !!(systemSettings.apiBase&&systemSettings.apiKey&&systemSettings.apiModel) : (typeof c?.generateRaw === 'function'||typeof c?.generateQuietPrompt === 'function') };
@@ -143,7 +155,7 @@
         <div class="xp-settings-info"><span>直播间弹幕</span><b>${liveMessageCount} 条</b></div>
         <p class="xp-settings-note">动态分布：朋友圈 ${Number(posts.moments||0)} · 微博 ${Number(posts.weibo||0)} · 小红书 ${Number(posts.red||0)} · X ${Number(posts.x||0)}。人物资料只进入通讯录目录，不会自动变成微信好友；只有明确发生的好友申请才会进入新的朋友。</p>
         <p class="xp-settings-note">剧情摘要：${escapeHtml(profile.summary||'本次没有提取到摘要。')}</p>`:'<p class="xp-settings-note">还没有同步记录。先选择一张角色卡并进入对应聊天，再点击下方按钮。</p>'}
-        <div class="xp-settings-actions"><button data-action="context-import" ${!info.hasGenerator||!info.hasCharacter?'disabled':''}>${profile?'重新识别并同步':'识别并同步当前剧情'}</button></div>
+        <div class="xp-settings-actions"><button data-action="context-import">${profile?'重新识别并同步':'识别并同步当前剧情'}</button></div>
       </div>
       <div class="xp-settings-card"><div class="xp-settings-card-title">下一步怎么测试</div><p class="xp-settings-note">① 先测试模型生成；② 同步当前剧情并核对上方数量；③ 打开微信检查新的朋友与联系人，或进入 X平台直播间检查导入的房间和弹幕。</p></div>
     </section>`;
@@ -162,7 +174,7 @@
         <label class="xp-settings-toggle"><input type="checkbox" data-setting="includeWorldbook" ${systemSettings.includeWorldbook?'checked':''}>读取当前世界书相关信息</label>
         <label class="xp-settings-toggle"><input type="checkbox" data-setting="includeChat" ${systemSettings.includeChat?'checked':''}>读取当前剧情聊天记录</label>
         <label class="xp-settings-field">剧情上下文消息数量 <b>${systemSettings.contextMessages}</b><input type="range" min="4" max="80" step="4" value="${systemSettings.contextMessages}" data-setting="contextMessages"></label>
-        <div class="xp-settings-actions"><button data-action="context-import" ${!info.hasGenerator || !info.hasCharacter?'disabled':''}>识别并导入当前剧情</button></div>
+        <div class="xp-settings-actions"><button data-action="context-import">识别并导入当前剧情</button></div>
         <small class="xp-settings-note">导入会调用酒馆当前模型的后台生成接口，识别当前卡片、已进入上下文的世界书和近期剧情。仅写入当前聊天，不会修改角色卡原文。</small>
         ${state.importedProfile?`<div class="xp-settings-info"><span>上次导入</span><b>${escapeHtml(state.importedProfile.importedAt||'已导入')}</b></div><div class="xp-settings-info"><span>识别人物</span><b>${(state.importedProfile.characters||[]).length} 位</b></div>`:''}
       </div>
@@ -1624,8 +1636,8 @@
     const context = currentContext();
     if (!systemSettings.contextEnabled) { addNotification('上下文导入','上下文识别已关闭','请先在设置中开启上下文识别。'); renderScreen(); return; }
     if (!canGenerateText()) { addNotification('上下文导入','生成接口不可用','请检查系统设置中的酒馆接口或独立 API 配置。'); renderScreen(); return; }
-    const character = context?.characters?.[context?.characterId];
-    if (!context || !character) { addNotification('上下文导入','未选择角色卡','请先打开一张角色卡并进入对应聊天。'); renderScreen(); return; }
+    const character = getCurrentCharacterRecord(context);
+    if (!context || !character) { addNotification('上下文导入','未读取到当前角色卡','请先进入一张角色卡的聊天页面；若已打开角色卡，请刷新酒馆后重试。'); renderScreen(); return; }
     const chatIdAtStart = context.chatId, metadataAtStart = context.chatMetadata;
     const button = document.querySelector('[data-action="context-import"],[data-action="wechat-friend-refresh"]');
     if (button) { button.disabled = true; button.textContent = '正在识别当前剧情…'; }
@@ -1788,6 +1800,9 @@
     } catch(error) {
       console.error(`[${EXT_ID}] story context import failed`,error);
       addNotification('上下文导入','导入失败',String(error?.message||error).slice(0,140)); renderScreen();
+    } finally {
+      const activeButton = document.querySelector('[data-action="context-import"],[data-action="wechat-friend-refresh"]');
+      if (activeButton) { activeButton.disabled = false; activeButton.textContent = '重新识别并同步'; }
     }
   }
 
