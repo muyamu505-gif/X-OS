@@ -566,6 +566,11 @@
       host.innerHTML = `<div class="xp-inline-device"><div class="xp-inline-status"><span>● ${new Date().toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit', hour12:false})}</span><span>5G　▰</span></div><div class="xp-inline-toolbar"><button data-action="back">‹</button><strong class="xp-inline-title">手机</strong><span><i class="xp-inline-dot"></i><button data-action="close">×</button></span></div><div class="xphone-inline-screen"></div><div class="xp-inline-nav"><button data-action="back">‹</button><button data-action="home">○</button><button data-action="close">×</button></div></div>`;
       button.addEventListener('click', () => { host.hidden = !host.hidden; button.textContent = host.hidden ? '▣ 展开手机' : '▣ 收起手机'; if (!host.hidden) renderScreen(); });
       host.addEventListener('click', handleClick);
+      host.addEventListener('keydown', event => {
+        if (event.key !== 'Escape') return;
+        const dialog = host.querySelector('.xp-action-dialog');
+        if (dialog) { dialog.remove(); pendingDialog = null; event.stopPropagation(); }
+      });
       host.addEventListener('submit', handleSubmit);
       host.addEventListener('input', handleInput);
       const contentRoot = message.querySelector('.mes_text') || message;
