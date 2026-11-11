@@ -89,7 +89,7 @@
   function mergeDefaults(saved) {
     const base = structuredCloneSafe(DEFAULT_STATE);
     if (!saved || typeof saved !== 'object' || Array.isArray(saved)) return base;
-    const arrayKeys = ['stack', 'notifications', 'contacts', 'weiboPosts', 'redPosts', 'liveMessages', 'browserResults', 'photos', 'calendar'];
+    const arrayKeys = ['stack', 'notifications', 'contacts', 'weiboPosts', 'redPosts', 'liveMessages', 'browserResults', 'photos', 'calendar', 'walletTransactions'];
     const objectKeys = ['chats'];
     const stringKeys = ['page', 'selectedContact', 'notes', 'browserUrl', 'browserQuery', 'selectedAlbum'];
     const booleanKeys = ['followed'];
@@ -301,8 +301,8 @@
   }
 
   function renderNotifications() {
-    const rows = state.notifications.map(n => `<button class="xp-notification ${n.unread ? 'is-unread' : ''}" data-notice="${escapeHtml(n.id)}"><span class="xp-notice-app">${escapeHtml(n.app)}</span><span class="xp-notice-main"><strong>${escapeHtml(n.title)}</strong><span>${escapeHtml(n.body)}</span></span><time>${escapeHtml(n.time)}</time></button>`).join('');
-    return `<section class="xp-page xp-notifications"><div class="xp-page-title">通知中心</div><div class="xp-muted">${state.notifications.filter(n => n.unread).length} 条未读</div>${rows || '<div class="xp-empty">暂时没有通知</div>'}<button class="xp-text-btn" data-action="clear-notices">全部标为已读</button></section>`;
+    const rows = state.notifications.map(n => `<div class="xp-notification-row"><button class="xp-notification ${n.unread ? 'is-unread' : ''}" data-notice="${escapeHtml(n.id)}"><span class="xp-notice-app">${escapeHtml(n.app)}</span><span class="xp-notice-main"><strong>${escapeHtml(n.title)}</strong><span>${escapeHtml(n.body)}</span></span><time>${escapeHtml(n.time)}</time></button><button class="xp-notice-delete" data-delete-notice="${escapeHtml(n.id)}" aria-label="删除通知">×</button></div>`).join('');
+    return `<section class="xp-page xp-notifications"><div class="xp-page-title">通知中心</div><div class="xp-muted">${state.notifications.filter(n => n.unread).length} 条未读 · 共 ${state.notifications.length} 条</div>${rows || '<div class="xp-empty">暂时没有通知</div>'}<div class="xp-notice-tools"><button class="xp-text-btn" data-action="clear-notices">全部标为已读</button><button class="xp-text-btn" data-action="delete-all-notices">清空通知</button></div></section>`;
   }
 
   function renderWechat() {
@@ -341,7 +341,8 @@
   }
 
   function renderWallet() {
-    return `<section class="xp-page xp-wallet"><div class="xp-appbar"><div class="xp-app-title">钱包</div></div><div class="xp-wallet-card"><small>模拟账户余额</small><strong>${Number(state.wallet).toLocaleString('zh-CN')} <em>钻石</em></strong><span>仅供剧情模拟，不涉及真实支付</span></div><div class="xp-wallet-actions"><button data-action="wallet-record">账单记录</button><button data-action="wallet-recharge">模拟充值</button></div><p class="xp-muted">本地模拟钱包不会连接任何支付渠道。</p></section>`;
+    const records = (state.walletTransactions || []).slice(0,8).map(item => `<div class="xp-wallet-record"><span><b>${escapeHtml(item.title)}</b><small>${escapeHtml(item.time)}</small></span><strong class="${item.amount < 0 ? 'is-minus' : 'is-plus'}">${item.amount > 0 ? '+' : ''}${item.amount}</strong></div>`).join('');
+    return `<section class="xp-page xp-wallet"><div class="xp-appbar"><div class="xp-app-title">钱包</div></div><div class="xp-wallet-card"><small>模拟账户余额</small><strong>${Number(state.wallet).toLocaleString('zh-CN')} <em>钻石</em></strong><span>仅供剧情模拟，不涉及真实支付</span></div><div class="xp-wallet-actions"><button data-action="wallet-record">完整账单</button><button data-action="wallet-recharge">模拟充值</button></div><div class="xp-section-heading">最近记录</div><div class="xp-wallet-records">${records || '<div class="xp-empty">暂无账单记录</div>'}</div><p class="xp-muted">本地模拟钱包不会连接任何支付渠道。</p></section>`;
   }
 
   function renderPhotos() {
@@ -403,6 +404,8 @@
     if (appButton) { const app = appButton.dataset.app; setPage(app === 'wechat' ? 'wechat' : app); return; }
     const contactButton = event.target.closest('[data-contact]');
     if (contactButton) { state.selectedContact = contactButton.dataset.contact; setPage('chat', 'wechat'); return; }
+    const deleteNotice = event.target.closest('[data-delete-notice]');
+    if (deleteNotice) { state.notifications = state.notifications.filter(n => n.id !== deleteNotice.dataset.deleteNotice); renderScreen(); persistState(); return; }
     const notice = event.target.closest('[data-notice]');
     if (notice) {
       const n = state.notifications.find(x => x.id === notice.dataset.notice);
@@ -446,6 +449,7 @@
       case 'home': state.stack = []; setPage('home', null, false); break;
       case 'notifications': setPage('notifications'); break;
       case 'clear-notices': state.notifications.forEach(n => n.unread = false); renderScreen(); persistState(); break;
+      case 'delete-all-notices': state.notifications = []; renderScreen(); persistState(); break;
       case 'enter-live': setPage('live', 'xplatform'); break;
       case 'x-home': setPage('xplatform', 'xplatform'); break;
       case 'wallet': setPage('wallet', 'xplatform'); break;
@@ -460,7 +464,7 @@
         break;
       }
       case 'share': addNotification('微博', '转发成功', '这条动态已加入本地模拟分享记录。'); renderScreen(); persistState(); break;
-      case 'wallet-record': openInfoDialog('账单记录', `累计送出礼物 ${state.giftsSent} 次。所有记录均为本地模拟。`, inlineHost); break;
+      case 'wallet-record': openInfoDialog('账单记录', (state.walletTransactions || []).map(t => `${t.title}：${t.amount > 0 ? '+' : ''}${t.amount}钻（${t.time}）`).join('\n') || '暂无账单记录。', inlineHost); break;
       case 'wallet-recharge': openInfoDialog('模拟充值', '此演示版不接入真实充值或支付渠道。', inlineHost); break;
     }
   }
@@ -517,6 +521,8 @@
       else {
         state.wallet -= price;
         state.giftsSent += 1;
+        state.walletTransactions.unshift({ id: `tx${Date.now()}`, title: `赠送礼物：${value}`, amount: -price, time: nowTime() });
+        state.walletTransactions = state.walletTransactions.slice(0, 100);
         state.liveMessages.push({ user: '系统', text: `你送出了 ${value} ×1` });
         state.liveMessages = state.liveMessages.slice(-200);
       }
