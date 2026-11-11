@@ -32,7 +32,7 @@
 
 ## 版本
 
-当前版本：**1.1.29**
+当前版本：**1.1.30**
 
 扩展源文件：`index.js`、`style.css`、`manifest.json`。
 
@@ -157,3 +157,9 @@
 ### 1.1.29
 - Add editable local contact names and notes from the chat information menu.
 - Add simulated text, image, voice, and file message types to the WeChat composer; attachment types are represented locally without uploading files.
+
+
+### 1.1.30
+- Fix Android soft-keyboard viewport resizing so focusing an input does not permanently shrink the phone window.
+- Restore phone geometry after input focus ends and keep focused fields visible inside the phone.
+- Remove viewport-relative max-height from the inline phone screen to prevent its lower half collapsing on keyboard open.
