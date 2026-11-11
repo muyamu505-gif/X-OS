@@ -32,10 +32,17 @@
 
 ## 版本
 
-当前版本：**1.1.83**
+当前版本：**1.1.84**
 
 扩展源文件：`index.js`、`style.css`、`manifest.json`。
 
+
+### 1.1.84
+- Connect the existing API settings to actual X-OS text generation: private chats, group chats, friend-request decisions, and story-context extraction now route through one configured generation adapter.
+- Implement OpenAI-compatible `/chat/completions` generation using the saved base URL, API key, selected model, temperature, and max output tokens.
+- Add `/models` discovery, persisted model lists, model selection/manual model ID entry, and a real text-generation connectivity test instead of only checking endpoint reachability.
+- Make mobile inline phone controls listen for `change` events as well as `input`, so select fields and API mode changes persist reliably.
+- Improve mobile API settings layout and surface actionable API errors, including HTTP responses and common CORS/network failures.
 
 ### 1.1.83
 - Repair WeChat add-friend discovery: the add-friend page now exposes a direct action to extract evidenced people from the active character card, selected worldbooks, and recent chat, and shows the current directory count.
