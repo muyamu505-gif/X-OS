@@ -568,11 +568,21 @@
     const target = document.querySelector('#extensions_settings2, #extensions_settings');
     if (!target || document.getElementById('xphone-settings')) return;
     const panel = document.createElement('div'); panel.id = 'xphone-settings'; panel.className = 'inline-drawer';
-    panel.innerHTML = `<div class="inline-drawer-toggle inline-drawer-header"><b>X手机模拟器</b><div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div></div><div class="inline-drawer-content"><p>打开手机桌面，体验微信、微博、小红书与X平台的本地模拟交互。</p><div class="flex-container"><button id="xphone-settings-open" class="menu_button">打开手机</button><button id="xphone-settings-reset" class="menu_button">重置演示数据</button></div><small>数据默认按当前聊天保存；所有社交内容、礼物与钱包均为本地虚构模拟，不会连接外部平台或真实支付。</small></div>`;
+    panel.innerHTML = `<div class="inline-drawer-toggle inline-drawer-header"><b>X手机模拟器</b><div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div></div><div class="inline-drawer-content"><p>打开手机桌面，体验微信、微博、小红书与X平台的本地模拟交互。</p><div class="flex-container"><button id="xphone-settings-open" class="menu_button">打开手机</button><button id="xphone-settings-reset" class="menu_button">重置演示数据</button></div><div id="xphone-reset-confirm" class="xphone-reset-confirm" hidden><p>确定重置当前聊天的手机模拟数据吗？此操作无法撤销。</p><div class="flex-container"><button id="xphone-reset-cancel" class="menu_button">取消</button><button id="xphone-reset-accept" class="menu_button">确认重置</button></div></div><small>数据默认按当前聊天保存；所有社交内容、礼物与钱包均为本地虚构模拟，不会连接外部平台或真实支付。</small></div>`;
     target.appendChild(panel);
     panel.querySelector('.inline-drawer-toggle').addEventListener('click', () => panel.classList.toggle('open'));
     panel.querySelector('#xphone-settings-open').addEventListener('click', () => openPhone());
-    panel.querySelector('#xphone-settings-reset').addEventListener('click', () => { if (window.confirm('确定重置当前聊天的手机模拟数据吗？')) { state = structuredCloneSafe(DEFAULT_STATE); persistState(); renderScreen(); } });
+    const resetConfirm = panel.querySelector('#xphone-reset-confirm');
+    panel.querySelector('#xphone-settings-reset').addEventListener('click', () => { resetConfirm.hidden = !resetConfirm.hidden; });
+    panel.querySelector('#xphone-reset-cancel').addEventListener('click', () => { resetConfirm.hidden = true; });
+    panel.querySelector('#xphone-reset-accept').addEventListener('click', () => {
+      state = structuredCloneSafe(DEFAULT_STATE);
+      persistState();
+      renderScreen();
+      resetConfirm.hidden = true;
+      panel.querySelector('#xphone-settings-reset').textContent = '已重置';
+      window.setTimeout(() => { const button = panel.querySelector('#xphone-settings-reset'); if (button) button.textContent = '重置演示数据'; }, 1600);
+    });
   }
 
   function initialize() {
