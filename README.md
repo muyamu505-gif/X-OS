@@ -32,7 +32,7 @@
 
 ## 版本
 
-当前版本：**1.1.40**
+当前版本：**1.1.41**
 
 扩展源文件：`index.js`、`style.css`、`manifest.json`。
 
@@ -214,3 +214,9 @@
 - Fix whole-device resizing by preserving the phone's native aspect ratio and scaling the complete screen content to exactly fit the shell.
 - Resize the frame, status bar, desktop icons, app pages, and bottom navigation together without leaving unused blank space.
 - Keep the resized device within the visible viewport and preserve the saved size.
+
+
+### 1.1.41
+- Make story-context re-import merge-safe: retain manually created contacts, chat history, Moments, Weibo, Xiaohongshu, and X posts.
+- Refresh only X-OS-tagged imported records, preserve user edits and conversations, and avoid duplicate imported social posts.
+- Keep imported contacts and posts scoped to the active SillyTavern chat metadata.
