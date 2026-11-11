@@ -897,8 +897,10 @@
     } else if (type === 'calendar') {
       const day = Number(data.get('day'));
       const title = String(data.get('title') || '').trim();
-      const year = Number(data.get('year')) || new Date().getFullYear();
-      const month = Number(data.get('month')) || new Date().getMonth()+1;
+      const yearValue = String(data.get('year') ?? '').trim();
+      const monthValue = String(data.get('month') ?? '').trim();
+      const year = yearValue === '' ? new Date().getFullYear() : Number(yearValue);
+      const month = monthValue === '' ? new Date().getMonth()+1 : Number(monthValue);
       const leapYear = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
       const monthLengths = [31, leapYear ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
       const daysInMonth = Number.isInteger(month) && month >= 1 && month <= 12 ? monthLengths[month - 1] : 0;
@@ -906,6 +908,7 @@
       if (!Number.isInteger(year) || year < 1 || year > 9999 || !Number.isInteger(month) || month < 1 || month > 12 || !Number.isInteger(day) || day < 1 || day > daysInMonth) {
         addNotification('日历','日期无效',daysInMonth ? `请检查日期，${year}年${month}月只有 ${daysInMonth} 天。` : '请填写有效的年份和月份。');
         renderScreen();
+        persistState();
         return;
       }
       state.calendar.push({ year, month, day, title, desc: String(data.get('desc') || '').trim() });
