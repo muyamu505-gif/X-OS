@@ -27,7 +27,7 @@
     redPosts: [],
     redTab: 'recommend',
     redFollowing: [],
-    followed: false,
+    followedLiveRooms: [],
     xTab: 'recommend',
     xFollowing: [],
     xPosts: [],
@@ -128,10 +128,10 @@
     const base = structuredCloneSafe(DEFAULT_STATE);
     if (!saved || typeof saved !== 'object' || Array.isArray(saved)) return base;
     const arrayKeys = ['stack', 'notifications', 'moments', 'contacts', 'weiboPosts', 'redPosts', 'liveMessages', 'importedLiveRooms', 'browserResults', 'photos', 'calendar', 'walletTransactions', 'xPosts'];
-    const stringArrayKeys = ['weiboFollowing', 'redFollowing', 'xFollowing'];
+    const stringArrayKeys = ['weiboFollowing', 'redFollowing', 'xFollowing', 'followedLiveRooms'];
     const objectKeys = ['chats'];
     const stringKeys = ['page', 'wechatTab', 'weiboTab', 'redTab', 'xTab', 'activeLiveId', 'selectedContact', 'notes', 'browserUrl', 'browserQuery', 'selectedAlbum'];
-    const booleanKeys = ['followed'];
+    const booleanKeys = [];
     const numberKeys = ['liveViewers', 'liveHeat', 'wallet', 'giftsSent'];
     for (const key of arrayKeys) {
       if (Array.isArray(saved[key])) base[key] = saved[key].filter(item => item && typeof item === 'object' && !Array.isArray(item));
@@ -142,6 +142,8 @@
     for (const key of stringKeys) if (typeof saved[key] === 'string' || saved[key] === null && key === 'selectedContact') base[key] = saved[key];
     // Template macros are identities, not creator accounts; never pre-follow them.
     base.xFollowing = base.xFollowing.filter(name => !['{{user}}','{{char}}'].includes(String(name).trim()));
+    // Migrate the former single follow toggle to the room it represented in the old save.
+    if (saved.followed === true && !base.followedLiveRooms.length) base.followedLiveRooms = [typeof saved.activeLiveId === 'string' ? saved.activeLiveId : 'main'];
     for (const key of booleanKeys) if (typeof saved[key] === 'boolean') base[key] = saved[key];
     for (const key of numberKeys) if (Number.isFinite(saved[key])) base[key] = saved[key];
     if (saved.importedProfile && typeof saved.importedProfile === 'object' && !Array.isArray(saved.importedProfile)) base.importedProfile = saved.importedProfile;
@@ -505,7 +507,8 @@
     const lines=roomMessages.slice(-30).map(message=>`<div class="xp-barrage"><b>${escapeHtml(message.user)}：</b>${escapeHtml(message.text)}</div>`).join('');
     const viewers=Number.isFinite(room.viewers)?room.viewers.toLocaleString('zh-CN')+' 人在线':'人数未记录';
     const heat=Number.isFinite(room.heat)?room.heat.toLocaleString('zh-CN'):'未记录';
-    return `<section class="xp-page xp-live-room"><div class="xp-live-video"><span class="xp-live-tag">● LIVE</span><span class="xp-live-video-label">${escapeHtml(room.title)}</span><small>${escapeHtml(room.description||'直播画面以当前剧情描述为准')}</small></div><div class="xp-live-room-info"><div><strong>${escapeHtml(room.title)}</strong><small>${escapeHtml(room.name)}　·　${escapeHtml(room.category)}　·　${viewers}</small></div><button data-action="follow" class="xp-follow ${state.followed?'following':''}">${state.followed?'已关注':'＋ 关注'}</button></div><div class="xp-live-metrics"><span>热度 <b>${heat}</b></span><span>本地模拟礼物 <b>${state.giftsSent}</b></span><span>余额 <b>${state.wallet}</b> 钻石</span></div><div class="xp-barrage-list">${lines||'<div class="xp-empty">暂无剧情弹幕，发送一条参与互动吧</div>'}</div><form class="xp-live-compose" data-form="barrage"><input name="message" autocomplete="off" placeholder="和主播聊两句…" maxlength="100"><button type="submit">发送</button><button type="button" data-action="gift">礼物</button></form></section>`;
+    const isRoomFollowed = (state.followedLiveRooms || []).includes(room.id);
+    return `<section class="xp-page xp-live-room"><div class="xp-live-video"><span class="xp-live-tag">● LIVE</span><span class="xp-live-video-label">${escapeHtml(room.title)}</span><small>${escapeHtml(room.description||'直播画面以当前剧情描述为准')}</small></div><div class="xp-live-room-info"><div><strong>${escapeHtml(room.title)}</strong><small>${escapeHtml(room.name)}　·　${escapeHtml(room.category)}　·　${viewers}</small></div><button data-action="follow" class="xp-follow ${isRoomFollowed?'following':''}">${isRoomFollowed?'已关注':'＋ 关注'}</button></div><div class="xp-live-metrics"><span>热度 <b>${heat}</b></span><span>本地模拟礼物 <b>${state.giftsSent}</b></span><span>余额 <b>${state.wallet}</b> 钻石</span></div><div class="xp-barrage-list">${lines||'<div class="xp-empty">暂无剧情弹幕，发送一条参与互动吧</div>'}</div><form class="xp-live-compose" data-form="barrage"><input name="message" autocomplete="off" placeholder="和主播聊两句…" maxlength="100"><button type="submit">发送</button><button type="button" data-action="gift">礼物</button></form></section>`;
   }
 
   function renderWallet() {
@@ -677,7 +680,7 @@
       case 'x-compose': openActionDialog('x-compose','发布 X 平台动态','发布内容会显示在动态广场',inlineHost,'分享此刻的动态……'); break;
       case 'x-profile': openInfoDialog('我的 X 平台主页',`已关注：${(state.xFollowing||[]).length} 人\n我的动态：${(state.xPosts||[]).filter(p=>p.user==='{{user}}').length} 条\n收到的点赞：${(state.xPosts||[]).filter(p=>p.user==='{{user}}').reduce((n,p)=>n+(Number(p.likes)||0),0)}\n直播间：{{char}}的直播间\n以上为本地模拟资料。`,inlineHost); break;
       case 'wallet': setPage('wallet', 'xplatform'); break;
-      case 'follow': state.followed = !state.followed; renderScreen(); persistState(); break;
+      case 'follow': { const id=state.activeLiveId||'main'; state.followedLiveRooms=state.followedLiveRooms||[]; state.followedLiveRooms=state.followedLiveRooms.includes(id)?state.followedLiveRooms.filter(roomId=>roomId!==id):[...state.followedLiveRooms,id]; renderScreen(); persistState(); break; }
       case 'gift': openActionDialog('gift', '赠送礼物', '选择一份礼物支持主播。将扣除模拟钻石，不涉及真实支付。', inlineHost); break;
       case 'wechat-add': openActionDialog('wechat-add', '添加联系人', '创建一个本地模拟联系人', inlineHost, '输入联系人昵称……'); break;
       case 'wechat-group-create': openActionDialog('wechat-group-create','发起群聊','创建群聊并邀请当前通讯录中的联系人（本地模拟）',inlineHost,'输入群聊名称……'); break;
