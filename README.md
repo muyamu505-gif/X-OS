@@ -32,10 +32,16 @@
 
 ## 版本
 
-当前版本：**1.1.82**
+当前版本：**1.1.83**
 
 扩展源文件：`index.js`、`style.css`、`manifest.json`。
 
+
+### 1.1.83
+- Repair WeChat add-friend discovery: the add-friend page now exposes a direct action to extract evidenced people from the active character card, selected worldbooks, and recent chat, and shows the current directory count.
+- Add a verification-message step before sending a friend request; outgoing requests are persisted and remain pending when there is no available generation context or insufficient evidence.
+- When the current SillyTavern generation interface is available, let the NPC decide whether to accept, reject, or leave the request pending based on their own imported profile and recent story context. Acceptance creates the contact and chat; final request states and response text remain visible in request history.
+- Match existing contacts by both stable ID and name to prevent duplicate friend entries.
 
 ### 1.1.82
 - Add message forwarding from a WeChat message to another existing contact or group chat; the destination receives a persisted message record rather than a success-only notice.
