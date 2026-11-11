@@ -17,18 +17,18 @@
 ## 功能
 
 - 桌面悬浮入口，以及 AI 消息标记 `[[PHONE]]` / `【打开手机】` 展开内嵌手机。
-- 浅灰蓝 Android 风格系统界面、通知中心、应用切换和返回导航。
+- 浅灰蓝 iOS 风格系统界面、状态栏、通知中心、应用切换和手势返回。
 - 微信：联系人、群聊、聊天记录、消息收藏、朋友圈与搜索。
 - 微博、小红书：动态浏览、关注、点赞、评论、转发、笔记发布与收藏分类。
-- X 平台：直播大厅、直播间弹幕、关注和模拟礼物。
+- X 平台：直播大厅、直播间弹幕、动态发布、评论、关注和本机礼物记录。
 - 相册：素材条目、分类与收藏。
-- 浏览器：模拟搜索与应用内跳转。
+- 浏览器：搜索、网址跳转与应用内浏览入口。
 - 日历：添加日程；备忘录：多篇笔记、标题、自动保存、删除与切换。
 - 聊天数据优先保存于当前 SillyTavern 聊天元数据。
 
 ## 数据与隐私
 
-所有社交内容、直播互动、礼物和钱包余额均为本地剧情模拟，不连接真实社交平台、支付渠道或外部 API。不要将模拟钱包视为真实账户。
+界面与交互按真实手机应用的使用习惯实现。联系人、聊天、笔记、动态、直播互动与钱包记录保存在当前 SillyTavern 聊天数据中；这不等于登录了真实微信、微博、小红书或第三方 X 平台账号，也不会连接真实平台私信、直播流或支付渠道。钱包余额仅为本机剧情数据，不是真实资金账户。
 
 ## 版本
 
@@ -36,6 +36,13 @@
 
 扩展源文件：`index.js`、`style.css`、`manifest.json`。
 
+
+### 1.1.68
+- Rename the extension presentation to X-OS Phone System instead of a simulator.
+- Add working WeChat message favorites with a dedicated collection page and remove controls.
+- Upgrade Notes from one text area to a multi-note list with titles, switching, creation, deletion and autosave; migrate legacy single-note data.
+- Expand Xiaohongshu publishing to separate title and body fields and add a favorites feed.
+- Keep local-data and third-party account/payment boundaries explicit.
 
 ### 1.1.67
 - Add monthly spending budgets and per-category budget limits to the wallet.
