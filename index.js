@@ -15,6 +15,11 @@
       { id: 'n1', app: '微信', title: '林知夏', body: '你今天晚上还开播吗？我有事找你。', time: '09:32', unread: true },
       { id: 'n2', app: '微博', title: '实时热搜', body: '你的关注有 3 条新动态', time: '08:57', unread: true }
     ],
+    wechatTab: 'chats',
+    moments: [
+      { id: 'm1', user: '林知夏', avatar: '知', text: '今天的天气很好，想出去走走。', time: '今天 09:20', likes: 3, liked: false, comments: [] },
+      { id: 'm2', user: '周予安', avatar: '周', text: '忙里偷闲的一杯咖啡。', time: '昨天 18:42', likes: 8, liked: false, comments: [] }
+    ],
     contacts: [
       { id: 'lin', name: '林知夏', note: '好友', avatar: '知', online: true },
       { id: 'zhou', name: '周予安', note: '特别关注', avatar: '周', online: false },
@@ -90,9 +95,9 @@
   function mergeDefaults(saved) {
     const base = structuredCloneSafe(DEFAULT_STATE);
     if (!saved || typeof saved !== 'object' || Array.isArray(saved)) return base;
-    const arrayKeys = ['stack', 'notifications', 'contacts', 'weiboPosts', 'redPosts', 'liveMessages', 'browserResults', 'photos', 'calendar', 'walletTransactions'];
+    const arrayKeys = ['stack', 'notifications', 'moments', 'contacts', 'weiboPosts', 'redPosts', 'liveMessages', 'browserResults', 'photos', 'calendar', 'walletTransactions'];
     const objectKeys = ['chats'];
-    const stringKeys = ['page', 'selectedContact', 'notes', 'browserUrl', 'browserQuery', 'selectedAlbum'];
+    const stringKeys = ['page', 'wechatTab', 'selectedContact', 'notes', 'browserUrl', 'browserQuery', 'selectedAlbum'];
     const booleanKeys = ['followed'];
     const numberKeys = ['liveViewers', 'liveHeat', 'wallet', 'giftsSent'];
     for (const key of arrayKeys) {
@@ -106,8 +111,9 @@
         base[key] = Object.fromEntries(Object.entries(saved[key]).filter(([, messages]) => Array.isArray(messages)).map(([id, messages]) => [id, messages.filter(message => message && typeof message === 'object' && !Array.isArray(message))]));
       }
     }
-    const pages = new Set(['home', 'notifications', 'wechat', 'chat', 'weibo', 'red', 'xplatform', 'live', 'wallet', 'photos', 'browser', 'calendar', 'notes']);
+    const pages = new Set(['home', 'notifications', 'wechat', 'wechat-moments', 'chat', 'weibo', 'red', 'xplatform', 'live', 'wallet', 'photos', 'browser', 'calendar', 'notes']);
     if (!pages.has(base.page)) base.page = 'home';
+    if (!['chats','contacts','discover','me'].includes(base.wechatTab)) base.wechatTab = 'chats';
     // The chat renderer always needs a contact to display; recover the built-in
     // starter contacts if an old or damaged save contains an empty contact list.
     if (!base.contacts.length) base.contacts = structuredCloneSafe(DEFAULT_STATE.contacts);
@@ -308,14 +314,25 @@
   }
 
   function renderWechat() {
+    const tab = state.wechatTab || 'chats';
     const rows = state.contacts.map(c => {
-      const msgs = state.chats[c.id] || [];
-      const last = msgs[msgs.length - 1];
-      return `<button class="xp-contact" data-contact="${escapeHtml(c.id)}"><span class="xp-avatar xp-avatar-green">${escapeHtml(c.avatar)}</span><span class="xp-contact-main"><strong>${escapeHtml(c.name)}</strong><small>${escapeHtml(last?.text || c.note)}</small></span><time>${escapeHtml(last?.time || '')}</time></button>`;
+      const msgs = state.chats[c.id] || []; const last = msgs[msgs.length - 1];
+      return '<button class="xp-contact" data-contact="' + escapeHtml(c.id) + '"><span class="xp-avatar xp-avatar-green">' + escapeHtml(c.avatar) + '</span><span class="xp-contact-main"><strong>' + escapeHtml(c.name) + '</strong><small>' + escapeHtml(last?.text || c.note) + '</small></span><time>' + escapeHtml(last?.time || '') + '</time></button>';
     }).join('');
-    return `<section class="xp-page xp-wechat"><div class="xp-appbar"><div><div class="xp-app-title">微信</div><small>消息</small></div><button class="xp-circle-btn" data-action="wechat-add">＋</button></div><div class="xp-search"><span>⌕</span><input type="search" data-contact-search placeholder="搜索联系人和聊天记录"></div>${rows}<div class="xp-empty" data-contact-empty hidden>没有找到联系人或聊天记录</div><div class="xp-bottom-tabs"><span class="active">微信</span><span>通讯录</span><span>发现</span><span>我</span></div></section>`;
+    const tabs = [['chats','微信','▤'],['contacts','通讯录','♙'],['discover','发现','◎'],['me','我','●']];
+    const nav = '<nav class="xp-wechat-nav">' + tabs.map(t => '<button data-wechat-tab="'+t[0]+'" class="'+(tab===t[0]?'active':'')+'"><span>'+t[2]+'</span>'+t[1]+'</button>').join('') + '</nav>';
+    let body = '';
+    if (tab === 'chats') body = '<div class="xp-wechat-list">' + rows + '<div class="xp-empty" data-contact-empty hidden>没有找到联系人或聊天记录</div></div>';
+    else if (tab === 'contacts') body = '<div class="xp-wechat-section-label">新的朋友</div><button class="xp-wechat-menu-row" data-action="wechat-add"><span class="xp-wechat-menu-icon green">＋</span><b>添加朋友</b><i>›</i></button><div class="xp-wechat-section-label">联系人</div><div class="xp-wechat-list">'+rows+'</div>';
+    else if (tab === 'discover') body = '<div class="xp-wechat-discover"><button class="xp-wechat-menu-row" data-action="wechat-moments"><span class="xp-wechat-menu-icon moments">▧</span><b>朋友圈</b><i>›</i></button><button class="xp-wechat-menu-row" data-action="wechat-channels"><span class="xp-wechat-menu-icon channels">▶</span><b>视频号</b><i>›</i></button><button class="xp-wechat-menu-row" data-action="wechat-search"><span class="xp-wechat-menu-icon search">⌕</span><b>搜一搜</b><i>›</i></button><button class="xp-wechat-menu-row" data-action="wechat-mini"><span class="xp-wechat-menu-icon mini">▦</span><b>小程序</b><i>›</i></button></div>';
+    else body = '<div class="xp-wechat-profile"><div class="xp-wechat-profile-card"><span class="xp-wechat-profile-avatar">我</span><div><strong>我的微信</strong><small>微信号：xos_user_01</small><small>个人二维码　›</small></div><i>›</i></div><button class="xp-wechat-menu-row" data-action="wechat-favorites"><span class="xp-wechat-menu-icon favorites">☆</span><b>收藏</b><i>›</i></button><button class="xp-wechat-menu-row" data-action="wechat-files"><span class="xp-wechat-menu-icon files">▣</span><b>卡包与文件</b><i>›</i></button><button class="xp-wechat-menu-row" data-action="wechat-settings"><span class="xp-wechat-menu-icon settings">⚙</span><b>设置</b><i>›</i></button></div>';
+    const search = (tab==='chats'||tab==='contacts') ? '<label class="xp-search"><span>⌕</span><input type="search" data-contact-search placeholder="'+(tab==='chats'?'搜索联系人和聊天记录':'搜索联系人')+'"></label>' : '';
+    return '<section class="xp-page xp-wechat"><div class="xp-wechat-topbar"><div class="xp-app-title">'+({chats:'微信',contacts:'通讯录',discover:'发现',me:'我'}[tab])+'</div><div class="xp-wechat-top-actions">'+(tab==='chats'?'<button class="xp-circle-btn" data-action="wechat-add">＋</button>':'')+'<button class="xp-circle-btn" data-action="wechat-search">⌕</button></div></div>'+search+body+nav+'</section>';
   }
-
+  function renderWechatMoments() {
+    const posts = (state.moments || []).map(p => '<article class="xp-moment-post"><div class="xp-moment-avatar">'+escapeHtml(p.avatar||p.user?.[0]||'我')+'</div><div class="xp-moment-content"><b>'+escapeHtml(p.user||'我')+'</b><p>'+escapeHtml(p.text)+'</p><div class="xp-moment-meta"><time>'+escapeHtml(p.time||'')+'</time><button data-like-moment="'+escapeHtml(p.id)+'" class="'+(p.liked?'liked':'')+'">'+(p.liked?'♥':'♡')+' '+(Number(p.likes)||0)+'</button></div>'+((p.comments||[]).map(c=>'<div class="xp-moment-comment"><b>'+escapeHtml(c.user)+'：</b>'+escapeHtml(c.text)+'</div>').join(''))+'<button class="xp-moment-comment-btn" data-comment-moment="'+escapeHtml(p.id)+'">评论</button></div></article>').join('');
+    return '<section class="xp-page xp-wechat-moments"><div class="xp-moments-header"><button data-action="wechat-list">‹</button><strong>朋友圈</strong><button data-action="wechat-moment-compose">相机</button></div><div class="xp-moments-cover"><span>记录生活中的每一个瞬间</span><b>我的朋友圈</b></div><div class="xp-moments-feed">'+(posts||'<div class="xp-empty">还没有朋友圈动态</div>')+'</div></section>';
+  }
   function renderChat() {
     const contact = state.contacts.find(c => c.id === state.selectedContact) || state.contacts[0];
     const msgs = state.chats[contact.id] || [];
@@ -375,8 +392,8 @@
   }
 
   function renderScreen() {
-    const titles = { home: '手机', notifications: '通知中心', wechat: '微信', chat: '微信', weibo: '微博', red: '小红书', xplatform: 'X平台', live: '直播间', wallet: '钱包', photos: '相册', browser: '浏览器', calendar: '日历', notes: '备忘录' };
-    const renderers = { home: renderHome, notifications: renderNotifications, wechat: renderWechat, chat: renderChat, weibo: renderWeibo, red: renderRed, xplatform: renderXPlatform, live: renderLive, wallet: renderWallet, photos: renderPhotos, browser: renderBrowser, calendar: renderCalendar, notes: renderNotes };
+    const titles = { home: '手机', notifications: '通知中心', wechat: '微信', 'wechat-moments': '朋友圈', chat: '微信', weibo: '微博', red: '小红书', xplatform: 'X平台', live: '直播间', wallet: '钱包', photos: '相册', browser: '浏览器', calendar: '日历', notes: '备忘录' };
+    const renderers = { home: renderHome, notifications: renderNotifications, wechat: renderWechat, 'wechat-moments': renderWechatMoments, chat: renderChat, weibo: renderWeibo, red: renderRed, xplatform: renderXPlatform, live: renderLive, wallet: renderWallet, photos: renderPhotos, browser: renderBrowser, calendar: renderCalendar, notes: renderNotes };
     const renderer = renderers[state.page] || renderHome;
     if (phoneScreen && overlay) {
       const title = overlay.querySelector('.xp-head-title');
@@ -404,6 +421,12 @@
   function handleClick(event) {
     const appButton = event.target.closest('[data-app]');
     if (appButton) { const app = appButton.dataset.app; setPage(app === 'wechat' ? 'wechat' : app); return; }
+    const tabButton = event.target.closest('[data-wechat-tab]');
+    if(tabButton){state.wechatTab=tabButton.dataset.wechatTab;renderScreen();persistState();return;}
+    const momentLike=event.target.closest('[data-like-moment]');
+    if(momentLike){const p=(state.moments||[]).find(x=>x.id===momentLike.dataset.likeMoment);if(p){p.liked=!p.liked;p.likes=Math.max(0,(Number(p.likes)||0)+(p.liked?1:-1));}renderScreen();persistState();return;}
+    const momentComment=event.target.closest('[data-comment-moment]');
+    if(momentComment){openActionDialog('wechat-moment-comment','评论朋友圈','评论会保存在本地模拟朋友圈中',inlineHost,'写下评论……',momentComment.dataset.commentMoment);return;}
     const contactButton = event.target.closest('[data-contact]');
     if (contactButton) { state.selectedContact = contactButton.dataset.contact; setPage('chat', 'wechat'); return; }
     const deleteChatMessage = event.target.closest('[data-delete-chat-message]');
@@ -458,6 +481,14 @@
       case 'home': state.stack = []; setPage('home', null, false); break;
       case 'notifications': setPage('notifications'); break;
       case 'wechat-list': setPage('wechat', 'wechat'); break;
+      case 'wechat-moments': setPage('wechat-moments', 'wechat'); break;
+      case 'wechat-moment-compose': openActionDialog('wechat-moment-compose','发表朋友圈','分享此刻的生活',inlineHost,'这一刻的想法……'); break;
+      case 'wechat-search': state.wechatTab='chats'; setPage('wechat','wechat'); break;
+      case 'wechat-channels': openInfoDialog('视频号','这里展示本地模拟的视频号内容。',inlineHost); break;
+      case 'wechat-mini': openInfoDialog('小程序','这里是本地模拟的小程序入口。',inlineHost); break;
+      case 'wechat-favorites': openInfoDialog('收藏','收藏的聊天内容和文件会显示在这里。',inlineHost); break;
+      case 'wechat-files': openInfoDialog('卡包与文件','这里可以查看本地模拟的卡包与文件。',inlineHost); break;
+      case 'wechat-settings': openInfoDialog('微信设置','账号与安全、消息通知、通用、隐私和关于微信。',inlineHost); break;
       case 'clear-chat': openActionDialog('clear-chat', '清空聊天记录', '确定删除与当前联系人的全部聊天记录吗？', inlineHost); break;
       case 'clear-notices': state.notifications.forEach(n => n.unread = false); renderScreen(); persistState(); break;
       case 'delete-all-notices': state.notifications = []; renderScreen(); persistState(); break;
@@ -512,6 +543,10 @@
     pendingDialog = null;
     if (kind === 'clear-chat' && value === 'confirm') {
       if (state.selectedContact) state.chats[state.selectedContact] = [];
+    } else if (kind === 'wechat-moment-compose' && value) {
+      state.moments=state.moments||[];state.moments.unshift({id:`m${Date.now()}`,user:'我',avatar:'我',text:value,time:`今天 ${nowTime()}`,likes:0,liked:false,comments:[]});state.moments=state.moments.slice(0,100);
+    } else if (kind === 'wechat-moment-comment' && value) {
+      const post=(state.moments||[]).find(p=>p.id===extra);if(post){post.comments=Array.isArray(post.comments)?post.comments:[];post.comments.push({user:'我',text:value});post.comments=post.comments.slice(-30);}
     } else if (kind === 'weibo-compose' && value) {
       state.weiboPosts.unshift({ id: `w${Date.now()}`, user: '我', avatar: '我', text: value, tag: '#我的动态#', likes: 0, comments: 0, liked: false });
       state.weiboPosts = state.weiboPosts.slice(0, 100);
