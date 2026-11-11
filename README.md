@@ -32,10 +32,14 @@
 
 ## 版本
 
-当前版本：**1.1.69**
+当前版本：**1.1.70**
 
 扩展源文件：`index.js`、`style.css`、`manifest.json`。
 
+
+### 1.1.70
+- Add searchable chat history inside each WeChat conversation, with persistent query state and a clear-search action.
+- Make the Weibo hot-search list interactive; selecting a topic applies it to the feed search.
 
 ### 1.1.69
 - Add persistent keyword search to Weibo, Xiaohongshu, and X-platform feeds.
