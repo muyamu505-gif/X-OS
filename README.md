@@ -1,3 +1,5 @@
+- **v1.1.96**：补齐此前遗漏的 `canGenerateText()` 生成能力判断函数，修复点击剧情同步时在预检阶段触发 `ReferenceError`、导致同步流程根本未启动的问题；独立 API 模式检查地址、Key、模型，酒馆模式检查可用生成接口。
+
 - **v1.1.95**：修复 AI 中心与系统设置中的剧情同步按钮被预检条件禁用、看起来点击无反应的问题；兼容读取当前角色卡记录，并在同步完成或失败后恢复按钮状态。
 
 - **v1.1.94**：修复独立 API 生成测试的关键错误：补齐缺失的 `extractApiText` 响应解析函数；兼容常见 Chat Completions、旧式 text completion 与 Responses API 文本字段；API 地址自动去除误填的 `/models`、`/completions` 等尾路径；酒馆模式增加 `generateQuietPrompt` 兼容回退。
@@ -42,7 +44,7 @@
 
 ## 版本
 
-当前版本：**1.1.95**
+当前版本：**1.1.96**
 
 ### 1.1.90
 - Add a dedicated AI Center app on the phone home screen with visible model test, story sync, connection status and a direct route to API settings.
