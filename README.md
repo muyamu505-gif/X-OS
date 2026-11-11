@@ -32,7 +32,7 @@
 
 ## 版本
 
-当前版本：**1.1.54**
+当前版本：**1.1.55**
 
 扩展源文件：`index.js`、`style.css`、`manifest.json`。
 
@@ -294,3 +294,8 @@
 
 ### 1.1.54
 - Replace non-functional Safari-style bottom toolbar icons with a clear note explaining that links open in the device's default browser.
+
+
+### 1.1.55
+- Validate calendar dates against the selected month, including leap years, instead of silently clamping invalid days.
+- Show a local notification when a submitted calendar date is invalid.
