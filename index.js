@@ -65,7 +65,7 @@
   };
 
   let state = structuredCloneSafe(DEFAULT_STATE);
-  let overlay, phoneScreen, chatObserver, lastChatKey = '';
+  let overlay, phoneScreen, chatObserver, observedChat, lastChatKey = '';
   let ctx = null;
   let saveTimer = null;
   let initialized = false;
@@ -583,7 +583,12 @@
 
   function observeChat() {
     const chat = document.querySelector('#chat');
-    if (!chat || chatObserver) return;
+    if (!chat) return;
+    // SillyTavern can replace the chat container during layout/app lifecycle changes.
+    // Rebind instead of keeping an observer attached to a detached old node.
+    if (chatObserver && observedChat === chat) { scanChatMessages(); return; }
+    if (chatObserver) chatObserver.disconnect();
+    observedChat = chat;
     chatObserver = new MutationObserver(() => scanChatMessages());
     chatObserver.observe(chat, { childList: true, subtree: true });
     scanChatMessages();
