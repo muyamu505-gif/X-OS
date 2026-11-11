@@ -521,10 +521,16 @@
       const post = state.weiboPosts.find(p => p.id === extra);
       if (post) { post.comments = Number(post.comments || 0) + 1; post.lastComment = value; }
     } else if (kind === 'wechat-add' && value) {
-      const id = `contact${Date.now()}`;
-      state.contacts.push({ id, name: value.slice(0, 24), note: '新联系人', avatar: value.slice(0, 1), online: false });
-      state.chats[id] = [];
-      addNotification('微信', '联系人已添加', `已添加联系人：${value.slice(0, 24)}`);
+      const name = value.slice(0, 24);
+      const duplicate = state.contacts.find(contact => String(contact.name || '').trim().toLocaleLowerCase() === name.trim().toLocaleLowerCase());
+      if (duplicate) {
+        addNotification('微信', '联系人已存在', `“${name}”已在通讯录中。`);
+      } else {
+        const id = `contact${Date.now()}`;
+        state.contacts.unshift({ id, name, note: '新联系人', avatar: name.slice(0, 1), online: false });
+        state.chats[id] = [];
+        addNotification('微信', '联系人已添加', `已添加联系人：${name}`);
+      }
     } else if (kind === 'gift') {
       const prices = { '小心心': 10, '玫瑰': 99, '星海': 520 };
       const price = prices[value];
@@ -585,6 +591,8 @@
       const arr = state.chats[state.selectedContact] || (state.chats[state.selectedContact] = []);
       arr.push({ from: 'me', text, time: nowTime() });
       if (arr.length > 200) arr.splice(0, arr.length - 200);
+      const contactIndex = state.contacts.findIndex(contact => contact.id === state.selectedContact);
+      if (contactIndex > 0) state.contacts.unshift(state.contacts.splice(contactIndex, 1)[0]);
       renderScreen(); persistState();
     } else if (type === 'barrage') {
       const text = String(data.get('message') || '').trim();
