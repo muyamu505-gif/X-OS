@@ -301,16 +301,18 @@
     overlay.style.setProperty('top', '0px', 'important');
     overlay.style.setProperty('left', '0px', 'important');
     const shell = overlay.querySelector('.xphone-shell'); if (!shell) return;
-    const maxW = Math.max(220, width - 24), maxH = Math.max(220, height - 24);
-    const w = Math.min(Math.max(220, parseFloat(shell.style.width) || 320), maxW);
-    const h = Math.min(Math.max(220, parseFloat(shell.style.height) || 620), maxH);
+    const maxW = Math.max(180, width - 24), maxH = Math.max(320, height - 24);
+    const maxScale = Math.max(.25, Math.min((maxW - 12) / 308, (maxH - 12) / 608));
+    const rawW = parseFloat(shell.style.width) || 320, rawH = parseFloat(shell.style.height) || 620;
+    const requestedScale = (((rawW - 12) / 308) + ((rawH - 12) / 608)) / 2;
+    const scale = Math.max(.25, Math.min(maxScale, requestedScale));
+    const w = 308 * scale + 12, h = 608 * scale + 12;
     shell.style.setProperty('width', w + 'px', 'important');
     shell.style.setProperty('height', h + 'px', 'important');
     shell.style.setProperty('max-width', maxW + 'px', 'important');
     shell.style.setProperty('max-height', maxH + 'px', 'important');
-    const scale = Math.min((w - 12) / 308, (h - 12) / 608);
     const content = shell.querySelector('.xphone-content');
-    if (content) content.style.setProperty('--xp-phone-scale', String(Math.max(.25, scale)));
+    if (content) content.style.setProperty('--xp-phone-scale', String(scale));
     const pos = getPhonePosition(width, height, w, h);
     shell.style.setProperty('left', pos.x + 'px', 'important');
     shell.style.setProperty('top', pos.y + 'px', 'important');
@@ -325,8 +327,18 @@
   }
 
   function attachPhoneResize(shell) {
-    const sizeKey = `${EXT_ID}:windowSize`, posKey = `${EXT_ID}:windowPosition`, minW = 220, minH = 220;
-    const clamp = (w,h) => ({width:Math.min(Math.max(minW,(document.documentElement.clientWidth||innerWidth)-24),Math.max(minW,w)),height:Math.min(Math.max(minH,(window.innerHeight||document.documentElement.clientHeight||640)-24),Math.max(minH,h))});
+    const sizeKey = `${EXT_ID}:windowSize`, posKey = `${EXT_ID}:windowPosition`;
+    const getLimits = () => {
+      const vw = document.documentElement.clientWidth || innerWidth;
+      const vh = keyboardFocused && keyboardViewportHeight ? keyboardViewportHeight : (window.innerHeight || document.documentElement.clientHeight || 640);
+      return { maxScale: Math.max(.25, Math.min((Math.max(180,vw-24)-12)/308, (Math.max(320,vh-24)-12)/608)) };
+    };
+    const fromScale = scale => ({width:308*scale+12,height:608*scale+12});
+    const clamp = (w,h) => {
+      const requested = (((w-12)/308)+((h-12)/608))/2;
+      const scale = Math.max(.25,Math.min(getLimits().maxScale,requested));
+      return fromScale(scale);
+    };
     try {
       const saved=JSON.parse(localStorage.getItem(sizeKey)||'null');
       if(saved&&Number.isFinite(saved.width)&&Number.isFinite(saved.height)){
@@ -339,11 +351,17 @@
     let resize=null, move=null;
     const saveSize=()=>{const r=shell.getBoundingClientRect();try{localStorage.setItem(sizeKey,JSON.stringify({width:Math.round(r.width),height:Math.round(r.height)}));}catch(_){}};
     if(handle){
-      handle.addEventListener('pointerdown',e=>{const r=shell.getBoundingClientRect();resize={id:e.pointerId,x:e.clientX,y:e.clientY,w:r.width,h:r.height};try{handle.setPointerCapture(e.pointerId);}catch(_){}e.preventDefault();e.stopPropagation();});
-      handle.addEventListener('pointermove',e=>{if(!resize||resize.id!==e.pointerId)return;const z=clamp(resize.w+e.clientX-resize.x,resize.h+e.clientY-resize.y);shell.style.setProperty('width',z.width+'px','important');shell.style.setProperty('height',z.height+'px','important');updateOverlayGeometry();});
+      handle.addEventListener('pointerdown',e=>{const r=shell.getBoundingClientRect();resize={id:e.pointerId,x:e.clientX,y:e.clientY,scale:(r.width-12)/308};try{handle.setPointerCapture(e.pointerId);}catch(_){}e.preventDefault();e.stopPropagation();});
+      handle.addEventListener('pointermove',e=>{if(!resize||resize.id!==e.pointerId)return;const dx=e.clientX-resize.x,dy=e.clientY-resize.y;
+        const nextScale=resize.scale+(dx/308+dy/608)/2;
+        const z=fromScale(Math.max(.25,Math.min(getLimits().maxScale,nextScale)));
+        shell.style.setProperty('width',z.width+'px','important');shell.style.setProperty('height',z.height+'px','important');
+        const content=shell.querySelector('.xphone-content');if(content)content.style.setProperty('--xp-phone-scale',String((z.width-12)/308));
+        const vw=document.documentElement.clientWidth||innerWidth,vh=window.innerHeight||640;
+        const r=shell.getBoundingClientRect();shell.style.setProperty('left',Math.max(0,Math.min(vw-z.width,r.left))+'px','important');shell.style.setProperty('top',Math.max(0,Math.min(vh-z.height,r.top))+'px','important');});
       const finish=e=>{if(!resize||(e.pointerId!==undefined&&resize.id!==e.pointerId))return;saveSize();resize=null;updateOverlayGeometry();};
       handle.addEventListener('pointerup',finish);handle.addEventListener('pointercancel',finish);
-      handle.addEventListener('keydown',e=>{if(!['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key))return;e.preventDefault();const r=shell.getBoundingClientRect(),step=e.shiftKey?48:16;const z=clamp(r.width+(e.key==='ArrowRight'?step:e.key==='ArrowLeft'?-step:0),r.height+(e.key==='ArrowDown'?step:e.key==='ArrowUp'?-step:0));shell.style.setProperty('width',z.width+'px','important');shell.style.setProperty('height',z.height+'px','important');saveSize();updateOverlayGeometry();});
+      handle.addEventListener('keydown',e=>{if(!['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key))return;e.preventDefault();const r=shell.getBoundingClientRect(),step=e.shiftKey?48:16,delta=(e.key==='ArrowRight'||e.key==='ArrowDown'?step:-step),z=fromScale(Math.max(.25,Math.min(getLimits().maxScale,(r.width-12)/308+delta/308)));shell.style.setProperty('width',z.width+'px','important');shell.style.setProperty('height',z.height+'px','important');saveSize();updateOverlayGeometry();});
     }
     const drag=shell.querySelector('.xphone-drag-handle');
     if(drag){
