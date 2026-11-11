@@ -32,10 +32,16 @@
 
 ## 版本
 
-当前版本：**1.1.63**
+当前版本：**1.1.64**
 
 扩展源文件：`index.js`、`style.css`、`manifest.json`。
 
+
+### 1.1.64
+- Add per-transaction editing and deletion controls to wallet ledger rows.
+- Editing adjusts the simulated balance by the difference between old and new amounts; deletion reverses the transaction amount.
+- Block edits or deletions that would make the simulated balance negative, and preserve the original transaction date/time when editing.
+- Assign stable local IDs to older ledger entries that did not previously have IDs.
 
 ### 1.1.63
 - Add wallet month navigation with previous/next month and a shortcut back to the current month.
