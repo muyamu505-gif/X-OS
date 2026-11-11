@@ -662,8 +662,8 @@
       case 'back': goBack(); break;
       case 'home': state.stack = []; setPage('home', null, false); break;
       case 'notifications': setPage('notifications'); break;
-      case 'calendar-prev': { const p=/^(\\d{4})-(\\d{2})$/.exec(state.calendarView||''); const d=p?new Date(Number(p[1]),Number(p[2])-2,1):new Date(new Date().getFullYear(),new Date().getMonth()-1,1); state.calendarView=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; renderScreen(); persistState(); break; }
-      case 'calendar-next': { const p=/^(\\d{4})-(\\d{2})$/.exec(state.calendarView||''); const d=p?new Date(Number(p[1]),Number(p[2]),1):new Date(new Date().getFullYear(),new Date().getMonth()+1,1); state.calendarView=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; renderScreen(); persistState(); break; }
+      case 'calendar-prev': { const p=/^(\d{4})-(\d{2})$/.exec(state.calendarView||''); const d=p?new Date(Number(p[1]),Number(p[2])-2,1):new Date(new Date().getFullYear(),new Date().getMonth()-1,1); state.calendarView=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; renderScreen(); persistState(); break; }
+      case 'calendar-next': { const p=/^(\d{4})-(\d{2})$/.exec(state.calendarView||''); const d=p?new Date(Number(p[1]),Number(p[2]),1):new Date(new Date().getFullYear(),new Date().getMonth()+1,1); state.calendarView=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; renderScreen(); persistState(); break; }
       case 'calendar-today': state.calendarView=''; renderScreen(); persistState(); break;
       case 'wechat-list': setPage('wechat', 'wechat'); break;
       case 'wechat-moments': setPage('wechat-moments', 'wechat'); break;
