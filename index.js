@@ -328,7 +328,7 @@
       if (dialog) {
         dialog.remove();
         const root = event.target.closest('.xphone-shell, .xp-inline-device');
-        if (pendingDialog?.root === root) pendingDialog = null;
+        if (pendingDialog?.root === root) { if(pendingDialog.kind==='wallet-restore') pendingWalletRestore=null; pendingDialog = null; }
         event.stopPropagation();
       } else {
         closePhone();
@@ -605,7 +605,7 @@
     reader.onload=()=>{try{
       const data=JSON.parse(String(reader.result||''));
       if(data?.format!=='xos-wallet-backup'||data?.version!==1||!Number.isSafeInteger(data.wallet)||data.wallet<0||data.wallet>999999999999||!Array.isArray(data.transactions)||data.transactions.length>2000)throw new Error('备份格式不正确或账单数量超出限制。');
-      const transactions=data.transactions.map((t,i)=>{const amount=Number(t?.amount);if(!Number.isSafeInteger(amount)||Math.abs(amount)>999999999)throw new Error('第 '+(i+1)+' 笔账单金额无效。');return{id:String(t.id||('restore-'+Date.now()+'-'+i)).slice(0,100),title:String(t.title||'未命名记录').slice(0,80),amount,balanceDelta:Number.isSafeInteger(Number(t.balanceDelta))?Number(t.balanceDelta):amount,category:String(t.category||'其他').slice(0,30),time:String(t.time||'').slice(0,40),date:/^\d{4}-\d{2}-\d{2}$/.test(String(t.date||''))?String(t.date):'',month:/^\d{4}-\d{2}$/.test(String(t.month||''))?String(t.month):''};});
+      const transactions=data.transactions.map((t,i)=>{const amount=Number(t?.amount);if(!Number.isSafeInteger(amount)||Math.abs(amount)>999999999)throw new Error('第 '+(i+1)+' 笔账单金额无效。');return{id:String(t.id||('restore-'+Date.now()+'-'+i)).slice(0,100),title:String(t.title||'未命名记录').slice(0,80),amount,balanceDelta:Number.isSafeInteger(Number(t.balanceDelta))&&Math.abs(Number(t.balanceDelta))<=999999999?Number(t.balanceDelta):amount,category:String(t.category||'其他').slice(0,30),time:String(t.time||'').slice(0,40),date:/^\d{4}-\d{2}-\d{2}$/.test(String(t.date||''))?String(t.date):'',month:/^\d{4}-\d{2}$/.test(String(t.month||''))?String(t.month):''};});
       pendingWalletRestore={wallet:data.wallet,transactions};openActionDialog('wallet-restore','恢复钱包备份','将用备份中的余额和 '+transactions.length+' 笔账单替换当前钱包数据。此操作不可撤销。',null);
     }catch(error){pendingWalletRestore=null;addNotification('记账','恢复失败',String(error?.message||error).slice(0,120));renderScreen();persistState();}};
     reader.onerror=()=>addNotification('记账','读取失败','无法读取所选备份文件。');reader.readAsText(file,'utf-8');
