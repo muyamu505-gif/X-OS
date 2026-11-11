@@ -32,7 +32,7 @@
 
 ## 版本
 
-当前版本：**1.1.44**
+当前版本：**1.1.45**
 
 扩展源文件：`index.js`、`style.css`、`manifest.json`。
 
@@ -238,3 +238,8 @@
 - Import only explicitly evidenced livestream chat/barrage lines from the active story context and attach them to their matching room.
 - Scope locally sent barrages to the currently open room and keep messages from separate rooms isolated.
 - Display unknown viewer counts and heat as “not recorded” rather than rendering misleading zero values; show room descriptions and a proper empty state.
+
+
+### 1.1.45
+- Correct the inner phone screen offset so the scaled desktop and app content align with the phone frame instead of being shifted right/down and clipped.
+- Remove the two visible diagonal marks from the bottom-right resize handle while retaining its pointer and keyboard resizing behavior.
