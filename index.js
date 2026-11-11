@@ -16,55 +16,22 @@
     app: null,
     stack: [],
     selectedContact: null,
-    notifications: [
-      { id: 'n1', app: '微信', title: '林知夏', body: '你今天晚上还开播吗？我有事找你。', time: '09:32', unread: true },
-      { id: 'n2', app: '微博', title: '实时热搜', body: '你的关注有 3 条新动态', time: '08:57', unread: true }
-    ],
+    notifications: [],
     wechatTab: 'chats',
-    moments: [
-      { id: 'm1', user: '林知夏', avatar: '知', text: '今天的天气很好，想出去走走。', time: '今天 09:20', likes: 3, liked: false, comments: [] },
-      { id: 'm2', user: '周予安', avatar: '周', text: '忙里偷闲的一杯咖啡。', time: '昨天 18:42', likes: 8, liked: false, comments: [] }
-    ],
-    contacts: [
-      { id: 'lin', name: '林知夏', note: '好友', avatar: '知', online: true },
-      { id: 'zhou', name: '周予安', note: '特别关注', avatar: '周', online: false },
-      { id: 'group', name: '深夜摸鱼小分队', note: '群聊 · 6人', avatar: '群', online: true, isGroup: true, members: ['lin','zhou'] }
-    ],
-    chats: {
-      lin: [
-        { from: 'them', text: '你今天晚上还开播吗？我有事找你。', time: '09:32' },
-        { from: 'me', text: '还没确定，怎么啦？', time: '09:34' },
-        { from: 'them', text: '没什么，就是刷到你昨晚的直播切片了。', time: '09:35' }
-      ],
-      zhou: [{ from: 'them', text: '有空看一下我发你的链接。', time: '昨天' }],
-      group: [{ from: 'them', text: '今晚有人一起打游戏吗？', time: '09:10' }]
-    },
+    moments: [],
+    contacts: [],
+    chats: {},
     weiboTab: 'recommend',
-    weiboFollowing: ['娱乐显微镜'],
-    weiboPosts: [
-      { id: 'w1', user: '娱乐显微镜', avatar: '娱', text: '昨晚深夜直播间又出现了新话题？评论区已经吵起来了。', tag: '#直播间观察#', likes: 2381, comments: 462, liked: false },
-      { id: 'w2', user: '今天也要开心', avatar: '今', text: '感觉最近大家都在讨论主播和粉丝之间的边界感。', tag: '#网络社交#', likes: 806, comments: 93, liked: false }
-    ],
-    redPosts: [
-      { id: 'r1', user: '一颗晚睡的栗子', title: '深夜直播桌面布置分享', desc: '暖光灯、麦克风和一杯冰美式，记录一点日常。', likes: 1280, liked: false, favorite: false, comments: [], color: 'peach' },
-      { id: 'r2', user: '穿搭备忘录', title: '秋冬通勤穿搭｜简单但有氛围', desc: '最近很喜欢低饱和的日常搭配。', likes: 926, liked: false, favorite: false, comments: [], color: 'sage' }
-    ],
+    weiboFollowing: [],
+    weiboPosts: [],
+    redPosts: [],
     redTab: 'recommend',
-    redFollowing: ['一颗晚睡的栗子'],
+    redFollowing: [],
     followed: false,
     xTab: 'recommend',
     xFollowing: ['{{char}}'],
-    xPosts: [
-      {id:'xp1',user:'{{char}}',avatar:'{{char}}',text:'今晚临时加播，想聊聊天的可以来。',time:'刚刚',likes:2860,comments:[],liked:false,room:'main'},
-      {id:'xp2',user:'今晚冲分车队',avatar:'游',text:'差一个队友，今晚目标上分。',time:'12分钟前',likes:842,comments:[],liked:false,room:'game'},
-      {id:'xp3',user:'深夜情绪电台',avatar:'声',text:'今晚主题：那些没来得及说出口的话。',time:'半小时前',likes:1206,comments:[],liked:false,room:'voice'}
-    ],
-    liveMessages: [
-      { user: '汽水不加冰', text: '主播晚上好！' },
-      { user: '晚风', text: '今天是闲聊局吗' },
-      { user: '匿名观众', text: '刚从推荐页进来' },
-      { user: '知更鸟', text: '这个背景音乐好听' }
-    ],
+    xPosts: [],
+    liveMessages: [],
     liveViewers: 128436,
     liveHeat: 865200,
     wallet: 8888,
@@ -74,16 +41,10 @@
     browserUrl: '',
     browserQuery: '',
     browserResults: [],
-    photos: [
-      { id: 'p1', album: '截图', title: '直播间数据截图', detail: '昨晚直播结束后的数据记录', date: '今天 00:18' },
-      { id: 'p2', album: '直播素材', title: '开播封面草稿', detail: '深夜闲聊主题封面构思', date: '昨天 21:06' },
-      { id: 'p3', album: '最近项目', title: '桌面布置灵感', detail: '暖光灯与麦克风摆放参考', date: '昨天 16:42' }
-    ],
+    photos: [],
     selectedAlbum: '最近项目',
-    calendar: [
-      { day: '11', title: '晚上 20:00', desc: '直播计划（待确认）' },
-      { day: '13', title: '周五', desc: '和朋友吃饭' }
-    ]
+    calendar: [],
+    importedProfile: null
   };
 
   let state = structuredCloneSafe(DEFAULT_STATE);
@@ -116,7 +77,10 @@
   }
   function getContextSummary() {
     const c = currentContext(), chat = Array.isArray(c?.chat) ? c.chat : [];
-    return { characterName: getCurrentCharacterName(), messages: chat.length, hasCharacter: !!(c?.characters?.[c?.characterId]), hasWorldbook: !!(c?.worldInfo || c?.world_info || c?.worldbook) };
+    const character = c?.characters?.[c?.characterId] || null;
+    const book = character?.data?.character_book || character?.character_book || null;
+    const worldInfo = c?.chatMetadata?.world_info || c?.worldInfo || c?.world_info || null;
+    return { characterName: getCurrentCharacterName(), messages: chat.length, hasCharacter: !!character, hasWorldbook: !!(book || worldInfo), hasGenerator: typeof c?.generateQuietPrompt === 'function' };
   }
   function renderSettings() {
     const info = getContextSummary();
@@ -131,7 +95,9 @@
         <label class="xp-settings-toggle"><input type="checkbox" data-setting="includeWorldbook" ${systemSettings.includeWorldbook?'checked':''}>读取当前世界书相关信息</label>
         <label class="xp-settings-toggle"><input type="checkbox" data-setting="includeChat" ${systemSettings.includeChat?'checked':''}>读取当前剧情聊天记录</label>
         <label class="xp-settings-field">剧情上下文消息数量 <b>${systemSettings.contextMessages}</b><input type="range" min="4" max="80" step="4" value="${systemSettings.contextMessages}" data-setting="contextMessages"></label>
-        <small class="xp-settings-note">这里先提供上下文范围开关和状态检测；完整提取与剧情导入需要继续接入酒馆上下文接口。</small>
+        <div class="xp-settings-actions"><button data-action="context-import" ${!info.hasGenerator || !info.hasCharacter?'disabled':''}>识别并导入当前剧情</button></div>
+        <small class="xp-settings-note">导入会调用酒馆当前模型的后台生成接口，识别当前卡片、已进入上下文的世界书和近期剧情。仅写入当前聊天，不会修改角色卡原文。</small>
+        ${state.importedProfile?`<div class="xp-settings-info"><span>上次导入</span><b>${escapeHtml(state.importedProfile.importedAt||'已导入')}</b></div><div class="xp-settings-info"><span>识别人物</span><b>${(state.importedProfile.characters||[]).length} 位</b></div>`:''}
       </div>
       <div class="xp-settings-card"><div class="xp-settings-card-title">模型 API</div>
         <label class="xp-settings-field">调用方式<select data-setting="apiMode"><option value="sillytavern" ${systemSettings.apiMode==='sillytavern'?'selected':''}>跟随酒馆当前 API</option><option value="openai" ${systemSettings.apiMode==='openai'?'selected':''}>独立 OpenAI 兼容 API</option></select></label>
@@ -175,14 +141,14 @@
         base[key] = Object.fromEntries(Object.entries(saved[key]).filter(([, messages]) => Array.isArray(messages)).map(([id, messages]) => [id, messages.filter(message => message && typeof message === 'object' && !Array.isArray(message))]));
       }
     }
-    const pages = new Set(['home', 'notifications', 'wechat', 'wechat-moments', 'chat', 'weibo', 'red', 'xplatform', 'live', 'wallet', 'photos', 'browser', 'calendar', 'notes']);
+    const pages = new Set(['home', 'notifications', 'wechat', 'wechat-moments', 'chat', 'weibo', 'red', 'xplatform', 'live', 'wallet', 'photos', 'browser', 'calendar', 'notes', 'settings']);
     if (!pages.has(base.page)) base.page = 'home';
     if (!['chats','contacts','discover','me'].includes(base.wechatTab)) base.wechatTab = 'chats';
     if (!['recommend','following','mine'].includes(base.weiboTab)) base.weiboTab = 'recommend';
     if (!['recommend','following','game','voice','beauty'].includes(base.xTab)) base.xTab = 'recommend';
     // The chat renderer always needs a contact to display; recover the built-in
     // starter contacts if an old or damaged save contains an empty contact list.
-    if (!base.contacts.length) base.contacts = structuredCloneSafe(DEFAULT_STATE.contacts);
+    // Empty contact lists are valid: never repopulate role-specific starter NPCs.
     const contactIds = new Set(base.contacts.map(contact => String(contact.id)));
     if (!contactIds.has(base.selectedContact)) base.selectedContact = base.contacts[0]?.id || null;
     base.contacts.forEach((contact, index) => {
@@ -568,6 +534,7 @@
   function handleClick(event) {
     const settingAction = event.target.closest('[data-action^="settings-"]');
     if (settingAction) {
+      if (settingAction.dataset.action === 'context-import') { importCurrentStoryContext(); return; }
       if (settingAction.dataset.action === 'settings-save') { saveSystemSettings(); addNotification('设置','保存成功','X-OS 系统设置已保存在本机。'); renderScreen(); return; }
       if (settingAction.dataset.action === 'settings-test') { testApiConnection(); return; }
     }
@@ -870,6 +837,84 @@
 
   function openExternalBrowser(input) {
   async function testApiConnection() {
+  function parseGeneratedJson(raw) {
+    const text = String(raw || '').trim().replace(/^\`\`\`(?:json)?\s*/i,'').replace(/\s*\`\`\`$/,'');
+    try { return JSON.parse(text); } catch (_) {
+      const start = text.indexOf('{'), end = text.lastIndexOf('}');
+      if (start >= 0 && end > start) return JSON.parse(text.slice(start, end + 1));
+      throw new Error('模型返回内容不是有效 JSON');
+    }
+  }
+
+  async function importCurrentStoryContext() {
+    const context = currentContext();
+    if (!context?.generateQuietPrompt) { addNotification('上下文导入','酒馆接口不可用','请确认当前酒馆版本支持 generateQuietPrompt。'); renderScreen(); return; }
+    if (!context.characters?.[context.characterId]) { addNotification('上下文导入','未选择角色卡','请先打开一张角色卡并进入对应聊天。'); renderScreen(); return; }
+    const button = phoneScreen?.querySelector('[data-action="context-import"]');
+    if (button) { button.disabled = true; button.textContent = '正在识别当前剧情…'; }
+    try {
+      const character = context.characters[context.characterId];
+      const chat = Array.isArray(context.chat) ? context.chat : [];
+      const recent = systemSettings.includeChat ? chat.slice(-Math.max(4, Number(systemSettings.contextMessages)||24)) : [];
+      const cardInfo = systemSettings.includeCharacter ? {
+        name: character.name || '',
+        description: character.description || character.data?.description || '',
+        personality: character.personality || character.data?.personality || '',
+        scenario: character.scenario || character.data?.scenario || '',
+        first_mes: character.first_mes || character.data?.first_mes || ''
+      } : {};
+      const book = character.data?.character_book || character.character_book || null;
+      const bookSummary = systemSettings.includeWorldbook ? {
+        name: book?.name || '',
+        description: book?.description || '',
+        entries: Array.isArray(book?.entries) ? book.entries.filter(e=>e && e.disable!==true).slice(0,80).map(e=>({keys:e.keys||[],content:String(e.content||'').slice(0,1600)})) : [],
+        chatWorldInfo: context.chatMetadata?.world_info || null
+      } : {};
+      const transcript = recent.map(m=>({role:m.is_user?'user':m.is_system?'system':'assistant',name:m.name||'',text:String(m.mes||m.message||'').slice(0,5000)}));
+      const prompt = [
+        '请根据当前 SillyTavern 会话内容，提取适合导入通用手机模拟器 X-OS 的剧情资料。',
+        '只把当前角色卡、明确提供的世界书内容、聊天记录中有证据的人物与事实写入结果。不要编造未出现的 NPC，不要把示例人物当成固定角色。',
+        '角色引用必须使用 {{user}} 表示用户，使用 {{char}} 表示当前主角；其他 NPC 必须使用剧情中真实出现的名字。不要替 {{user}} 或 {{char}} 编造姓名、性别、身份或关系。',
+        '仅输出 JSON。若没有明确 NPC，characters 为空数组；若无动态内容，socialPosts 为空数组。聊天记录仅用于提取明确事实，不能把模型猜测当事实。',
+        '角色卡信息：', JSON.stringify(cardInfo),
+        '角色卡内置世界书（若有）：', JSON.stringify(bookSummary),
+        '近期聊天记录：', JSON.stringify(transcript),
+        '当前酒馆上下文中的已激活世界书/提示词也可作为依据；优先遵循当前剧情，忽略与剧情无关的扩展指令。'
+      ].join('\n');
+      const schema = {
+        name:'XOSStoryImport',
+        value:{type:'object',additionalProperties:false,properties:{
+          summary:{type:'string'},
+          userRole:{type:'string'},
+          charRole:{type:'string'},
+          characters:{type:'array',items:{type:'object',additionalProperties:false,properties:{name:{type:'string'},relation:{type:'string'},description:{type:'string'},openingMessage:{type:'string'}},required:['name','relation','description','openingMessage']}},
+          socialPosts:{type:'array',items:{type:'object',additionalProperties:false,properties:{author:{type:'string'},text:{type:'string'},platform:{type:'string'}},required:['author','text','platform']}}
+        },required:['summary','userRole','charRole','characters','socialPosts']}
+      };
+      const result = await context.generateQuietPrompt({quietPrompt:prompt,quietPromptDescription:'X-OS 当前角色卡剧情识别',jsonSchema:schema});
+      const profile = parseGeneratedJson(typeof result==='string'?result:result?.content||result?.text||JSON.stringify(result));
+      const safeChars = (Array.isArray(profile.characters)?profile.characters:[]).filter(x=>x&&typeof x.name==='string'&&x.name.trim()&&x.name!=='{{user}}'&&x.name!=='{{char}}').slice(0,40);
+      state.contacts = safeChars.map((x,i)=>({id:'ctx_'+i+'_'+Date.now(),name:x.name.trim().slice(0,48),note:String(x.relation||'剧情人物').slice(0,80),avatar:x.name.trim().slice(0,1),online:false}));
+      state.chats = {};
+      safeChars.forEach((x,i)=>{const id=state.contacts[i].id;state.chats[id]=x.openingMessage?[{from:'them',text:String(x.openingMessage).slice(0,500),time:'剧情导入'}]:[];});
+      state.moments = [];
+      state.weiboPosts = [];
+      state.redPosts = [];
+      state.xPosts = (Array.isArray(profile.socialPosts)?profile.socialPosts:[]).slice(0,40).map((p,i)=>({id:'ctxpost_'+Date.now()+'_'+i,user:String(p.author||'').slice(0,48),avatar:String(p.author||'？').slice(0,1),text:String(p.text||'').slice(0,800),tag:'',likes:0,comments:[],liked:false,room:'main',time:'剧情导入'})).filter(p=>p.user&&p.text);
+      state.liveMessages = [];
+      state.selectedContact = state.contacts[0]?.id || null;
+      state.importedProfile = {summary:String(profile.summary||'').slice(0,1000),userRole:String(profile.userRole||'').slice(0,500),charRole:String(profile.charRole||'').slice(0,500),characters:safeChars.map(x=>({name:x.name,relation:x.relation})),importedAt:nowTime()};
+      persistState();
+      addNotification('上下文导入','识别完成',`已导入 ${safeChars.length} 位剧情人物。资料仅保存于当前聊天。`);
+      renderScreen();
+    } catch(error) {
+      console.error(`[${EXT_ID}] story context import failed`,error);
+      addNotification('上下文导入','导入失败',String(error?.message||error).slice(0,140));
+      renderScreen();
+    }
+  }
+
+
     if (systemSettings.apiMode === 'sillytavern') {
       const context = currentContext();
       const available = !!(context && (typeof context.generate === 'function' || typeof context.generateRaw === 'function'));
