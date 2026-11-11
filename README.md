@@ -32,10 +32,16 @@
 
 ## 版本
 
-当前版本：**1.1.84**
+当前版本：**1.1.85**
 
 扩展源文件：`index.js`、`style.css`、`manifest.json`。
 
+
+### 1.1.85
+- Fix a critical recursion bug in the shared generation adapter: SillyTavern mode now correctly calls the active chat context's `generateRaw` instead of recursively calling itself.
+- Replace duplicate model selector/manual fields with one mobile-friendly model input backed by a datalist, so model selection and manual model IDs no longer overwrite each other.
+- Add configurable request timeout (10–180 seconds) and retry count (0–3) for independent API requests; retry network failures and server-side HTTP errors while surfacing actionable timeout, CORS, and HTTP messages.
+- Add persistent on-screen API status feedback for model discovery and real generation tests.
 
 ### 1.1.84
 - Connect the existing API settings to actual X-OS text generation: private chats, group chats, friend-request decisions, and story-context extraction now route through one configured generation adapter.
