@@ -32,10 +32,15 @@
 
 ## 版本
 
-当前版本：**1.1.64**
+当前版本：**1.1.65**
 
 扩展源文件：`index.js`、`style.css`、`manifest.json`。
 
+
+### 1.1.65
+- Add live keyword search and category filtering to the wallet ledger.
+- Export the current month/type/category/search result as a UTF-8 CSV file with spreadsheet-formula injection safeguards.
+- Preserve legacy undated transactions in the export when they match the current filters.
 
 ### 1.1.64
 - Add per-transaction editing and deletion controls to wallet ledger rows.
