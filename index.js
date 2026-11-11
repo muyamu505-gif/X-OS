@@ -6,6 +6,9 @@
 
   const EXT_ID = 'x-phone-simulator';
   const META_KEY = 'xPhoneSimulatorState';
+  const SETTINGS_KEY = `${EXT_ID}:systemSettings`;
+  const DEFAULT_SETTINGS = { contextEnabled: true, includeCharacter: true, includeWorldbook: true, includeChat: true, contextMessages: 24, apiMode: 'sillytavern', apiBase: '', apiKey: '', apiModel: '', temperature: 0.7, maxTokens: 1800 };
+  let systemSettings = loadSystemSettings();
   let keyboardFocused = false;
   let keyboardViewportHeight = 0;
   const DEFAULT_STATE = {
@@ -96,6 +99,54 @@
   function structuredCloneSafe(value) {
     return JSON.parse(JSON.stringify(value));
   }
+  
+  function loadSystemSettings() {
+    try { const saved = JSON.parse(localStorage.getItem(SETTINGS_KEY) || 'null'); return { ...DEFAULT_SETTINGS, ...(saved && typeof saved === 'object' ? saved : {}) }; }
+    catch (_) { return { ...DEFAULT_SETTINGS }; }
+  }
+  function saveSystemSettings() {
+    try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(systemSettings)); }
+    catch (error) { console.warn(`[${EXT_ID}] settings save failed`, error); }
+  }
+  function getCurrentCharacterName() {
+    const c = currentContext();
+    if (!c) return '未连接酒馆上下文';
+    if (c.characterId === undefined || c.characterId === null || c.characterId < 0) return c.groupId ? '群组聊天' : '未选择角色卡';
+    return c.name || c.characterName || c.characters?.[c.characterId]?.name || '当前角色卡';
+  }
+  function getContextSummary() {
+    const c = currentContext(), chat = Array.isArray(c?.chat) ? c.chat : [];
+    return { characterName: getCurrentCharacterName(), messages: chat.length, hasCharacter: !!(c?.characters?.[c?.characterId]), hasWorldbook: !!(c?.worldInfo || c?.world_info || c?.worldbook) };
+  }
+  function renderSettings() {
+    const info = getContextSummary();
+    return `<section class="xp-page xp-system-settings">
+      <div class="xp-settings-heading"><strong>系统设置</strong><small>X-OS 通用配置 · 不写入角色卡</small></div>
+      <div class="xp-settings-card"><div class="xp-settings-card-title">当前酒馆上下文</div>
+        <div class="xp-settings-info"><span>当前对象</span><b>${escapeHtml(info.characterName)}</b></div>
+        <div class="xp-settings-info"><span>聊天消息</span><b>${info.messages} 条</b></div>
+        <div class="xp-settings-info"><span>世界书信息</span><b>${info.hasWorldbook?'检测到上下文':'等待酒馆上下文'}</b></div>
+        <label class="xp-settings-toggle"><input type="checkbox" data-setting="contextEnabled" ${systemSettings.contextEnabled?'checked':''}>启用上下文识别</label>
+        <label class="xp-settings-toggle"><input type="checkbox" data-setting="includeCharacter" ${systemSettings.includeCharacter?'checked':''}>读取当前角色卡信息</label>
+        <label class="xp-settings-toggle"><input type="checkbox" data-setting="includeWorldbook" ${systemSettings.includeWorldbook?'checked':''}>读取当前世界书相关信息</label>
+        <label class="xp-settings-toggle"><input type="checkbox" data-setting="includeChat" ${systemSettings.includeChat?'checked':''}>读取当前剧情聊天记录</label>
+        <label class="xp-settings-field">剧情上下文消息数量 <b>${systemSettings.contextMessages}</b><input type="range" min="4" max="80" step="4" value="${systemSettings.contextMessages}" data-setting="contextMessages"></label>
+        <small class="xp-settings-note">这里先提供上下文范围开关和状态检测；完整提取与剧情导入需要继续接入酒馆上下文接口。</small>
+      </div>
+      <div class="xp-settings-card"><div class="xp-settings-card-title">模型 API</div>
+        <label class="xp-settings-field">调用方式<select data-setting="apiMode"><option value="sillytavern" ${systemSettings.apiMode==='sillytavern'?'selected':''}>跟随酒馆当前 API</option><option value="openai" ${systemSettings.apiMode==='openai'?'selected':''}>独立 OpenAI 兼容 API</option></select></label>
+        <label class="xp-settings-field">API 地址<input data-setting="apiBase" value="${escapeHtml(systemSettings.apiBase)}" placeholder="https://api.example.com/v1"></label>
+        <label class="xp-settings-field">API Key<input data-setting="apiKey" type="password" autocomplete="off" value="${escapeHtml(systemSettings.apiKey)}" placeholder="输入后本机保存"></label>
+        <label class="xp-settings-field">模型名称<input data-setting="apiModel" value="${escapeHtml(systemSettings.apiModel)}" placeholder="例如 gpt-4o-mini"></label>
+        <label class="xp-settings-field">Temperature<input data-setting="temperature" type="number" min="0" max="2" step="0.1" value="${systemSettings.temperature}"></label>
+        <label class="xp-settings-field">最大输出 Token<input data-setting="maxTokens" type="number" min="128" max="16000" step="128" value="${systemSettings.maxTokens}"></label>
+        <div class="xp-settings-actions"><button data-action="settings-save">保存设置</button><button data-action="settings-test">测试 API</button></div>
+        <small class="xp-settings-note">API Key 保存在本机浏览器存储，不写入聊天元数据。独立 API 的实际生成调用还需接入手机 AI 功能。</small>
+      </div>
+      <div class="xp-settings-card"><div class="xp-settings-card-title">数据与角色卡</div><p>手机系统设置属于 X-OS；联系人、聊天、动态和 NPC 属于当前角色卡/当前聊天。切换角色卡后重新识别，不沿用其他卡片的剧情人物。</p><div class="xp-settings-info"><span>数据保存</span><b>当前聊天元数据</b></div></div>
+    </section>`;
+  }
+
 
   function escapeHtml(value) {
     return String(value ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
@@ -366,6 +417,7 @@
         ${appIcon('browser', '浏览器', '◉', '#4d9cce')}
         ${appIcon('calendar', '日历', '日', '#e46b55')}
         ${appIcon('notes', '备忘录', '✎', '#71879a')}
+        ${appIcon('settings', '设置', '⚙', '#83919e')}
       </div>
       </div>`;
   }
@@ -487,8 +539,8 @@
   }
 
   function renderScreen() {
-    const titles = { home: '手机', notifications: '通知中心', wechat: '微信', 'wechat-moments': '朋友圈', chat: '微信', weibo: '微博', red: '小红书', xplatform: 'X平台', live: '直播间', wallet: '钱包', photos: '相册', browser: '浏览器', calendar: '日历', notes: '备忘录' };
-    const renderers = { home: renderHome, notifications: renderNotifications, wechat: renderWechat, 'wechat-moments': renderWechatMoments, chat: renderChat, weibo: renderWeibo, red: renderRed, xplatform: renderXPlatform, live: renderLive, wallet: renderWallet, photos: renderPhotos, browser: renderBrowser, calendar: renderCalendar, notes: renderNotes };
+    const titles = { home: '手机', notifications: '通知中心', wechat: '微信', 'wechat-moments': '朋友圈', chat: '微信', weibo: '微博', red: '小红书', xplatform: 'X平台', live: '直播间', wallet: '钱包', photos: '相册', browser: '浏览器', calendar: '日历', notes: '备忘录', settings: '设置' };
+    const renderers = { home: renderHome, notifications: renderNotifications, wechat: renderWechat, 'wechat-moments': renderWechatMoments, chat: renderChat, weibo: renderWeibo, red: renderRed, xplatform: renderXPlatform, live: renderLive, wallet: renderWallet, photos: renderPhotos, browser: renderBrowser, calendar: renderCalendar, notes: renderNotes, settings: renderSettings };
     const renderer = renderers[state.page] || renderHome;
     if (phoneScreen && overlay) {
       const title = overlay.querySelector('.xp-head-title');
@@ -514,6 +566,12 @@
   }
 
   function handleClick(event) {
+    const settingAction = event.target.closest('[data-action^="settings-"]');
+    if (settingAction) {
+      if (settingAction.dataset.action === 'settings-save') { saveSystemSettings(); addNotification('设置','保存成功','X-OS 系统设置已保存在本机。'); renderScreen(); return; }
+      if (settingAction.dataset.action === 'settings-test') { testApiConnection(); return; }
+    }
+
     const inlineHost = event.target.closest('.xphone-inline-host');
     const appButton = event.target.closest('[data-app]');
     if (appButton) { const app = appButton.dataset.app; setPage(app === 'wechat' ? 'wechat' : app); return; }
@@ -724,6 +782,16 @@
   }
 
   function handleInput(event) {
+    const setting = event.target.closest('[data-setting]');
+    if (setting) {
+      const key = setting.dataset.setting;
+      if (setting.type === 'checkbox') systemSettings[key] = setting.checked;
+      else if (['contextMessages','temperature','maxTokens'].includes(key)) systemSettings[key] = Number(setting.value);
+      else systemSettings[key] = setting.value;
+      if (key === 'contextMessages') { const label = setting.closest('label')?.querySelector('b'); if (label) label.textContent = String(systemSettings.contextMessages); }
+      saveSystemSettings();
+    }
+
     if (event.target.matches('[data-notes]')) {
       state.notes = event.target.value;
       const count = event.target.closest('.xp-notes-page')?.querySelector('[data-notes-count]');
@@ -801,6 +869,25 @@
   }
 
   function openExternalBrowser(input) {
+  async function testApiConnection() {
+    if (systemSettings.apiMode === 'sillytavern') {
+      const context = currentContext();
+      const available = !!(context && (typeof context.generate === 'function' || typeof context.generateRaw === 'function'));
+      addNotification('API 测试', available ? '检测到酒馆生成接口' : '已读取酒馆上下文', available ? '后续手机生成将沿用酒馆当前 API。' : '尚未检测到可直接调用的生成方法，需要继续接入酒馆生成接口。');
+      renderScreen(); return;
+    }
+    const base = String(systemSettings.apiBase || '').trim().replace(/\/+$/, '');
+    if (!base || !systemSettings.apiKey) { addNotification('API 测试','配置不完整','请填写 API 地址和 API Key。'); renderScreen(); return; }
+    try {
+      const response = await fetch(base + '/models', { headers: { Authorization: 'Bearer ' + systemSettings.apiKey } });
+      if (!response.ok) throw new Error('HTTP ' + response.status);
+      const result = await response.json();
+      addNotification('API 测试','连接成功',`接口可访问，检测到 ${Array.isArray(result.data) ? result.data.length : 0} 个模型。`);
+    } catch (error) { addNotification('API 测试','连接失败',String(error.message || error).slice(0,120)); }
+    renderScreen();
+  }
+
+
     const raw = String(input || '').trim();
     if (!raw) return;
     let url;
