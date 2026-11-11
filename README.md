@@ -32,7 +32,7 @@
 
 ## 版本
 
-当前版本：**1.1.27**
+当前版本：**1.1.28**
 
 扩展源文件：`index.js`、`style.css`、`manifest.json`。
 
@@ -147,3 +147,8 @@
 - Rework WeChat with four functional tabs: Chats, Contacts, Discover, and Me.
 - Add a local Moments feed with publishing, likes, and comments.
 - Refresh WeChat list, navigation, profile, and conversation styling to better match the familiar WeChat visual hierarchy.
+
+
+### 1.1.28
+- Add local group creation from the WeChat Contacts tab, with existing contacts invited automatically.
+- Group conversations show member counts and sender labels; add a chat-info view for groups and contacts.
