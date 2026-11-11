@@ -32,7 +32,7 @@
 
 ## 版本
 
-当前版本：**1.1.26**
+当前版本：**1.1.27**
 
 扩展源文件：`index.js`、`style.css`、`manifest.json`。
 
@@ -142,3 +142,8 @@
 
 ### 1.1.26
 - Add a home-screen shortcut for Notes so the existing memo editor and autosave feature are directly accessible.
+
+### 1.1.27
+- Rework WeChat with four functional tabs: Chats, Contacts, Discover, and Me.
+- Add a local Moments feed with publishing, likes, and comments.
+- Refresh WeChat list, navigation, profile, and conversation styling to better match the familiar WeChat visual hierarchy.
