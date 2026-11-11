@@ -297,7 +297,6 @@
         ${appIcon('browser', '浏览器', '◉', '#4d9cce')}
         ${appIcon('calendar', '日历', '日', '#e46b55')}
       </div>
-      <div class="xp-dock"><span>常用应用</span><div>${appIcon('wechat', '微信', '聊', '#19a66a')}${appIcon('xplatform', 'X平台', 'X', '#24272c')}${appIcon('browser', '浏览器', '◉', '#4d9cce')}</div></div>
       </div>`;
   }
 
@@ -356,7 +355,7 @@
 
   function renderBrowser() {
     const results = (state.browserResults || []).map(r => `<button class="xp-browser-result" data-browser-result="${escapeHtml(r.id)}"><span>${escapeHtml(r.site)}</span><b>${escapeHtml(r.title)}</b><small>${escapeHtml(r.desc)}</small></button>`).join('');
-    return `<section class="xp-page xp-browser"><div class="xp-appbar"><div class="xp-app-title">浏览器</div><span class="xp-browser-private">本地模拟</span></div><form data-form="browser" class="xp-browser-form"><input name="url" value="${escapeHtml(state.browserQuery || '')}" placeholder="搜索内容或输入站点名称"><button>搜索</button></form>${state.browserResults?.length ? `<div class="xp-browser-result-list"><div class="xp-section-heading">搜索结果</div>${results}</div>` : `<div class="xp-browser-home"><div class="xp-browser-logo">◉</div><strong>有什么新鲜事？</strong><p>搜索本地模拟站点与内容</p><div class="xp-browser-shortcuts"><button data-browser-shortcut="X平台">X平台</button><button data-browser-shortcut="微博">微博</button><button data-browser-shortcut="小红书">小红书</button></div><div class="xp-browser-suggest"><span>推荐访问</span><b>今日热议　·　直播话题　·　生活灵感</b></div></div>`}</section>`;
+    return `<section class="xp-page xp-browser"><div class="xp-appbar"><div class="xp-app-title">浏览器</div><span class="xp-browser-private">外部网页搜索</span></div><form data-form="browser" class="xp-browser-form"><input name="url" value="${escapeHtml(state.browserQuery || '')}" placeholder="搜索网页或输入网址"><button type="submit">搜索</button></form><div class="xp-browser-home"><div class="xp-browser-logo">◉</div><strong>使用手机浏览器打开网页</strong><p>搜索内容会跳转到设备的外部浏览器，不会在模拟器里加载网页。</p><div class="xp-browser-shortcuts"><button type="button" data-browser-shortcut="https://www.google.com/">Google</button><button type="button" data-browser-shortcut="https://www.baidu.com/">百度</button><button type="button" data-browser-shortcut="https://www.bing.com/">Bing</button></div><div class="xp-browser-suggest"><span>提示</span><b>输入关键词进行 Google 搜索，或输入完整网址直接访问</b></div></div></section>`;
   }
 
   function renderCalendar() {
@@ -424,7 +423,7 @@
     const favoritePhoto = event.target.closest('[data-favorite-photo]');
     if (favoritePhoto) { const p = state.photos.find(x => x.id === favoritePhoto.dataset.favoritePhoto); if (p) p.favorite = !p.favorite; renderScreen(); persistState(); return; }
     const browserShortcut = event.target.closest('[data-browser-shortcut]');
-    if (browserShortcut) { state.browserQuery = browserShortcut.dataset.browserShortcut; runLocalSearch(state.browserQuery); renderScreen(); persistState(); return; }
+    if (browserShortcut) { openExternalBrowser(browserShortcut.dataset.browserShortcut); return; }
     const browserResult = event.target.closest('[data-browser-result]');
     if (browserResult) { const r = state.browserResults.find(x => x.id === browserResult.dataset.browserResult); if (r?.page) setPage(r.page); return; }
     const action = event.target.closest('[data-action]')?.dataset.action;
@@ -545,9 +544,13 @@
       state.liveMessages = state.liveMessages.slice(-200);
       renderScreen(); persistState();
     } else if (type === 'browser') {
-      state.browserQuery = String(data.get('url') || '').trim();
-      runLocalSearch(state.browserQuery);
-      renderScreen(); persistState();
+      const query = String(data.get('url') || '').trim();
+      if (!query) return;
+      state.browserQuery = query;
+      persistState();
+      openExternalBrowser(query);
+      // Keep the phone open and the browser page intact; external navigation must not
+      // trigger a simulator re-render or a route change that looks like the phone folded.
     } else if (type === 'photo') {
       const title = String(data.get('title') || '').trim();
       if (!title) return;
@@ -565,16 +568,29 @@
     }
   }
 
-  function runLocalSearch(query) {
-    const q = String(query || '').trim().toLowerCase();
-    const catalog = [
-      { id:'x', site:'X平台', title:'X平台 · 综合直播社区', desc:'进入直播大厅，查看热门直播与实时互动', page:'xplatform', keys:'x平台 直播 直播间 主播' },
-      { id:'w', site:'微博', title:'微博热搜与实时动态', desc:'浏览热搜话题、用户动态与讨论', page:'weibo', keys:'微博 热搜 话题 动态' },
-      { id:'r', site:'小红书', title:'小红书 · 生活灵感社区', desc:'发现穿搭、生活与创作笔记', page:'red', keys:'小红书 笔记 穿搭 生活' },
-      { id:'c', site:'微信', title:'微信 · 消息与联系人', desc:'查看聊天列表，与联系人交流', page:'wechat', keys:'微信 聊天 联系人 消息' }
-    ];
-    state.browserResults = q ? catalog.filter(x => `${x.site} ${x.title} ${x.desc} ${x.keys}`.toLowerCase().includes(q)) : catalog;
-    if (q && !state.browserResults.length) state.browserResults = [{ id:'none', site:'本地搜索', title:`没有找到“${String(query).slice(0,32)}”`, desc:'当前浏览器只模拟平台内页面，不连接互联网。' }];
+  function openExternalBrowser(input) {
+    const raw = String(input || '').trim();
+    if (!raw) return;
+    let url;
+    if (/^(https?:)?\/\//i.test(raw)) {
+      url = raw.startsWith('//') ? 'https:' + raw : raw;
+    } else if (/^[\w.-]+\.[a-z]{2,}(\/.*)?$/i.test(raw) && !/\s/.test(raw)) {
+      url = 'https://' + raw;
+    } else {
+      url = 'https://www.google.com/search?q=' + encodeURIComponent(raw);
+    }
+    try {
+      const opened = window.open(url, '_blank');
+      if (!opened) {
+        const link = document.createElement('a');
+        link.href = url; link.target = '_blank'; link.rel = 'noopener noreferrer';
+        link.style.display = 'none'; document.body.appendChild(link); link.click(); link.remove();
+      }
+    } catch (error) {
+      console.warn(`[${EXT_ID}] external browser launch failed`, error);
+      addNotification('浏览器', '无法打开外部浏览器', '请检查 Android WebView 是否允许打开外部链接');
+      persistState();
+    }
   }
 
   function nowTime() { return new Intl.DateTimeFormat('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date()); }
@@ -604,8 +620,7 @@
       floating.style.setProperty('pointer-events','auto','important');
       floating.style.setProperty('z-index','2147483646','important');
     }
-    const topbar=document.querySelector('#top-bar, #top-settings-holder');
-    if(topbar&&!document.getElementById('xphone-topbar-entry')){const btn=document.createElement('div');btn.id='xphone-topbar-entry';btn.className='xphone-topbar-entry menu_button';btn.title='打开手机模拟器';btn.innerHTML='<i class="fa-solid fa-mobile-screen-button"></i><span>手机</span>';btn.addEventListener('click',()=>openPhone());topbar.appendChild(btn);}
+    document.getElementById('xphone-topbar-entry')?.remove();
   }
   function scanChatMessages() {
     const messages = document.querySelectorAll('#chat .mes');
@@ -718,7 +733,6 @@
         entryRepairQueued = false;
         try {
           if (!document.getElementById('xphone-floating-entry') ||
-              !document.getElementById('xphone-topbar-entry') ||
               !document.getElementById('xphone-settings')) {
             createEntryButtons();
             addSettingsPanel();
