@@ -318,8 +318,8 @@
   function renderChat() {
     const contact = state.contacts.find(c => c.id === state.selectedContact) || state.contacts[0];
     const msgs = state.chats[contact.id] || [];
-    const bubbles = msgs.map(m => `<div class="xp-chat-row ${m.from === 'me' ? 'mine' : ''}"><span class="xp-chat-avatar">${m.from === 'me' ? '我' : escapeHtml(contact.avatar)}</span><div class="xp-chat-bubble">${escapeHtml(m.text)}<small>${escapeHtml(m.time || '')}</small></div></div>`).join('');
-    return `<section class="xp-page xp-chat-page"><div class="xp-chat-title">${escapeHtml(contact.name)}<small>${contact.online ? '在线' : '最近在线'}</small></div><div class="xp-chat-history">${bubbles}</div><form class="xp-chat-compose" data-form="wechat"><input name="message" autocomplete="off" placeholder="发送消息…" maxlength="300"><button type="submit">发送</button></form></section>`;
+    const bubbles = msgs.map((m, index) => `<div class="xp-chat-row ${m.from === 'me' ? 'mine' : ''}"><span class="xp-chat-avatar">${m.from === 'me' ? '我' : escapeHtml(contact.avatar)}</span><div class="xp-chat-bubble">${escapeHtml(m.text)}<small>${escapeHtml(m.time || '')}</small></div><button type="button" class="xp-chat-delete" data-delete-chat-message="${index}" aria-label="删除这条消息" title="删除消息">×</button></div>`).join('');
+    return `<section class="xp-page xp-chat-page"><div class="xp-chat-title"><button type="button" data-action="wechat-list" aria-label="返回微信">‹</button><span>${escapeHtml(contact.name)}<small>${contact.online ? '在线' : '最近在线'}</small></span></div><div class="xp-chat-history">${bubbles || '<div class="xp-empty">还没有聊天记录</div>'}</div><form class="xp-chat-compose" data-form="wechat"><input name="message" autocomplete="off" placeholder="发送消息…" maxlength="300"><button type="submit">发送</button></form></section>`;
   }
 
   function renderWeibo() {
@@ -405,6 +405,13 @@
     if (appButton) { const app = appButton.dataset.app; setPage(app === 'wechat' ? 'wechat' : app); return; }
     const contactButton = event.target.closest('[data-contact]');
     if (contactButton) { state.selectedContact = contactButton.dataset.contact; setPage('chat', 'wechat'); return; }
+    const deleteChatMessage = event.target.closest('[data-delete-chat-message]');
+    if (deleteChatMessage) {
+      const messages = state.chats[state.selectedContact] || [];
+      const index = Number(deleteChatMessage.dataset.deleteChatMessage);
+      if (Number.isInteger(index) && index >= 0 && index < messages.length) messages.splice(index, 1);
+      renderScreen(); persistState(); return;
+    }
     const deleteNotice = event.target.closest('[data-delete-notice]');
     if (deleteNotice) { state.notifications = state.notifications.filter(n => n.id !== deleteNotice.dataset.deleteNotice); renderScreen(); persistState(); return; }
     const notice = event.target.closest('[data-notice]');
@@ -449,6 +456,7 @@
       case 'back': goBack(); break;
       case 'home': state.stack = []; setPage('home', null, false); break;
       case 'notifications': setPage('notifications'); break;
+      case 'wechat-list': setPage('wechat', 'wechat'); break;
       case 'clear-notices': state.notifications.forEach(n => n.unread = false); renderScreen(); persistState(); break;
       case 'delete-all-notices': state.notifications = []; renderScreen(); persistState(); break;
       case 'enter-live': setPage('live', 'xplatform'); break;
