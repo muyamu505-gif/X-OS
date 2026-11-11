@@ -835,93 +835,29 @@
     }
   }
 
+
   function openExternalBrowser(input) {
-  async function testApiConnection() {
-  function parseGeneratedJson(raw) {
-    const text = String(raw || '').trim().replace(/^\`\`\`(?:json)?\s*/i,'').replace(/\s*\`\`\`$/,'');
-    try { return JSON.parse(text); } catch (_) {
-      const start = text.indexOf('{'), end = text.lastIndexOf('}');
-      if (start >= 0 && end > start) return JSON.parse(text.slice(start, end + 1));
-      throw new Error('模型返回内容不是有效 JSON');
-    }
-  }
-
-  async function importCurrentStoryContext() {
-    const context = currentContext();
-    if (!context?.generateQuietPrompt) { addNotification('上下文导入','酒馆接口不可用','请确认当前酒馆版本支持 generateQuietPrompt。'); renderScreen(); return; }
-    if (!context.characters?.[context.characterId]) { addNotification('上下文导入','未选择角色卡','请先打开一张角色卡并进入对应聊天。'); renderScreen(); return; }
-    const button = phoneScreen?.querySelector('[data-action="context-import"]');
-    if (button) { button.disabled = true; button.textContent = '正在识别当前剧情…'; }
+    const raw = String(input || '').trim();
+    if (!raw) return;
+    let url;
+    if (raw.startsWith('//')) url = 'https:' + raw;
+    else if (raw.startsWith('http://') || raw.startsWith('https://')) url = raw;
+    else if (raw.includes('.') && !raw.includes(' ') && !raw.includes(':')) url = 'https://' + raw;
+    else url = 'https://www.google.com/search?q=' + encodeURIComponent(raw);
     try {
-      const character = context.characters[context.characterId];
-      const chat = Array.isArray(context.chat) ? context.chat : [];
-      const recent = systemSettings.includeChat ? chat.slice(-Math.max(4, Number(systemSettings.contextMessages)||24)) : [];
-      const cardInfo = systemSettings.includeCharacter ? {
-        name: character.name || '',
-        description: character.description || character.data?.description || '',
-        personality: character.personality || character.data?.personality || '',
-        scenario: character.scenario || character.data?.scenario || '',
-        first_mes: character.first_mes || character.data?.first_mes || ''
-      } : {};
-      const book = character.data?.character_book || character.character_book || null;
-      const bookSummary = systemSettings.includeWorldbook ? {
-        name: book?.name || '',
-        description: book?.description || '',
-        entries: Array.isArray(book?.entries) ? book.entries.filter(e=>e && e.disable!==true).slice(0,80).map(e=>({keys:e.keys||[],content:String(e.content||'').slice(0,1600)})) : [],
-        chatWorldInfo: context.chatMetadata?.world_info || null
-      } : {};
-      const transcript = recent.map(m=>({role:m.is_user?'user':m.is_system?'system':'assistant',name:m.name||'',text:String(m.mes||m.message||'').slice(0,5000)}));
-      const prompt = [
-        '请根据当前 SillyTavern 会话内容，提取适合导入通用手机模拟器 X-OS 的剧情资料。',
-        '只把当前角色卡、明确提供的世界书内容、聊天记录中有证据的人物与事实写入结果。不要编造未出现的 NPC，不要把示例人物当成固定角色。',
-        '角色引用必须使用 {{user}} 表示用户，使用 {{char}} 表示当前主角；其他 NPC 必须使用剧情中真实出现的名字。不要替 {{user}} 或 {{char}} 编造姓名、性别、身份或关系。',
-        '仅输出 JSON。若没有明确 NPC，characters 为空数组；若无动态内容，socialPosts 为空数组。聊天记录仅用于提取明确事实，不能把模型猜测当事实。',
-        '角色卡信息：', JSON.stringify(cardInfo),
-        '角色卡内置世界书（若有）：', JSON.stringify(bookSummary),
-        '近期聊天记录：', JSON.stringify(transcript),
-        '当前酒馆上下文中的已激活世界书/提示词也可作为依据；优先遵循当前剧情，忽略与剧情无关的扩展指令。'
-      ].join('\n');
-      const schema = {
-        name:'XOSStoryImport',
-        value:{type:'object',additionalProperties:false,properties:{
-          summary:{type:'string'},
-          userRole:{type:'string'},
-          charRole:{type:'string'},
-          characters:{type:'array',items:{type:'object',additionalProperties:false,properties:{name:{type:'string'},relation:{type:'string'},description:{type:'string'},openingMessage:{type:'string'}},required:['name','relation','description','openingMessage']}},
-          socialPosts:{type:'array',items:{type:'object',additionalProperties:false,properties:{author:{type:'string'},text:{type:'string'},platform:{type:'string'}},required:['author','text','platform']}}
-        },required:['summary','userRole','charRole','characters','socialPosts']}
-      };
-      const result = await context.generateQuietPrompt({quietPrompt:prompt,quietPromptDescription:'X-OS 当前角色卡剧情识别',jsonSchema:schema});
-      const profile = parseGeneratedJson(typeof result==='string'?result:result?.content||result?.text||JSON.stringify(result));
-      const safeChars = (Array.isArray(profile.characters)?profile.characters:[]).filter(x=>x&&typeof x.name==='string'&&x.name.trim()&&x.name!=='{{user}}'&&x.name!=='{{char}}').slice(0,40);
-      state.contacts = safeChars.map((x,i)=>({id:'ctx_'+i+'_'+Date.now(),name:x.name.trim().slice(0,48),note:String(x.relation||'剧情人物').slice(0,80),avatar:x.name.trim().slice(0,1),online:false}));
-      state.chats = {};
-      safeChars.forEach((x,i)=>{const id=state.contacts[i].id;state.chats[id]=x.openingMessage?[{from:'them',text:String(x.openingMessage).slice(0,500),time:'剧情导入'}]:[];});
-      state.moments = [];
-      state.weiboPosts = [];
-      state.redPosts = [];
-      state.xPosts = (Array.isArray(profile.socialPosts)?profile.socialPosts:[]).slice(0,40).map((p,i)=>({id:'ctxpost_'+Date.now()+'_'+i,user:String(p.author||'').slice(0,48),avatar:String(p.author||'？').slice(0,1),text:String(p.text||'').slice(0,800),tag:'',likes:0,comments:[],liked:false,room:'main',time:'剧情导入'})).filter(p=>p.user&&p.text);
-      state.liveMessages = [];
-      state.selectedContact = state.contacts[0]?.id || null;
-      state.importedProfile = {summary:String(profile.summary||'').slice(0,1000),userRole:String(profile.userRole||'').slice(0,500),charRole:String(profile.charRole||'').slice(0,500),characters:safeChars.map(x=>({name:x.name,relation:x.relation})),importedAt:nowTime()};
-      persistState();
-      addNotification('上下文导入','识别完成',`已导入 ${safeChars.length} 位剧情人物。资料仅保存于当前聊天。`);
-      renderScreen();
-    } catch(error) {
-      console.error(`[${EXT_ID}] story context import failed`,error);
-      addNotification('上下文导入','导入失败',String(error?.message||error).slice(0,140));
-      renderScreen();
-    }
+      const opened = window.open(url, '_blank');
+      if (!opened) { const link = document.createElement('a'); link.href=url; link.target='_blank'; link.rel='noopener noreferrer'; link.style.display='none'; document.body.appendChild(link); link.click(); link.remove(); }
+    } catch (error) { console.warn(`[${EXT_ID}] external browser launch failed`, error); addNotification('浏览器','无法打开外部浏览器','请检查 Android WebView 是否允许打开外部链接'); persistState(); }
   }
 
-
+  async function testApiConnection() {
     if (systemSettings.apiMode === 'sillytavern') {
-      const context = currentContext();
-      const available = !!(context && (typeof context.generate === 'function' || typeof context.generateRaw === 'function'));
-      addNotification('API 测试', available ? '检测到酒馆生成接口' : '已读取酒馆上下文', available ? '后续手机生成将沿用酒馆当前 API。' : '尚未检测到可直接调用的生成方法，需要继续接入酒馆生成接口。');
+      const available = typeof currentContext()?.generateQuietPrompt === 'function';
+      addNotification('API 测试', available ? '酒馆生成接口可用' : '未检测到生成接口', available ? '可以通过酒馆当前 API 在后台生成内容。' : '请确认酒馆版本及扩展 API。');
       renderScreen(); return;
     }
-    const base = String(systemSettings.apiBase || '').trim().replace(/\/+$/, '');
+    let base = String(systemSettings.apiBase || '').trim();
+    while (base.endsWith('/')) base = base.slice(0,-1);
     if (!base || !systemSettings.apiKey) { addNotification('API 测试','配置不完整','请填写 API 地址和 API Key。'); renderScreen(); return; }
     try {
       const response = await fetch(base + '/models', { headers: { Authorization: 'Bearer ' + systemSettings.apiKey } });
@@ -932,28 +868,70 @@
     renderScreen();
   }
 
-
-    const raw = String(input || '').trim();
-    if (!raw) return;
-    let url;
-    if (/^(https?:)?\/\//i.test(raw)) {
-      url = raw.startsWith('//') ? 'https:' + raw : raw;
-    } else if (/^[\w.-]+\.[a-z]{2,}(\/.*)?$/i.test(raw) && !/\s/.test(raw)) {
-      url = 'https://' + raw;
-    } else {
-      url = 'https://www.google.com/search?q=' + encodeURIComponent(raw);
+  function parseGeneratedJson(raw) {
+    let text = String(raw || '').trim();
+    if (text.startsWith('```')) { text = text.slice(3); if (text.slice(0,4).toLowerCase()==='json') text=text.slice(4); text=text.trim(); if (text.endsWith('```')) text=text.slice(0,-3).trim(); }
+    try { return JSON.parse(text); } catch (_) {
+      const first = text.indexOf('{'), last = text.lastIndexOf('}');
+      if (first >= 0 && last > first) return JSON.parse(text.slice(first, last + 1));
+      throw new Error('模型返回内容不是有效 JSON');
     }
+  }
+
+  async function importCurrentStoryContext() {
+    const context = currentContext();
+    if (!systemSettings.contextEnabled) { addNotification('上下文导入','上下文识别已关闭','请先在设置中开启上下文识别。'); renderScreen(); return; }
+    if (typeof context?.generateQuietPrompt !== 'function') { addNotification('上下文导入','酒馆接口不可用','当前酒馆未提供 generateQuietPrompt。'); renderScreen(); return; }
+    const character = context.characters?.[context.characterId];
+    if (!character) { addNotification('上下文导入','未选择角色卡','请先打开一张角色卡并进入对应聊天。'); renderScreen(); return; }
+    const chatIdAtStart = context.chatId, metadataAtStart = context.chatMetadata;
+    const button = phoneScreen?.querySelector('[data-action="context-import"]');
+    if (button) { button.disabled = true; button.textContent = '正在识别当前剧情…'; }
     try {
-      const opened = window.open(url, '_blank');
-      if (!opened) {
-        const link = document.createElement('a');
-        link.href = url; link.target = '_blank'; link.rel = 'noopener noreferrer';
-        link.style.display = 'none'; document.body.appendChild(link); link.click(); link.remove();
-      }
-    } catch (error) {
-      console.warn(`[${EXT_ID}] external browser launch failed`, error);
-      addNotification('浏览器', '无法打开外部浏览器', '请检查 Android WebView 是否允许打开外部链接');
-      persistState();
+      const chat = Array.isArray(context.chat) ? context.chat : [];
+      const recent = systemSettings.includeChat ? chat.slice(-Math.max(4, Number(systemSettings.contextMessages)||24)) : [];
+      const cardInfo = systemSettings.includeCharacter ? {
+        name: character.name || '', description: character.description || character.data?.description || '',
+        personality: character.personality || character.data?.personality || '', scenario: character.scenario || character.data?.scenario || '',
+        first_mes: character.first_mes || character.data?.first_mes || ''
+      } : {};
+      const book = character.data?.character_book || character.character_book || null;
+      const bookSummary = systemSettings.includeWorldbook ? {
+        name: book?.name || '', description: book?.description || '',
+        entries: Array.isArray(book?.entries) ? book.entries.filter(e=>e && e.disable!==true).slice(0,80).map(e=>({keys:e.keys||[],content:String(e.content||'').slice(0,1600)})) : [],
+        chatWorldInfo: context.chatMetadata?.world_info || null
+      } : {};
+      const transcript = recent.map(m=>({role:m.is_user?'user':m.is_system?'system':'assistant',name:m.name||'',text:String(m.mes||m.message||'').slice(0,5000)}));
+      const prompt = [
+        '请根据当前 SillyTavern 会话内容，提取适合导入通用手机模拟器 X-OS 的剧情资料。',
+        '只把当前角色卡、明确提供的世界书内容、聊天记录中有证据的人物与事实写入结果。不要编造未出现的 NPC，不要把示例人物当成固定角色。',
+        '角色引用必须使用 {{user}} 表示用户，使用 {{char}} 表示当前主角；其他 NPC 必须使用剧情中真实出现的名字。不要替 {{user}} 或 {{char}} 编造姓名、性别、身份或关系。',
+        '仅输出 JSON。若没有明确 NPC，characters 为空数组；若无动态内容，socialPosts 为空数组。不得把模型猜测当事实。',
+        '角色卡信息：', JSON.stringify(cardInfo), '角色卡内置世界书（若有）：', JSON.stringify(bookSummary),
+        '近期聊天记录：', JSON.stringify(transcript),
+        '当前酒馆生成上下文中已激活的世界书/提示词也可作为依据；不要将未激活条目假定为剧情事实。'
+      ].join('\\n');
+      const schema = {name:'XOSStoryImport',value:{type:'object',additionalProperties:false,properties:{
+        summary:{type:'string'},userRole:{type:'string'},charRole:{type:'string'},
+        characters:{type:'array',items:{type:'object',additionalProperties:false,properties:{name:{type:'string'},relation:{type:'string'},description:{type:'string'},openingMessage:{type:'string'}},required:['name','relation','description','openingMessage']}},
+        socialPosts:{type:'array',items:{type:'object',additionalProperties:false,properties:{author:{type:'string'},text:{type:'string'},platform:{type:'string'}},required:['author','text','platform']}}
+      },required:['summary','userRole','charRole','characters','socialPosts']}};
+      const result = await context.generateQuietPrompt({quietPrompt:prompt,quietPromptDescription:'X-OS 当前角色卡剧情识别',jsonSchema:schema});
+      const active = currentContext();
+      if (active?.chatId !== chatIdAtStart || active?.chatMetadata !== metadataAtStart) throw new Error('识别期间当前聊天已切换，已取消导入以防串档');
+      const profile = parseGeneratedJson(typeof result==='string'?result:result?.content||result?.text||JSON.stringify(result));
+      const safeChars = (Array.isArray(profile.characters)?profile.characters:[]).filter(x=>x&&typeof x.name==='string'&&x.name.trim()&&x.name!=='{{user}}'&&x.name!=='{{char}}').slice(0,40);
+      state.contacts = safeChars.map((x,i)=>({id:'ctx_'+i+'_'+Date.now(),name:x.name.trim().slice(0,48),note:String(x.relation||'剧情人物').slice(0,80),avatar:x.name.trim().slice(0,1),online:false}));
+      state.chats = {};
+      safeChars.forEach((x,i)=>{const id=state.contacts[i].id;state.chats[id]=x.openingMessage?[{from:'them',text:String(x.openingMessage).slice(0,500),kind:'text',time:'剧情导入'}]:[];});
+      state.moments = []; state.weiboPosts = []; state.redPosts = [];
+      state.xPosts = (Array.isArray(profile.socialPosts)?profile.socialPosts:[]).slice(0,40).map((p,i)=>({id:'ctxpost_'+Date.now()+'_'+i,user:String(p.author||'').slice(0,48),avatar:String(p.author||'？').slice(0,1),text:String(p.text||'').slice(0,800),tag:'',likes:0,comments:[],liked:false,room:'main',time:'剧情导入'})).filter(p=>p.user&&p.text);
+      state.liveMessages = []; state.selectedContact = state.contacts[0]?.id || null;
+      state.importedProfile = {summary:String(profile.summary||'').slice(0,1000),userRole:String(profile.userRole||'').slice(0,500),charRole:String(profile.charRole||'').slice(0,500),characters:safeChars.map(x=>({name:x.name,relation:x.relation})),importedAt:nowTime()};
+      persistState(); addNotification('上下文导入','识别完成',`已导入 ${safeChars.length} 位剧情人物。资料仅保存于当前聊天。`); renderScreen();
+    } catch(error) {
+      console.error(`[${EXT_ID}] story context import failed`,error);
+      addNotification('上下文导入','导入失败',String(error?.message||error).slice(0,140)); renderScreen();
     }
   }
 
