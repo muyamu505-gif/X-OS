@@ -56,34 +56,38 @@
 - Portaled the floating phone overlay to the document root to avoid host layout clipping.
 
 
-### 1.1.13
+### 1.1.14
 - Restored a persistent floating phone launcher with draggable placement, edge docking, and saved position.
 - Added a high-visibility top-layer launcher and retained extension settings/top-bar entry points.
 
 
-### 1.1.13
+### 1.1.14
 - Rebuilt the extension script from the last clean source to remove malformed appended code that prevented initialization.
 - Restored a draggable, edge-docking floating launcher with saved position and settings/top-bar fallback.
 - Added viewport-safe modal sizing and bottom-right drag resizing.
 
 
-### 1.1.13
+### 1.1.14
 - Replaced the browser-native reset confirmation with an in-extension confirmation panel for a consistent mobile experience.
 
 
-### 1.1.13
+### 1.1.14
 - Escape closes an open in-phone dialog before closing the phone window.
 - Added keyboard resizing with arrow keys (Shift for larger steps) and a visible focus indicator.
 
 
-### 1.1.13
+### 1.1.14
 - Write the latest simulator snapshot into the active chat metadata immediately, while keeping the disk save debounced. This reduces the chance of losing the last interaction when switching chats quickly.
 
-### 1.1.13
+### 1.1.14
 - Reconnect the chat message observer when SillyTavern replaces its chat container, so inline phone markers continue to be detected after chat UI lifecycle changes.
 
-### 1.1.13
+### 1.1.14
 - Keep modal actions bound to the phone surface that opened them. Submissions and Escape/close actions can no longer accidentally affect a dialog in the other phone view (floating phone vs. inline chat phone).
 
-### 1.1.13
+### 1.1.14
 - Validate restored saved state before rendering: reject malformed collection types, constrain page names, normalize navigation history, repair invalid selected contacts, and restore starter contacts/chat arrays if a save is damaged.
+
+### 1.1.14
+- Keep informational dialogs scoped to the phone surface that opened them, so they do not cancel another surface's pending form.
+- Route notification taps to the matching simulated app (including Xiaohongshu, live room, wallet, photos, calendar, notes, and browser); unknown app labels remain in the notification center.
