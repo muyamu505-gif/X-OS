@@ -32,7 +32,7 @@
 
 ## 版本
 
-当前版本：**1.1.32**
+当前版本：**1.1.33**
 
 扩展源文件：`index.js`、`style.css`、`manifest.json`。
 
@@ -174,3 +174,7 @@
 - Add a draggable top-edge phone handle around the status bar / Dynamic Island area and persist the phone position.
 - Resize the entire phone proportionally from the bottom-right corner, including the app desktop and all app screens.
 - Keep the phone as a floating, rounded device on narrow screens instead of forcing a full-screen layout; fit the initial phone to the available viewport.
+
+
+### 1.1.33
+- Expand Weibo with recommendation/following/mine feeds, local creator follow state, a personal profile summary, structured local comments, and functional repost records.
