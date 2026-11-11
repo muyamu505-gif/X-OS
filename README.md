@@ -32,10 +32,15 @@
 
 ## 版本
 
-当前版本：**1.1.65**
+当前版本：**1.1.66**
 
 扩展源文件：`index.js`、`style.css`、`manifest.json`。
 
+
+### 1.1.66
+- Add a six-month income/expense trend chart to the wallet.
+- Add complete wallet JSON backup export and validated restore with explicit overwrite confirmation.
+- Validate backup size, format, balance, transaction count and transaction amounts before restoring.
 
 ### 1.1.65
 - Add live keyword search and category filtering to the wallet ledger.
