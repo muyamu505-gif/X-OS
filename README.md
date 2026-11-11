@@ -32,10 +32,15 @@
 
 ## 版本
 
-当前版本：**1.1.81**
+当前版本：**1.1.82**
 
 扩展源文件：`index.js`、`style.css`、`manifest.json`。
 
+
+### 1.1.82
+- Add message forwarding from a WeChat message to another existing contact or group chat; the destination receives a persisted message record rather than a success-only notice.
+- Preserve source conversation, source message ID, original sender, content, message kind, and original time in structured forwarding metadata, and render a source label in the destination chat.
+- Update destination unread count and notification when forwarding into another conversation; prevent forwarding to the source conversation or to a missing target.
 
 ### 1.1.81
 - Add persistent WeChat quoted replies: quote a specific message, preview its author and text above the composer, and store the reply relationship as structured `replyTo` metadata on the sent message.
