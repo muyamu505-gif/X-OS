@@ -169,8 +169,10 @@
         <header class="xphone-header"><button class="xp-head-btn" data-action="back" aria-label="返回">‹</button><div class="xp-head-title">手机</div><button class="xp-head-btn" data-action="notifications" aria-label="通知">♧<i class="xp-notice-dot"></i></button></header>
         <main class="xphone-screen" id="xphone-screen"></main>
         <nav class="xphone-bottom-nav"><button data-action="back">‹</button><button data-action="home">○</button><button data-action="close">×</button></nav>
+        <div class="xphone-resize-handle" role="button" tabindex="0" aria-label="拖动调整手机大小" title="拖动调整大小"></div>
       </section>`;
     document.body.appendChild(overlay);
+    attachPhoneResize(overlay.querySelector('.xphone-shell'));
     phoneScreen = overlay.querySelector('#xphone-screen');
     overlay.addEventListener('click', handleClick);
     overlay.addEventListener('submit', handleSubmit);
@@ -180,6 +182,68 @@
     });
     updateClock();
     setInterval(updateClock, 30000);
+  }
+
+  function attachPhoneResize(shell) {
+    const sizeKey = `${EXT_ID}:windowSize`;
+    const minWidth = 260;
+    const minHeight = 440;
+    const clampSize = (width, height) => ({
+      width: Math.max(Math.min(minWidth, window.innerWidth - 24), Math.min(width, window.innerWidth - 24)),
+      height: Math.max(Math.min(minHeight, window.innerHeight - 24), Math.min(height, window.innerHeight - 24))
+    });
+    try {
+      const saved = JSON.parse(localStorage.getItem(sizeKey) || 'null');
+      if (saved && Number.isFinite(saved.width) && Number.isFinite(saved.height)) {
+        const size = clampSize(saved.width, saved.height);
+        shell.style.width = `${size.width}px`;
+        shell.style.height = `${size.height}px`;
+      }
+    } catch { /* use default size */ }
+
+    const handle = shell.querySelector('.xphone-resize-handle');
+    if (!handle) return;
+    let drag = null;
+    handle.addEventListener('pointerdown', event => {
+      if (event.button !== undefined && event.button !== 0) return;
+      const rect = shell.getBoundingClientRect();
+      drag = { x: event.clientX, y: event.clientY, width: rect.width, height: rect.height, pointerId: event.pointerId };
+      try { handle.setPointerCapture(event.pointerId); } catch { /* pointer capture may be unavailable */ }
+      event.preventDefault();
+    });
+    handle.addEventListener('pointermove', event => {
+      if (!drag || event.pointerId !== drag.pointerId) return;
+      const size = clampSize(drag.width + event.clientX - drag.x, drag.height + event.clientY - drag.y);
+      shell.style.width = `${size.width}px`;
+      shell.style.height = `${size.height}px`;
+    });
+    const finishResize = event => {
+      if (!drag || (event.pointerId !== undefined && event.pointerId !== drag.pointerId)) return;
+      const rect = shell.getBoundingClientRect();
+      try { localStorage.setItem(sizeKey, JSON.stringify({ width: Math.round(rect.width), height: Math.round(rect.height) })); } catch { /* storage may be disabled */ }
+      drag = null;
+    };
+    handle.addEventListener('pointerup', finishResize);
+    handle.addEventListener('pointercancel', finishResize);
+    handle.addEventListener('keydown', event => {
+      if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) return;
+      event.preventDefault();
+      const rect = shell.getBoundingClientRect();
+      const step = event.shiftKey ? 30 : 12;
+      const width = rect.width + (event.key === 'ArrowRight' ? step : event.key === 'ArrowLeft' ? -step : 0);
+      const height = rect.height + (event.key === 'ArrowDown' ? step : event.key === 'ArrowUp' ? -step : 0);
+      const size = clampSize(width, height);
+      shell.style.width = `${size.width}px`;
+      shell.style.height = `${size.height}px`;
+      try { localStorage.setItem(sizeKey, JSON.stringify(size)); } catch { /* storage may be disabled */ }
+    });
+    window.addEventListener('resize', () => {
+      if (!overlay?.classList.contains('xphone-open')) return;
+      const rect = shell.getBoundingClientRect();
+      const size = clampSize(rect.width, rect.height);
+      shell.style.width = `${size.width}px`;
+      shell.style.height = `${size.height}px`;
+    });
   }
 
   function updateClock() {
