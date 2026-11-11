@@ -434,3 +434,26 @@ html #xphone-overlay .xphone-resize-handle{background:transparent!important;bord
 .xp-wallet-backup button:active{background:#eaf1f7}
 .xp-wallet-backup small{flex-basis:100%;font-size:9px;line-height:1.5;color:#9aa5b1}
 @media(max-width:380px){.xp-wallet-trend{padding:10px}.xp-wallet-trend-bars{gap:4px}.xp-wallet-trend-pair{gap:2px}.xp-wallet-trend-pair span{width:7px}.xp-wallet-backup{gap:5px}}
+
+
+/* Wallet monthly and category budgets */
+.xp-wallet-budget{margin:12px 0;padding:13px;border:1px solid #e4eaf0;border-radius:14px;background:linear-gradient(145deg,#fbfcfd,#f1f5f8)}
+.xp-wallet-budget-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.xp-wallet-budget-head>div{display:flex;flex-direction:column;gap:3px}
+.xp-wallet-budget-head strong{font-size:12px;color:#536477}
+.xp-wallet-budget-head small,.xp-wallet-budget-hint{font-size:9px;color:#98a4b0}
+.xp-wallet-budget-head button{border:1px solid #d9e3ec;border-radius:8px;background:#fff;color:#6c879e;padding:6px 10px;font-size:10px}
+.xp-wallet-budget-total{margin-top:12px;display:flex;align-items:baseline;gap:4px;color:#82909e}
+.xp-wallet-budget-total b{font-size:22px;color:#536477;font-weight:700}
+.xp-wallet-budget-total span{font-size:10px}
+.xp-wallet-budget-track{height:7px;margin-top:7px;overflow:hidden;border-radius:99px;background:#e6ebf0}
+.xp-wallet-budget-track i{display:block;height:100%;border-radius:99px;background:#9ab9d2;transition:width .2s ease}
+.xp-wallet-budget-track i.over{background:#d68e89}
+.xp-wallet-budget-alert{display:block;margin-top:5px;color:#bd7772;font-size:10px}
+.xp-wallet-budget-categories{display:flex;flex-direction:column;gap:10px;margin-top:12px;padding-top:10px;border-top:1px solid #e5eaf0}
+.xp-wallet-budget-category>div:first-child{display:flex;justify-content:space-between;gap:8px;font-size:10px;color:#718092}
+.xp-wallet-budget-category>div:first-child b{font-weight:600;color:#7d8996}
+.xp-wallet-budget-category .xp-wallet-budget-track{height:5px;margin-top:5px}
+.xp-wallet-budget-label{display:flex;flex-direction:column;gap:6px;margin:10px 0;color:#65788a;font-size:11px}
+.xp-wallet-budget-label input{width:100%;box-sizing:border-box;border:1px solid #dfe6ed;border-radius:9px;background:#f8fafc;padding:10px;color:#465667;font:inherit;font-size:12px;outline:none}
+.xp-wallet-budget-label input:focus{border-color:#9db8ce;box-shadow:0 0 0 2px rgba(142,174,199,.15)}
