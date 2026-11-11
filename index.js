@@ -6,6 +6,8 @@
 
   const EXT_ID = 'x-phone-simulator';
   const META_KEY = 'xPhoneSimulatorState';
+  let keyboardFocused = false;
+  let keyboardViewportHeight = 0;
   const DEFAULT_STATE = {
     page: 'home',
     app: null,
@@ -225,6 +227,20 @@
     overlay.addEventListener('click', handleClick);
     overlay.addEventListener('submit', handleSubmit);
     overlay.addEventListener('input', handleInput);
+    overlay.addEventListener('focusin', event => {
+      if (!event.target.matches('input, textarea, select, [contenteditable="true"]')) return;
+      if (!keyboardFocused) keyboardViewportHeight = Math.max(window.innerHeight || 0, window.visualViewport?.height || 0);
+      keyboardFocused = true;
+      // Keep the active field visible inside the phone without scrolling the host chat.
+      requestAnimationFrame(() => { try { event.target.scrollIntoView({ block: 'nearest', inline: 'nearest' }); } catch (_) {} });
+    });
+    overlay.addEventListener('focusout', event => {
+      if (!event.target.matches('input, textarea, select, [contenteditable="true"]')) return;
+      setTimeout(() => {
+        const active = overlay?.contains(document.activeElement) && document.activeElement.matches('input, textarea, select, [contenteditable="true"]');
+        if (!active) { keyboardFocused = false; keyboardViewportHeight = 0; updateOverlayGeometry(); }
+      }, 250);
+    });
     overlay.addEventListener('keydown', event => {
       if (event.key !== 'Escape') return;
       const dialog = event.target.closest('.xphone-shell, .xp-inline-device')?.querySelector('.xp-action-dialog');
@@ -244,21 +260,27 @@
   function updateOverlayGeometry() {
     if (!overlay) return;
     const width = Math.max(1, document.documentElement.clientWidth || window.innerWidth || 360);
-    const height = Math.max(1, window.visualViewport?.height || window.innerHeight || 640);
+    const liveHeight = Math.max(1, window.innerHeight || document.documentElement.clientHeight || 640);
+    if (!keyboardFocused) keyboardViewportHeight = Math.max(liveHeight, window.visualViewport?.height || 0);
+    // Android resizes visualViewport when the software keyboard opens. Keep the
+    // phone's pre-keyboard geometry so the shell does not permanently collapse.
+    const height = keyboardFocused && keyboardViewportHeight ? keyboardViewportHeight : liveHeight;
     overlay.style.setProperty('width', width + 'px', 'important');
     overlay.style.setProperty('height', height + 'px', 'important');
     overlay.style.setProperty('top', '0px', 'important');
     overlay.style.setProperty('left', '0px', 'important');
     const shell = overlay.querySelector('.xphone-shell'); if (!shell) return;
     const maxW = Math.max(220, width - 24), maxH = Math.max(220, height - 24);
-    const w = Math.min(Math.max(220, parseFloat(shell.style.width) || 320), maxW), h = Math.min(Math.max(220, parseFloat(shell.style.height) || 620), maxH);
-    shell.style.width = w + 'px'; shell.style.height = h + 'px';
-    shell.style.setProperty('max-width', maxW + 'px', 'important'); shell.style.setProperty('max-height', maxH + 'px', 'important');
+    const w = Math.min(Math.max(220, parseFloat(shell.style.width) || 320), maxW);
+    shell.style.width = w + 'px';
+    // Do not overwrite the user's saved height with the temporary keyboard viewport.
+    shell.style.setProperty('max-width', maxW + 'px', 'important');
+    shell.style.setProperty('max-height', maxH + 'px', 'important');
   }
 
   function attachPhoneResize(shell) {
     const key = `${EXT_ID}:windowSize`, minW = 220, minH = 220;
-    const clamp = (w,h) => ({width:Math.min(Math.max(minW,(document.documentElement.clientWidth||innerWidth)-24),Math.max(minW,w)),height:Math.min(Math.max(minH,(window.visualViewport?.height||innerHeight)-24),Math.max(minH,h))});
+    const clamp = (w,h) => ({width:Math.min(Math.max(minW,(document.documentElement.clientWidth||innerWidth)-24),Math.max(minW,w)),height:Math.min(Math.max(minH,(window.innerHeight||document.documentElement.clientHeight||640)-24),Math.max(minH,h))});
     try { const saved=JSON.parse(localStorage.getItem(key)||'null'); if(saved&&Number.isFinite(saved.width)&&Number.isFinite(saved.height)){const z=clamp(saved.width,saved.height);shell.style.width=z.width+'px';shell.style.height=z.height+'px';} } catch(_) {}
     const h=shell.querySelector('.xphone-resize-handle'); if(!h)return; let d=null;
     h.addEventListener('pointerdown',e=>{const r=shell.getBoundingClientRect();d={id:e.pointerId,x:e.clientX,y:e.clientY,w:r.width,h:r.height};try{h.setPointerCapture(e.pointerId);}catch(_){}e.preventDefault();});
