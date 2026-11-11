@@ -32,10 +32,15 @@
 
 ## 版本
 
-当前版本：**1.1.74**
+当前版本：**1.1.75**
 
 扩展源文件：`index.js`、`style.css`、`manifest.json`。
 
+
+### 1.1.75
+- Replace direct contact creation with a persistent WeChat friend-request workflow: new-friends page, received/sent tabs, pending status, accept/reject actions, and contact/chat creation only after acceptance.
+- Add a searchable WeChat people directory populated from explicitly extracted story characters; discovered characters are no longer automatically inserted as accepted friends.
+- Context import extracts only explicitly evidenced incoming/outgoing friend requests and merges them idempotently into the current chat state.
 
 ### 1.1.74
 - Add individual X platform streamer profile pages with follow/unfollow, public post history, received-like totals, and associated live-room entry when room host metadata matches the profile.
