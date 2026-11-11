@@ -1238,9 +1238,11 @@
     const character=context.characters&&context.characters[context.characterId]||null;
     const cardName=String(character&&character.name||'').trim();
     const isMainCharacter=contact.name==='{{char}}'||(cardName&&contact.name===cardName);
-    const cardDetails=isMainCharacter?['角色名：'+(character.name||''),'角色描述：'+(character.description||character.data&&character.data.description||''),'性格：'+(character.personality||character.data&&character.data.personality||''),'背景：'+(character.scenario||character.data&&character.data.scenario||'')].join('\n'):'联系人身份：'+String(contact.note||'当前剧情中的联系人')+'\n人物剧情资料：'+String(((state.importedProfile&&state.importedProfile.characters)||[]).find(x=>x.name===contact.name)?.description||'')+'\n人物关系：'+String(((state.importedProfile&&state.importedProfile.characters)||[]).find(x=>x.name===contact.name)?.relation||'')+'\n已知开场信息：'+String(contact.openingMessage||'')+'\n当前剧情概述：'+String(state.importedProfile&&state.importedProfile.summary||'');
+    const npcProfile=((state.importedProfile&&state.importedProfile.characters)||[]).find(x=>x.name===contact.name)||{};
+    const cardDetails=isMainCharacter?['角色名：'+(character.name||''),'角色描述：'+(character.description||character.data&&character.data.description||''),'性格：'+(character.personality||character.data&&character.data.personality||''),'背景：'+(character.scenario||character.data&&character.data.scenario||'')].join('\n'):['联系人备注：'+String(contact.note||''),'人物身份与经历：'+String(contact.storyDescription||npcProfile.description||''),'人物性格：'+String(contact.storyPersonality||npcProfile.personality||''),'说话风格：'+String(contact.storyVoice||npcProfile.voice||''),'与用户的关系：'+String(contact.storyRelation||npcProfile.relation||''),'关键事实与当前状态：'+String(contact.storyNotes||npcProfile.notes||''),'已知开场信息：'+String(contact.openingMessage||'')].join('\n');
+
     const history=(state.chats[contactId]||[]).slice(-18).map(m=>(m.from==='me'?'我':String(m.user||contact.name))+'：'+String(m.text||'')).join('\n');
-    const prompt=['你正在为 X-OS 手机中的微信联系人生成一条真实聊天回复。','你扮演的联系人是：'+contact.name,cardDetails,'当前关系：已经通过好友申请，双方是微信好友。','最近聊天记录：\n'+history,'用户刚刚发送：'+userText,'请严格以联系人本人身份回复，遵守角色卡与剧情事实。不要替用户说话，不要描述界面或生成说明，不要输出多个备选，不要使用“作为AI”。','回复应像真实微信消息，符合人物语气和关系，可以简短，也可以根据上下文自然展开。只输出消息正文。'].join('\n\n');
+    const prompt=['你正在为 X-OS 手机中的微信联系人生成一条真实聊天回复。','你扮演的联系人是：'+contact.name,cardDetails,'当前关系状态：该联系人已存在于当前微信联系人列表；具体关系以人物资料和聊天记录为准，不要擅自假定亲密程度。','最近聊天记录：\n'+history,'用户刚刚发送：'+userText,'请严格以联系人本人身份回复，遵守角色卡与剧情事实。不要替用户说话，不要描述界面或生成说明，不要输出多个备选，不要使用“作为AI”。','回复应像真实微信消息，符合人物语气和关系，可以简短，也可以根据上下文自然展开。只输出消息正文。'].join('\n\n');
     try{
       const result=await context.generateRaw({prompt:prompt,systemPrompt:'你是角色扮演对话中的微信联系人。只扮演指定联系人，严格遵守提供的角色设定与聊天上下文；不得控制用户角色，不得编造已发生的事实。只输出一条自然的聊天消息。'});
       const active=currentContext();if(!active||active.chatId!==chatIdAtSend||active.chatMetadata!==context.chatMetadata)return;
@@ -1398,6 +1400,7 @@
         '请根据当前 SillyTavern 会话内容，提取适合导入通用手机系统 X-OS 的剧情资料。',
         '只把当前角色卡、明确提供的世界书内容、聊天记录中有证据的人物与事实写入结果。不要编造未出现的 NPC，不要把示例人物当成固定角色。',
         '角色引用必须使用 {{user}} 表示用户，使用 {{char}} 表示当前主角；其他 NPC 必须使用剧情中真实出现的名字。不要替 {{user}} 或 {{char}} 编造姓名、性别、身份或关系。',
+        'characters 中每个人物除 name/relation/description 外，还要提取 personality（明确性格）、voice（说话习惯/口吻/常用表达）、notes（与用户相关且有证据的关键经历/边界/当前状态）；没有文本证据的字段留空，不得臆造。人物资料必须逐人区分，不要把主角设定复制给 NPC。',
         'friendRequests 只提取剧情中明确发生的微信好友申请。角色明确向用户发申请时 direction=incoming；用户明确向角色发申请时 direction=outgoing。普通认识、交换联系方式意愿、普通聊天不算已经发生的申请。没有明确申请时返回空数组。',
         'wechatMessages 只提取剧情记录中明确由某个角色通过微信私聊/聊天窗口发给用户的消息正文；不提取旁白、面对面说话、群聊、用户自己发出的消息、其他平台私信或模型推测。仅当消息确实在剧情中发生时提取；sender 使用剧情中的真实角色名，text 忠实摘录，按发生顺序排列。没有明确微信私聊消息时返回空数组。导入时只允许写入已经是微信好友的联系人会话，未成为好友的角色不得凭空建立聊天。',
         '仅输出 JSON。若没有明确 NPC，characters 为空数组；若无动态内容，socialPosts 为空数组。不得把模型猜测当事实。',
@@ -1410,7 +1413,7 @@
       ].join('\\n');
       const schema = {name:'XOSStoryImport',value:{type:'object',additionalProperties:false,properties:{
         summary:{type:'string'},userRole:{type:'string'},charRole:{type:'string'},
-        characters:{type:'array',items:{type:'object',additionalProperties:false,properties:{name:{type:'string'},relation:{type:'string'},description:{type:'string'},openingMessage:{type:'string'}},required:['name','relation','description','openingMessage']}},
+        characters:{type:'array',items:{type:'object',additionalProperties:false,properties:{name:{type:'string'},relation:{type:'string'},description:{type:'string'},personality:{type:'string'},voice:{type:'string'},notes:{type:'string'},openingMessage:{type:'string'}},required:['name','relation','description','personality','voice','notes','openingMessage']}},
         socialPosts:{type:'array',items:{type:'object',additionalProperties:false,properties:{author:{type:'string'},text:{type:'string'},platform:{type:'string'}},required:['author','text','platform']}},
         liveRooms:{type:'array',items:{type:'object',additionalProperties:false,properties:{name:{type:'string'},title:{type:'string'},category:{type:'string'},description:{type:'string'},host:{type:'string'}},required:['name','title','category','description','host']}},
         liveChat:{type:'array',items:{type:'object',additionalProperties:false,properties:{roomTitle:{type:'string'},speaker:{type:'string'},text:{type:'string'}},required:['roomTitle','speaker','text']}},
@@ -1432,13 +1435,14 @@
       const importedContactIds = [];
       for (const person of safeChars) {
         const name=person.name.trim().slice(0,48),key=makeImportKey('contact',name),id='ctx_'+key;
-        const existing=state.contacts.find(c=>String(c?.name||'').trim().toLocaleLowerCase()===name.toLocaleLowerCase());
-        if(existing){importedContactIds.push(existing.id);continue;}
+        const fields={storyRelation:String(person.relation||'').trim().slice(0,160),storyDescription:String(person.description||'').trim().slice(0,1800),storyPersonality:String(person.personality||'').trim().slice(0,1200),storyVoice:String(person.voice||'').trim().slice(0,800),storyNotes:String(person.notes||'').trim().slice(0,1200),openingMessage:String(person.openingMessage||'').trim().slice(0,500)};
         let entry=state.wechatDirectory.find(p=>p.id===id);
         if(!entry){entry={id,name,note:String(person.relation||'剧情人物').slice(0,80),avatar:name.slice(0,1),source:'xos-context',sourceKey:key};state.wechatDirectory.push(entry);}
-        else entry.note=String(person.relation||entry.note||'剧情人物').slice(0,80);
-        entry.openingMessage=String(person.openingMessage||entry.openingMessage||'').trim().slice(0,500);
-        importedContactIds.push(id);
+        Object.assign(entry,Object.fromEntries(Object.entries(fields).filter(([,v])=>v)));
+        if(!entry.note)entry.note=String(person.relation||'剧情人物').slice(0,80);
+        const existing=state.contacts.find(c=>String(c?.name||'').trim().toLocaleLowerCase()===name.toLocaleLowerCase());
+        if(existing){Object.assign(existing,Object.fromEntries(Object.entries(fields).filter(([,v])=>v)));importedContactIds.push(existing.id);}
+        else importedContactIds.push(id);
       }
       const incomingFriendRequests=(Array.isArray(profile.friendRequests)?profile.friendRequests:[]).slice(0,30);
       let importedFriendRequestCount=0;
