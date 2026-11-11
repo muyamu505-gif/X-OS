@@ -1414,7 +1414,7 @@
       state.liveMessages.push({ user: '{{user}}', text, roomId:state.activeLiveId||'main' });
       state.liveMessages = state.liveMessages.slice(-200);
       renderScreen(); persistState();
-      generateLiveHostReply(state.activeLiveId||'main',text,context?.chatId||null);
+      generateLiveHostReply(state.activeLiveId||'main',text,currentContext()?.chatId||null);
     } else if (type === 'browser') {
       const query = String(data.get('url') || '').trim();
       if (!query) return;
