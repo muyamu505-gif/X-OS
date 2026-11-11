@@ -1402,6 +1402,8 @@
         const personKey=makeImportKey('contact',name),personId='ctx_'+personKey;
         if(!state.contacts.some(c=>c.id===personId)&&!state.wechatDirectory.some(p=>p.id===personId))state.wechatDirectory.push({id:personId,name,note:'剧情人物',avatar:name.slice(0,1),source:'xos-context',sourceKey:personKey});
         state.friendRequests.unshift({id:'storyfr_'+key,personId,name,avatar:name.slice(0,1),message:message||'请求添加你为朋友',direction,status:'pending',time:nowTime(),source:'xos-context',sourceKey:key});
+        if(direction==='incoming')addNotification('微信','新的好友申请',name+'：'+(message||'请求添加你为朋友'));
+        else addNotification('微信','好友申请已发送','已向 '+name+' 发送好友申请。');
         importedFriendRequestCount++;
       }
       // Only import explicitly narrated incoming one-to-one messages for existing friends.
