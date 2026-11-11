@@ -899,10 +899,12 @@
       const title = String(data.get('title') || '').trim();
       const year = Number(data.get('year')) || new Date().getFullYear();
       const month = Number(data.get('month')) || new Date().getMonth()+1;
-      const daysInMonth = new Date(year, month, 0).getDate();
+      const leapYear = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+      const monthLengths = [31, leapYear ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+      const daysInMonth = Number.isInteger(month) && month >= 1 && month <= 12 ? monthLengths[month - 1] : 0;
       if (!title) return;
       if (!Number.isInteger(year) || year < 1 || year > 9999 || !Number.isInteger(month) || month < 1 || month > 12 || !Number.isInteger(day) || day < 1 || day > daysInMonth) {
-        addNotification('日历','日期无效',`请检查日期，${year}年${month}月只有 ${daysInMonth > 0 ? daysInMonth : '有效'} 天。`);
+        addNotification('日历','日期无效',daysInMonth ? `请检查日期，${year}年${month}月只有 ${daysInMonth} 天。` : '请填写有效的年份和月份。');
         renderScreen();
         return;
       }
