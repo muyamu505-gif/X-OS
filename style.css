@@ -284,7 +284,10 @@ html #xphone-overlay .xphone-resize-handle{background:transparent!important;bord
 .xp-notes-paper{min-height:68%;background:linear-gradient(transparent 31px,#f1e8d4 32px);background-size:100% 32px;padding:4px 2px}
 .xp-notes-date{font-size:10px;color:#a2a2a2;margin:0 0 13px}
 .xp-notes{display:block;min-height:390px!important;width:100%;border:0!important;border-radius:0!important;background:transparent!important;padding:0 2px!important;font:14px/32px -apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif!important;resize:none!important;color:#242424!important;outline:none!important}
-.xp-notes-footer{position:sticky;bottom:0;display:flex;align-items:center;gap:23px;padding:13px 5px;background:#fffdf8;border-top:1px solid #eee8dc;color:#d6a33b;font-size:17px}
+.xp-notes-footer{position:sticky;bottom:0;display:flex;align-items:center;gap:12px;padding:10px 5px;background:#fffdf8;border-top:1px solid #eee8dc;color:#d6a33b;font-size:17px}
+.xp-notes-footer button{width:34px;height:32px;border:0;border-radius:9px;background:transparent;color:#b68b36;font-size:16px;font-weight:600;cursor:pointer}
+.xp-notes-footer button:active{background:#f2ead8}
+.xp-notes-footer button:focus-visible{outline:2px solid #3478d4;outline-offset:1px}
 .xp-notes-footer small{margin-left:auto;font-size:9px;color:#a3a3a3}
 
 /* iOS Calendar */
