@@ -17,6 +17,7 @@
     stack: [],
     selectedContact: null,
     selectedRedPostId: '',
+    selectedWeiboPostId: '',
     chatSearchQuery: '',
     notifications: [],
     wechatTab: 'chats',
@@ -145,7 +146,7 @@
     const arrayKeys = ['stack', 'notifications', 'moments', 'wechatFavorites', 'notesList', 'contacts', 'weiboPosts', 'redPosts', 'liveMessages', 'importedLiveRooms', 'browserResults', 'photos', 'calendar', 'walletTransactions', 'xPosts'];
     const stringArrayKeys = ['weiboFollowing', 'redFollowing', 'xFollowing', 'followedLiveRooms'];
     const objectKeys = ['chats'];
-    const stringKeys = ['page', 'wechatTab', 'weiboTab', 'redTab', 'xTab', 'activeLiveId', 'selectedContact', 'selectedRedPostId', 'chatSearchQuery', 'notes', 'activeNoteId', 'browserUrl', 'browserQuery', 'selectedAlbum', 'calendarView', 'walletViewMonth', 'walletTypeFilter', 'walletCategoryFilter', 'walletSearchQuery', 'weiboSearchQuery', 'redSearchQuery', 'xSearchQuery'];
+    const stringKeys = ['page', 'wechatTab', 'weiboTab', 'redTab', 'xTab', 'activeLiveId', 'selectedContact', 'selectedRedPostId', 'selectedWeiboPostId', 'chatSearchQuery', 'notes', 'activeNoteId', 'browserUrl', 'browserQuery', 'selectedAlbum', 'calendarView', 'walletViewMonth', 'walletTypeFilter', 'walletCategoryFilter', 'walletSearchQuery', 'weiboSearchQuery', 'redSearchQuery', 'xSearchQuery'];
     const booleanKeys = [];
     const numberKeys = ['liveViewers', 'liveHeat', 'wallet', 'giftsSent'];
     for (const key of arrayKeys) {
@@ -520,11 +521,19 @@
       const count = Math.max(Number(p.comments) || 0, comments.length);
       const reposts = Number(p.reposts) || 0;
       const repostOf = p.repostOf ? all.find(x => x.id === p.repostOf) : null;
-      return `<article class="xp-social-post" data-post-id="${escapeHtml(p.id)}"><div class="xp-post-author"><span class="xp-avatar xp-avatar-red">${escapeHtml(p.avatar || p.user?.[0] || '用')}</span><strong>${escapeHtml(p.user)}</strong><small>${escapeHtml(p.time || '刚刚')}</small>${p.user !== '{{user}}' ? `<button class="xp-weibo-follow ${following.includes(p.user)?'following':''}" data-follow-weibo="${escapeHtml(p.user)}">${following.includes(p.user)?'已关注':'＋关注'}</button>` : ''}</div>${p.repostOf ? '<div class="xp-weibo-repost-label">↗ 转发动态</div>' : ''}<p>${escapeHtml(p.text)}</p>${repostOf ? `<div class="xp-weibo-original"><b>@${escapeHtml(repostOf.user)}</b><p>${escapeHtml(repostOf.text)}</p></div>` : ''}<a class="xp-hashtag">${escapeHtml(p.tag || '#日常#')}</a>${comments.slice(-2).map(c=>`<div class="xp-last-comment"><b>${escapeHtml(c.user || '用户')}：</b>${escapeHtml(c.text)}</div>`).join('')}${p.lastComment && !comments.length ? `<div class="xp-last-comment"><b>最新评论：</b>${escapeHtml(p.lastComment)}</div>` : ''}<div class="xp-post-actions"><button data-like-post="${escapeHtml(p.id)}" class="${p.liked ? 'is-liked' : ''}">♡ ${Number(p.likes)||0}</button><button data-action="weibo-comment">评论 ${count}</button><button data-weibo-favorite="${escapeHtml(p.id)}" class="${p.favorite?'is-favorited':''}">${p.favorite?'★ 已收藏':'☆ 收藏'}</button><button data-share-weibo="${escapeHtml(p.id)}">↗ 转发 ${reposts}</button></div></article>`;
+      return `<article class="xp-social-post" data-post-id="${escapeHtml(p.id)}"><button type="button" class="xp-weibo-open" data-weibo-open="${escapeHtml(p.id)}" aria-label="查看微博详情">查看全文与评论 ›</button><div class="xp-post-author"><span class="xp-avatar xp-avatar-red">${escapeHtml(p.avatar || p.user?.[0] || '用')}</span><strong>${escapeHtml(p.user)}</strong><small>${escapeHtml(p.time || '刚刚')}</small>${p.user !== '{{user}}' ? `<button class="xp-weibo-follow ${following.includes(p.user)?'following':''}" data-follow-weibo="${escapeHtml(p.user)}">${following.includes(p.user)?'已关注':'＋关注'}</button>` : ''}</div>${p.repostOf ? '<div class="xp-weibo-repost-label">↗ 转发动态</div>' : ''}<p>${escapeHtml(p.text)}</p>${repostOf ? `<div class="xp-weibo-original"><b>@${escapeHtml(repostOf.user)}</b><p>${escapeHtml(repostOf.text)}</p></div>` : ''}<a class="xp-hashtag">${escapeHtml(p.tag || '#日常#')}</a>${comments.slice(-2).map(c=>`<div class="xp-last-comment"><b>${escapeHtml(c.user || '用户')}：</b>${escapeHtml(c.text)}</div>`).join('')}${p.lastComment && !comments.length ? `<div class="xp-last-comment"><b>最新评论：</b>${escapeHtml(p.lastComment)}</div>` : ''}<div class="xp-post-actions"><button data-like-post="${escapeHtml(p.id)}" class="${p.liked ? 'is-liked' : ''}">♡ ${Number(p.likes)||0}</button><button data-action="weibo-comment">评论 ${count}</button><button data-weibo-favorite="${escapeHtml(p.id)}" class="${p.favorite?'is-favorited':''}">${p.favorite?'★ 已收藏':'☆ 收藏'}</button><button data-share-weibo="${escapeHtml(p.id)}">↗ 转发 ${reposts}</button></div></article>`;
     }).join('');
     const tabs = [['recommend','推荐'],['following','关注'],['favorites','收藏'],['mine','我的']].map(([id,label])=>`<button type="button" data-weibo-tab="${id}" class="${tab===id?'active':''}">${label}</button>`).join('');
     const mine = all.filter(p=>p.user==='{{user}}');
     return `<section class="xp-page xp-weibo"><div class="xp-appbar"><div class="xp-app-title xp-weibo-brand">微博</div><div class="xp-weibo-head-actions"><button class="xp-circle-btn" data-action="weibo-profile">我</button><button class="xp-circle-btn" data-action="weibo-compose">＋</button></div></div><div class="xp-social-search"><span>⌕</span><input type="search" data-weibo-search value="${escapeHtml(state.weiboSearchQuery || '')}" placeholder="搜索用户、动态或话题"></div><div class="xp-weibo-tabs">${tabs}</div>${tab==='mine'? `<div class="xp-weibo-profile"><div class="xp-weibo-profile-avatar">我</div><strong>我的微博</strong><small>本地模拟账号 · 分享你的生活</small><div><span><b>${mine.length}</b> 动态</span><span><b>${mine.reduce((n,p)=>n+(Number(p.likes)||0),0)}</b> 获赞</span><span><b>${following.length}</b> 关注</span></div><button data-action="weibo-compose">发布新动态</button></div>` : '<div class="xp-hot-search"><strong>热搜榜</strong><button type="button" data-weibo-hot="直播间新话题">1　直播间新话题　热</button><button type="button" data-weibo-hot="主播互动边界讨论">2　主播互动边界讨论　沸</button><button type="button" data-weibo-hot="深夜闲聊切片">3　深夜闲聊切片　新</button></div>'}${posts || '<div class="xp-empty">暂时没有微博动态</div>'}</section>`;
+  }
+
+  function renderWeiboDetail() {
+    const p=(state.weiboPosts||[]).find(item=>item.id===state.selectedWeiboPostId);
+    if(!p)return '<section class="xp-page xp-weibo-detail"><header><button data-action="back">‹</button><strong>微博详情</strong></header><div class="xp-empty">这条微博可能已被删除</div></section>';
+    const comments=Array.isArray(p.commentList)?p.commentList:[];
+    const original=p.repostOf?(state.weiboPosts||[]).find(x=>x.id===p.repostOf):null;
+    return `<section class="xp-page xp-weibo-detail" data-post-id="${escapeHtml(p.id)}"><header class="xp-weibo-detail-head"><button data-action="back">‹</button><strong>微博正文</strong><span></span></header><article class="xp-weibo-detail-post"><div class="xp-post-author"><span class="xp-avatar xp-avatar-red">${escapeHtml(p.avatar||p.user?.[0]||'用')}</span><strong>${escapeHtml(p.user||'用户')}</strong><small>${escapeHtml(p.time||'刚刚')}</small></div><p>${escapeHtml(p.text)}</p>${original?`<div class="xp-weibo-original"><b>@${escapeHtml(original.user)}</b><p>${escapeHtml(original.text)}</p></div>`:''}<a class="xp-hashtag">${escapeHtml(p.tag||'#日常#')}</a></article><section class="xp-weibo-detail-comments"><strong>全部评论（${comments.length}）</strong>${comments.map(c=>`<div class="xp-weibo-detail-comment"><b>${escapeHtml(c.user||'用户')}</b><p>${escapeHtml(c.text)}</p><small>${escapeHtml(c.time||'')}</small></div>`).join('')||'<div class="xp-empty">还没有评论，来发表第一条评论吧</div>'}</section><footer class="xp-weibo-detail-actions"><button data-like-post="${escapeHtml(p.id)}" class="${p.liked?'is-liked':''}">♡ ${Number(p.likes)||0}</button><button data-action="weibo-comment">评论 ${comments.length}</button><button data-weibo-favorite="${escapeHtml(p.id)}">${p.favorite?'★ 已收藏':'☆ 收藏'}</button><button data-share-weibo="${escapeHtml(p.id)}">↗ 转发 ${Number(p.reposts)||0}</button></footer></section>`;
   }
 
   function renderRed() {
@@ -740,8 +749,8 @@
   }
 
   function renderScreen() {
-    const titles = { home: '手机', notifications: '通知中心', wechat: '微信', 'wechat-moments': '朋友圈', 'wechat-favorites': '我的收藏', chat: '微信', weibo: '微博', red: '小红书', xplatform: 'X平台', live: '直播间', wallet: '钱包', photos: '相册', browser: '浏览器', calendar: '日历', notes: '备忘录', settings: '设置' };
-    const renderers = { home: renderHome, notifications: renderNotifications, wechat: renderWechat, 'wechat-moments': renderWechatMoments, 'wechat-favorites': renderWechatFavorites, chat: renderChat, weibo: renderWeibo, red: renderRed, 'red-detail': renderRedDetail, xplatform: renderXPlatform, live: renderLive, wallet: renderWallet, photos: renderPhotos, browser: renderBrowser, calendar: renderCalendar, notes: renderNotes, settings: renderSettings };
+    const titles = { home: '手机', notifications: '通知中心', wechat: '微信', 'wechat-moments': '朋友圈', 'wechat-favorites': '我的收藏', chat: '微信', weibo: '微博', 'weibo-detail': '微博详情', red: '小红书', xplatform: 'X平台', live: '直播间', wallet: '钱包', photos: '相册', browser: '浏览器', calendar: '日历', notes: '备忘录', settings: '设置' };
+    const renderers = { home: renderHome, notifications: renderNotifications, wechat: renderWechat, 'wechat-moments': renderWechatMoments, 'wechat-favorites': renderWechatFavorites, chat: renderChat, weibo: renderWeibo, 'weibo-detail': renderWeiboDetail, red: renderRed, 'red-detail': renderRedDetail, xplatform: renderXPlatform, live: renderLive, wallet: renderWallet, photos: renderPhotos, browser: renderBrowser, calendar: renderCalendar, notes: renderNotes, settings: renderSettings };
     const renderer = renderers[state.page] || renderHome;
     if (phoneScreen && overlay) {
       phoneScreen.innerHTML = renderer();
@@ -835,6 +844,7 @@
       return;
     }
     const hotSearch=event.target.closest('[data-weibo-hot]');if(hotSearch){state.weiboSearchQuery=hotSearch.dataset.weiboHot;state.weiboTab='recommend';renderScreen();persistState();return;}
+    const weiboOpen=event.target.closest('[data-weibo-open]');if(weiboOpen){state.selectedWeiboPostId=weiboOpen.dataset.weiboOpen;setPage('weibo-detail','weibo');persistState();return;}
     const weiboFavorite=event.target.closest('[data-weibo-favorite]');
     if(weiboFavorite){const p=(state.weiboPosts||[]).find(x=>x.id===weiboFavorite.dataset.weiboFavorite);if(p)p.favorite=!p.favorite;renderScreen();persistState();return;}
     const likePost = event.target.closest('[data-like-post]');
