@@ -208,3 +208,20 @@ html #xphone-overlay>.xphone-shell{position:absolute!important;display:block!imp
 .xphone-drag-handle:active{cursor:grabbing}
 .xphone-resize-handle{touch-action:none!important;z-index:12!important;width:34px!important;height:34px!important}
 @media(max-width:520px){html #xphone-overlay>.xphone-shell{width:320px;height:620px;max-height:none;border:6px solid #17191d;border-radius:30px}}
+
+
+/* Weibo feed tabs, creator follow and personal profile */
+.xp-weibo-head-actions{display:flex;gap:7px;align-items:center}.xp-weibo-head-actions .xp-circle-btn{font-size:15px}
+.xp-weibo-tabs{display:flex;gap:24px;border-bottom:1px solid #f0f0f0;margin:0 -15px 12px;padding:0 15px}
+.xp-weibo-tabs button{border:0;background:transparent;padding:10px 2px 11px;color:#888f97;font-size:12px}
+.xp-weibo-tabs button.active{color:#df4c55;font-weight:750;border-bottom:2px solid #df4c55}
+.xp-weibo-follow{margin-left:auto;border:1px solid #e7a0a5;border-radius:14px;padding:4px 9px;background:#fff;color:#df4c55;font-size:10px}
+.xp-weibo-follow.following{border-color:#e8eaed;color:#8b9299;background:#f7f8f9}
+.xp-weibo-repost-label{font-size:10px;color:#999;margin-top:8px}
+.xp-weibo-original{margin:7px 0;padding:9px 10px;border-radius:9px;background:#f6f7f8}
+.xp-weibo-original b{font-size:11px;color:#df5962}.xp-weibo-original p{margin:4px 0 0;font-size:11px;color:#656c74}
+.xp-weibo-profile{text-align:center;padding:18px 12px;margin-bottom:12px;border-radius:14px;background:linear-gradient(145deg,#fff5f4,#fff)}
+.xp-weibo-profile-avatar{width:54px;height:54px;margin:0 auto 8px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#f28b91,#cf4653);color:#fff;font-size:22px;font-weight:800}
+.xp-weibo-profile>strong,.xp-weibo-profile>small{display:block}.xp-weibo-profile>strong{font-size:14px}.xp-weibo-profile>small{font-size:10px;color:#999;margin-top:4px}
+.xp-weibo-profile>div:nth-of-type(1){display:flex;justify-content:center;gap:25px;margin:14px 0}.xp-weibo-profile>div span{font-size:10px;color:#999}.xp-weibo-profile>div b{display:block;color:#333;font-size:15px}
+.xp-weibo-profile>button{border:0;border-radius:18px;background:#df4c55;color:#fff;padding:8px 20px;font-size:11px}
