@@ -32,7 +32,7 @@
 
 ## 版本
 
-当前版本：**1.1.37**
+当前版本：**1.1.38**
 
 扩展源文件：`index.js`、`style.css`、`manifest.json`。
 
@@ -198,3 +198,8 @@
 - Add explicit current-story import using SillyTavern `generateQuietPrompt()` and the active chat context.
 - Import character-card fields, recent chat messages, and available character-book data according to context toggles; generated contacts and posts are stored only in the current chat metadata.
 - Add current chat context status and role-aware import controls to the phone settings page.
+
+### 1.1.38
+- Correct the SillyTavern generation/import helper placement and verify top-level event handlers can call it.
+- Abort context imports if the active chat changes while generation is in progress, preventing cross-chat data leakage.
+- Use the documented `generateQuietPrompt()` availability check for the built-in SillyTavern API mode.
