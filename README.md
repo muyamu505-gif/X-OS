@@ -32,10 +32,15 @@
 
 ## 版本
 
-当前版本：**1.1.75**
+当前版本：**1.1.76**
 
 扩展源文件：`index.js`、`style.css`、`manifest.json`。
 
+
+### 1.1.76
+- Add character-driven one-to-one WeChat replies using the active SillyTavern `generateRaw` interface; replies use recent conversation, the current character card, and imported NPC profile context.
+- Add an in-chat typing indicator, persisted incoming message records, unread counts, and notifications when a reply arrives outside its conversation.
+- Opening a conversation clears that contact's unread count. No reply is fabricated when the generation interface is unavailable or returns an empty result.
 
 ### 1.1.75
 - Replace direct contact creation with a persistent WeChat friend-request workflow: new-friends page, received/sent tabs, pending status, accept/reject actions, and contact/chat creation only after acceptance.
