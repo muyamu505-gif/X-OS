@@ -32,7 +32,7 @@
 
 ## 版本
 
-当前版本：**1.1.45**
+当前版本：**1.1.46**
 
 扩展源文件：`index.js`、`style.css`、`manifest.json`。
 
@@ -243,3 +243,10 @@
 ### 1.1.45
 - Correct the inner phone screen offset so the scaled desktop and app content align with the phone frame instead of being shifted right/down and clipped.
 - Remove the two visible diagonal marks from the bottom-right resize handle while retaining its pointer and keyboard resizing behavior.
+
+
+### 1.1.46
+- Fix persistence of story-imported livestream rooms and import summary when reopening the same chat.
+- Keep chat-specific X-OS data out of the global local-storage fallback, preventing story data from leaking when SillyTavern has no active chat context.
+- Scope locally simulated gift messages to the currently open livestream room.
+- Report the number of livestream messages actually imported after validation and deduplication.
