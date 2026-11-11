@@ -32,7 +32,7 @@
 
 ## 版本
 
-当前版本：**1.1.39**
+当前版本：**1.1.40**
 
 扩展源文件：`index.js`、`style.css`、`manifest.json`。
 
@@ -208,3 +208,9 @@
 - Use SillyTavern `generateRaw()` for context import so the user's context-scope switches are respected and unrelated chat prompt content is not implicitly attached.
 - Load selected global World Info books through the documented context API and include only selected entries plus the active card's embedded character book.
 - Keep the context import payload explicitly limited to the chosen character-card fields, selected worldbooks, and configured recent chat messages.
+
+
+### 1.1.40
+- Fix whole-device resizing by preserving the phone's native aspect ratio and scaling the complete screen content to exactly fit the shell.
+- Resize the frame, status bar, desktop icons, app pages, and bottom navigation together without leaving unused blank space.
+- Keep the resized device within the visible viewport and preserve the saved size.
