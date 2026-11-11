@@ -32,7 +32,7 @@
 
 ## 版本
 
-当前版本：**1.1.31**
+当前版本：**1.1.32**
 
 扩展源文件：`index.js`、`style.css`、`manifest.json`。
 
@@ -168,3 +168,9 @@
 ### 1.1.31
 - Expanded Xiaohongshu interactions: functional Recommend/Following/Nearby tabs, per-note follow/unfollow, favorites, and local comments.
 - Persisted the new Xiaohongshu tab and following list; older saved posts are migrated safely with optional comment/favorite defaults.
+
+
+### 1.1.32
+- Add a draggable top-edge phone handle around the status bar / Dynamic Island area and persist the phone position.
+- Resize the entire phone proportionally from the bottom-right corner, including the app desktop and all app screens.
+- Keep the phone as a floating, rounded device on narrow screens instead of forcing a full-screen layout; fit the initial phone to the available viewport.
