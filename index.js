@@ -48,6 +48,7 @@
     liveHeat: 865200,
     wallet: 8888,
     giftsSent: 0,
+    walletTransactions: [],
     notes: '这里可以记录临时备忘。',
     browserUrl: '',
     browserQuery: '',
