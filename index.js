@@ -47,6 +47,7 @@
     xFollowing: [],
     xPosts: [],
     liveMessages: [],
+    liveAudienceTypingRoomId: '',
     liveGiftRecords: [],
     importedLiveRooms: [],
     activeLiveId: 'main',
@@ -158,7 +159,7 @@
     const arrayKeys = ['stack', 'notifications', 'moments', 'wechatFavorites', 'notesList', 'contacts', 'wechatDirectory', 'friendRequests', 'weiboPosts', 'redPosts', 'liveMessages', 'liveGiftRecords', 'importedLiveRooms', 'browserResults', 'photos', 'calendar', 'walletTransactions', 'xPosts'];
     const stringArrayKeys = ['weiboFollowing', 'redFollowing', 'xFollowing', 'followedLiveRooms'];
     const objectKeys = ['chats'];
-    const stringKeys = ['page', 'wechatTab', 'weiboTab', 'redTab', 'xTab', 'activeLiveId', 'liveTypingRoomId', 'selectedContact', 'selectedRedPostId', 'selectedWeiboPostId', 'selectedXUser', 'friendRequestTab', 'friendSearchQuery', 'chatTypingContact', 'chatSearchQuery', 'notes', 'activeNoteId', 'browserUrl', 'browserQuery', 'selectedAlbum', 'calendarView', 'walletViewMonth', 'walletTypeFilter', 'walletCategoryFilter', 'walletSearchQuery', 'weiboSearchQuery', 'redSearchQuery', 'xSearchQuery'];
+    const stringKeys = ['page', 'wechatTab', 'weiboTab', 'redTab', 'xTab', 'activeLiveId', 'liveTypingRoomId', 'liveAudienceTypingRoomId', 'selectedContact', 'selectedRedPostId', 'selectedWeiboPostId', 'selectedXUser', 'friendRequestTab', 'friendSearchQuery', 'chatTypingContact', 'chatSearchQuery', 'notes', 'activeNoteId', 'browserUrl', 'browserQuery', 'selectedAlbum', 'calendarView', 'walletViewMonth', 'walletTypeFilter', 'walletCategoryFilter', 'walletSearchQuery', 'weiboSearchQuery', 'redSearchQuery', 'xSearchQuery'];
     const booleanKeys = [];
     const numberKeys = ['liveViewers', 'liveHeat', 'wallet', 'giftsSent'];
     for (const key of arrayKeys) {
@@ -619,12 +620,13 @@
     const roomMessages=state.liveMessages.filter(message=>!message.roomId||message.roomId===room.id);
     const lines=roomMessages.slice(-30).map(message=>`<div class="xp-barrage"><b>${escapeHtml(message.user)}：</b>${escapeHtml(message.text)}</div>`).join('');
     const liveTyping=state.liveTypingRoomId===room.id?'<div class="xp-barrage xp-live-typing"><b>主播：</b>正在回复…</div>':'';
+    const audienceTyping=state.liveAudienceTypingRoomId===room.id?'<div class="xp-barrage xp-live-typing"><b>观众：</b>正在互动…</div>':'';
     const viewers=Number.isFinite(room.viewers)?room.viewers.toLocaleString('zh-CN')+' 人在线':'人数未记录';
     const heat=Number.isFinite(room.heat)?room.heat.toLocaleString('zh-CN'):'未记录';
     const isRoomFollowed = (state.followedLiveRooms || []).includes(room.id);
     const roomGifts=(state.liveGiftRecords||[]).filter(g=>g.roomId===room.id);
     const roomGiftCount=roomGifts.reduce((n,g)=>n+(Number(g.quantity)||1),0);
-    return `<section class="xp-page xp-live-room"><div class="xp-live-video"><span class="xp-live-tag">● LIVE</span><span class="xp-live-video-label">${escapeHtml(room.title)}</span><small>${escapeHtml(room.description||'直播画面以当前剧情描述为准')}</small></div><div class="xp-live-room-info"><div><strong>${escapeHtml(room.title)}</strong><small>${escapeHtml(room.name)}　·　${escapeHtml(room.category)}　·　${viewers}</small><button type="button" data-live-host-profile="${escapeHtml(room.host||room.name)}">查看主播主页 ›</button></div><button data-action="follow" class="xp-follow ${isRoomFollowed?'following':''}">${isRoomFollowed?'已关注':'＋ 关注'}</button></div><div class="xp-live-metrics"><span>热度 <b>${heat}</b></span><span>本房间礼物 <b>${roomGiftCount}</b></span><span>余额 <b>${state.wallet}</b> 钻石</span></div><div class="xp-live-tools"><button type="button" data-live-gift-records>礼物记录（${roomGifts.length}）</button><button type="button" data-live-viewers>观众列表（${room.viewerList.length||'未记录'}）</button></div><div class="xp-barrage-list">${lines||'<div class="xp-empty">暂无剧情弹幕，发送一条参与互动吧</div>'}${liveTyping}</div><form class="xp-live-compose" data-form="barrage"><input name="message" autocomplete="off" placeholder="和主播聊两句…" maxlength="100"><button type="submit">发送</button><button type="button" data-action="gift">礼物</button></form></section>`;
+    return `<section class="xp-page xp-live-room"><div class="xp-live-video"><span class="xp-live-tag">● LIVE</span><span class="xp-live-video-label">${escapeHtml(room.title)}</span><small>${escapeHtml(room.description||'直播画面以当前剧情描述为准')}</small></div><div class="xp-live-room-info"><div><strong>${escapeHtml(room.title)}</strong><small>${escapeHtml(room.name)}　·　${escapeHtml(room.category)}　·　${viewers}</small><button type="button" data-live-host-profile="${escapeHtml(room.host||room.name)}">查看主播主页 ›</button></div><button data-action="follow" class="xp-follow ${isRoomFollowed?'following':''}">${isRoomFollowed?'已关注':'＋ 关注'}</button></div><div class="xp-live-metrics"><span>热度 <b>${heat}</b></span><span>本房间礼物 <b>${roomGiftCount}</b></span><span>余额 <b>${state.wallet}</b> 钻石</span></div><div class="xp-live-tools"><button type="button" data-live-gift-records>礼物记录（${roomGifts.length}）</button><button type="button" data-live-viewers>观众列表（${room.viewerList.length||'未记录'}）</button></div><div class="xp-barrage-list">${lines||'<div class="xp-empty">暂无剧情弹幕，发送一条参与互动吧</div>'}${liveTyping}${audienceTyping}</div><form class="xp-live-compose" data-form="barrage"><input name="message" autocomplete="off" placeholder="和主播聊两句…" maxlength="100"><button type="submit">发送</button><button type="button" data-action="gift">礼物</button></form></section>`;
   }
 
   function walletRowMatchesFilters(row, page) {
@@ -1375,12 +1377,84 @@
       if(state.page==='live'&&state.activeLiveId===roomId)renderScreen();
       else addNotification('直播间',hostName+' 回复了弹幕',reply.slice(0,80));
       persistState();
+      generateLiveAudienceReplies(roomId,reply,chatIdAtSend);
     }catch(error){
       state.liveTypingRoomId='';
       const active=currentContext();
       if(!context||!active||active.chatId!==chatIdAtSend||active.chatMetadata!==context.chatMetadata){persistState();return;}
       addNotification('直播间','主播暂未回复',String(error&&error.message||error).slice(0,120));
       if(state.page==='live'&&state.activeLiveId===roomId)renderScreen();
+      persistState();
+    }
+  }
+
+
+  async function generateLiveAudienceReplies(roomId,hostReply,chatIdAtSend){
+    const context=currentContext(),room=getLiveRooms().find(item=>item.id===roomId);
+    if(!room||!canGenerateText()||state.liveAudienceTypingRoomId)return;
+    const viewerNames=Array.from(new Set((room.viewerList||[]).map(name=>String(name||'').trim()).filter(Boolean)));
+    const hostName=String(room.host||room.name||'').trim();
+    const characters=(state.importedProfile&&state.importedProfile.characters)||[];
+    const knownViewers=viewerNames.filter(name=>name!==hostName&&!['{{user}}','{{char}}'].includes(name))
+      .map(name=>({name,profile:characters.find(p=>String(p.name||'').trim()===name)}))
+      .filter(item=>item.profile);
+    if(!knownViewers.length)return;
+    const selected=knownViewers.slice(0,Math.min(2,knownViewers.length));
+    const allowed=selected.map(item=>item.name);
+    const profileText=selected.map(({name,profile})=>[
+      '观众：'+name,
+      '身份：'+String(profile.relation||''),
+      '描述：'+String(profile.description||''),
+      '性格：'+String(profile.personality||''),
+      '说话风格：'+String(profile.voice||''),
+      '已知事实：'+String(profile.notes||'')
+    ].join('\n')).join('\n\n');
+    const recent=state.liveMessages.filter(m=>m.roomId===roomId).slice(-18)
+      .map(m=>String(m.user||'观众')+'：'+String(m.text||'')).join('\n');
+    state.liveAudienceTypingRoomId=roomId;
+    if(state.page==='live'&&state.activeLiveId===roomId)renderScreen();
+    persistState();
+    try{
+      const prompt=[
+        '你正在生成 X-OS 直播间中已有剧情人物的观众弹幕。',
+        '直播间：'+String(room.title||room.name)+'；主播：'+hostName,
+        '刚刚主播回复：'+hostReply,
+        '已知观众名单与人物资料（只能使用这些名字）：\n'+profileText,
+        '最近弹幕：\n'+recent,
+        '只生成 1 至 '+selected.length+' 条简短弹幕，每条必须来自名单中的不同人物。根据人物性格和已知关系自然回应主播，不要创造新观众，不要替用户发言，不要虚构礼物、在线人数或未发生的剧情事实。',
+        '严格只输出 JSON 对象，格式为 {"replies":[{"name":"名单中的名字","text":"弹幕内容"}]}。'
+      ].join('\n\n');
+      const result=await generateText({prompt,systemPrompt:'你是直播间观众弹幕生成器。只扮演给定名单中的已有角色，严格输出 JSON，不得创造名单外人物或控制用户。'});
+      const active=currentContext();
+      if(!context||!active||active.chatId!==chatIdAtSend||active.chatMetadata!==context.chatMetadata){state.liveAudienceTypingRoomId='';persistState();return;}
+      const raw=typeof result==='string'?result:(result&&(result.content||result.text))||'';
+      const parsed=parseGeneratedJson(raw);
+      const replies=Array.isArray(parsed?.replies)?parsed.replies:[];
+      const allowedSet=new Set(allowed);
+      const accepted=[];
+      for(const item of replies){
+        const name=String(item?.name||'').trim(),text=String(item?.text||'').trim();
+        if(!allowedSet.has(name)||!text||accepted.some(x=>x.name===name))continue;
+        accepted.push({name,text:text.slice(0,180)});
+        if(accepted.length>=selected.length)break;
+      }
+      accepted.forEach((item,index)=>state.liveMessages.push({
+        id:'live_audience_'+Date.now()+'_'+index+'_'+Math.random().toString(36).slice(2,6),
+        user:item.name,text:item.text,roomId,kind:'audience-reply',time:nowTime()
+      }));
+      state.liveMessages=state.liveMessages.slice(-200);
+      state.liveAudienceTypingRoomId='';
+      if(accepted.length){
+        if(state.page==='live'&&state.activeLiveId===roomId)renderScreen();
+        else addNotification('直播间','观众有了新弹幕',accepted.length+' 位已有剧情人物参与互动。');
+      }else if(state.page==='live'&&state.activeLiveId===roomId)renderScreen();
+      persistState();
+    }catch(error){
+      state.liveAudienceTypingRoomId='';
+      const active=currentContext();
+      if(!context||!active||active.chatId!==chatIdAtSend||active.chatMetadata!==context.chatMetadata){persistState();return;}
+      if(state.page==='live'&&state.activeLiveId===roomId)renderScreen();
+      addNotification('直播间','观众互动暂不可用',String(error?.message||error).slice(0,100));
       persistState();
     }
   }
