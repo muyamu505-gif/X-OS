@@ -29,7 +29,7 @@
     redFollowing: [],
     followed: false,
     xTab: 'recommend',
-    xFollowing: ['{{char}}'],
+    xFollowing: [],
     xPosts: [],
     liveMessages: [],
     importedLiveRooms: [],
@@ -136,6 +136,8 @@
       if (Array.isArray(saved[key])) base[key] = saved[key].filter(item => item && typeof item === 'object' && !Array.isArray(item));
     }
     for (const key of stringKeys) if (typeof saved[key] === 'string' || saved[key] === null && key === 'selectedContact') base[key] = saved[key];
+    // Template macros are identities, not creator accounts; never pre-follow them.
+    base.xFollowing = base.xFollowing.filter(name => !['{{user}}','{{char}}'].includes(String(name).trim()));
     for (const key of booleanKeys) if (typeof saved[key] === 'boolean') base[key] = saved[key];
     for (const key of numberKeys) if (Number.isFinite(saved[key])) base[key] = saved[key];
     if (saved.importedProfile && typeof saved.importedProfile === 'object' && !Array.isArray(saved.importedProfile)) base.importedProfile = saved.importedProfile;
