@@ -400,3 +400,15 @@ html #xphone-overlay .xphone-resize-handle{background:transparent!important;bord
 .xp-ledger-main{min-width:0;flex:1}
 .xp-ledger-main b,.xp-ledger-main small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 @media(max-width:380px){.xp-ledger-controls{gap:3px}.xp-ledger-controls button{padding:5px 5px;font-size:9px}.xp-ios-ledger-row{gap:6px}}
+
+
+/* Wallet search, category selector and CSV export */
+.xp-wallet-search{display:flex;gap:7px;margin:8px 0;min-width:0}
+.xp-wallet-search input,.xp-wallet-search select{min-width:0;height:35px;border:1px solid #e3e9ef;border-radius:9px;background:#fff;color:#536477;padding:0 9px;font-size:11px;box-sizing:border-box}
+.xp-wallet-search input{flex:1 1 58%}
+.xp-wallet-search select{flex:0 1 42%;max-width:42%}
+.xp-wallet-export{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:8px 0 11px}
+.xp-wallet-export button{border:1px solid #d9e4ee;border-radius:9px;background:#edf3f8;color:#547493;padding:8px 10px;font-size:10px;font-weight:600}
+.xp-wallet-export small{max-width:46%;color:#9aa5b1;font-size:9px;line-height:1.4;text-align:right}
+.xp-wallet-records [data-wallet-record][hidden],.xp-wallet-legacy [data-wallet-record][hidden]{display:none!important}
+@media(max-width:380px){.xp-wallet-search{gap:5px}.xp-wallet-search input,.xp-wallet-search select{font-size:10px;padding:0 7px}.xp-wallet-export{align-items:flex-start;flex-direction:column}.xp-wallet-export small{max-width:100%;text-align:left}}
