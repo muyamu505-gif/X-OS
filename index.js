@@ -200,7 +200,7 @@
     overlay.style.cssText = 'position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important;z-index:2147483647!important;display:none;align-items:center!important;justify-content:center!important;box-sizing:border-box!important;padding:12px!important;overflow:hidden!important;isolation:isolate!important;margin:0!important;';
     overlay.setAttribute('aria-hidden', 'true');
     overlay.innerHTML = `
-      <div class="xphone-backdrop" data-action="close"></div>
+      <div class="xphone-backdrop" aria-hidden="true"></div>
       <section class="xphone-shell" role="dialog" aria-modal="true" aria-label="手机模拟器" style="width:320px;height:620px;max-width:calc(100vw - 24px);max-height:calc(100vh - 24px);">
         <div class="xphone-notch"><span></span></div>
         <div class="xphone-status"><span class="xp-clock">09:41</span><span class="xp-status-right">5G　●●●　▰</span></div>
@@ -311,7 +311,7 @@
       const last = msgs[msgs.length - 1];
       return `<button class="xp-contact" data-contact="${escapeHtml(c.id)}"><span class="xp-avatar xp-avatar-green">${escapeHtml(c.avatar)}</span><span class="xp-contact-main"><strong>${escapeHtml(c.name)}</strong><small>${escapeHtml(last?.text || c.note)}</small></span><time>${escapeHtml(last?.time || '')}</time></button>`;
     }).join('');
-    return `<section class="xp-page xp-wechat"><div class="xp-appbar"><div><div class="xp-app-title">微信</div><small>消息</small></div><button class="xp-circle-btn" data-action="wechat-add">＋</button></div><div class="xp-search">⌕　搜索</div>${rows}<div class="xp-bottom-tabs"><span class="active">微信</span><span>通讯录</span><span>发现</span><span>我</span></div></section>`;
+    return `<section class="xp-page xp-wechat"><div class="xp-appbar"><div><div class="xp-app-title">微信</div><small>消息</small></div><button class="xp-circle-btn" data-action="wechat-add">＋</button></div><div class="xp-search"><span>⌕</span><input type="search" data-contact-search placeholder="搜索联系人和聊天记录"></div>${rows}<div class="xp-bottom-tabs"><span class="active">微信</span><span>通讯录</span><span>发现</span><span>我</span></div></section>`;
   }
 
   function renderChat() {
@@ -521,6 +521,13 @@
 
   function handleInput(event) {
     if (event.target.matches('[data-notes]')) { state.notes = event.target.value; persistState(); }
+    if (event.target.matches('[data-contact-search]')) {
+      const query = event.target.value.trim().toLocaleLowerCase();
+      const page = event.target.closest('.xp-wechat');
+      page?.querySelectorAll('.xp-contact').forEach(row => {
+        row.hidden = !row.textContent.toLocaleLowerCase().includes(query);
+      });
+    }
   }
 
   function handleSubmit(event) {
