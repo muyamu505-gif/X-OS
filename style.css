@@ -186,3 +186,7 @@ html #xphone-overlay #xphone-screen{background:#f6f8fa!important}
 
 /* X-OS 1.1.28 WeChat group chat details */
 .xp-wechat-menu-icon.group{background:#748eaa;font-size:12px;font-weight:700}.xp-chat-sender{display:block;margin-bottom:4px;color:#84909b;font-size:9px;font-weight:500}.xp-chat-title button[data-action="wechat-chat-info"]{min-width:24px;font-size:18px;letter-spacing:1px;color:#40464b}.xp-chat-title button[data-action="clear-chat"]{font-size:10px;color:#687078}
+
+
+/* X-OS 1.1.29 WeChat richer message composer and attachments */
+.xp-chat-compose{display:flex;align-items:center;gap:5px;padding:8px!important}.xp-chat-compose select{max-width:54px;min-width:48px;height:34px;border:0;border-radius:5px;background:#e9ecee;color:#56616a;font-size:10px}.xp-chat-compose input{min-width:0;flex:1}.xp-chat-attachment{display:block;margin-bottom:4px;color:#627f9a;font-size:11px;font-weight:600}.xp-chat-compose button{white-space:nowrap}.xp-dialog-card input[name="contactName"],.xp-dialog-card input[name="contactNote"]{width:100%;margin:5px 0;padding:10px;border:1px solid #e1e5e8;border-radius:7px;background:#f8f9fa;color:#252a2e;font-size:12px}
