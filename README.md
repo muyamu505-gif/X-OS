@@ -32,7 +32,12 @@
 
 ## 版本
 
-当前版本：**1.1.88**
+当前版本：**1.1.89**
+
+### 1.1.89
+- Add AI-generated audience barrage replies after host responses, using only viewer names explicitly listed in the room and characters with imported story profiles.
+- Validate every generated speaker against the known viewer list; unknown names and empty replies are discarded, and no audience is invented when no matching profile exists.
+- Show an audience-typing indicator and persist accepted replies to the matching room.
 
 ### 1.1.88
 - Add AI-generated livestream host replies to viewer barrage, grounded in the active character card or imported streamer profile and recent room messages.
