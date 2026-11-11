@@ -215,6 +215,27 @@
     persistState();
   }
 
+  let gestureTapTimer = null;
+
+  function handleGestureNavigation(event) {
+    const control = event.target.closest('[data-xp-gesture-nav]');
+    if (!control) return false;
+    event.preventDefault();
+    event.stopPropagation();
+    if (gestureTapTimer) {
+      clearTimeout(gestureTapTimer);
+      gestureTapTimer = null;
+      state.page = 'home'; state.app = null; state.stack = []; state.selectedContact = null;
+      renderScreen(); persistState();
+    } else {
+      gestureTapTimer = setTimeout(() => {
+        gestureTapTimer = null;
+        goBack();
+      }, 280);
+    }
+    return true;
+  }
+
   function goBack() {
     const previous = state.stack.pop();
     if (previous) {
@@ -258,6 +279,7 @@
           <div class="xphone-notch"><span></span></div>
           <div class="xphone-status"><span class="xp-clock">09:41</span><span class="xp-status-right">5G　●●●　▰</span></div>
           <main class="xphone-screen" id="xphone-screen"></main>
+          <div class="xp-gesture-nav" data-xp-gesture-nav role="button" tabindex="0" aria-label="轻点返回，快速连点两次回到桌面"><span></span></div>
         </div>
         <div class="xphone-drag-handle" role="button" tabindex="0" aria-label="拖动手机顶部移动位置" title="拖动手机顶部移动"></div>
         <div class="xphone-resize-handle" role="button" tabindex="0" aria-label="拖动右下角整体缩放手机" title="拖动调整整体大小"></div>
@@ -570,6 +592,7 @@
   }
 
   function handleClick(event) {
+    if (handleGestureNavigation(event)) return;
     const settingAction = event.target.closest('[data-action^="settings-"]');
     if (settingAction) {
       if (settingAction.dataset.action === 'context-import') { importCurrentStoryContext(); return; }
@@ -1105,7 +1128,7 @@
       button.className = 'xphone-inline-entry'; button.type = 'button'; button.textContent = '▣ 展开手机';
       const host = document.createElement('div');
       host.className = 'xphone-inline-host'; host.hidden = true;
-      host.innerHTML = `<div class="xp-inline-device"><div class="xp-inline-status"><span>● ${new Date().toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit', hour12:false})}</span><span>5G　▰</span></div><div class="xphone-inline-screen"></div></div>`;
+      host.innerHTML = `<div class="xp-inline-device"><div class="xp-inline-status"><span>● ${new Date().toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit', hour12:false})}</span><span>5G　▰</span></div><div class="xphone-inline-screen"></div><div class="xp-gesture-nav xp-inline-gesture-nav" data-xp-gesture-nav role="button" tabindex="0" aria-label="轻点返回，快速连点两次回到桌面"><span></span></div></div>`;
       button.addEventListener('click', () => { host.hidden = !host.hidden; button.textContent = host.hidden ? '▣ 展开手机' : '▣ 收起手机'; if (!host.hidden) renderScreen(); });
       host.addEventListener('click', handleClick);
       host.addEventListener('keydown', event => {
