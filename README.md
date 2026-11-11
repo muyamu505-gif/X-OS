@@ -35,3 +35,8 @@
 当前版本：**1.1.1**
 
 扩展源文件：`index.js`、`style.css`、`manifest.json`。
+
+
+### 1.1.2
+- Fixed phone window viewport positioning and edge clipping on mobile.
+- Reduced the default floating phone size and added a draggable bottom-right resize handle with saved dimensions.
