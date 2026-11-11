@@ -23,13 +23,16 @@
     contacts: [],
     chats: {},
     weiboTab: 'recommend',
+    weiboSearchQuery: '',
     weiboFollowing: [],
     weiboPosts: [],
     redPosts: [],
     redTab: 'recommend',
+    redSearchQuery: '',
     redFollowing: [],
     followedLiveRooms: [],
     xTab: 'recommend',
+    xSearchQuery: '',
     xFollowing: [],
     xPosts: [],
     liveMessages: [],
@@ -140,7 +143,7 @@
     const arrayKeys = ['stack', 'notifications', 'moments', 'wechatFavorites', 'notesList', 'contacts', 'weiboPosts', 'redPosts', 'liveMessages', 'importedLiveRooms', 'browserResults', 'photos', 'calendar', 'walletTransactions', 'xPosts'];
     const stringArrayKeys = ['weiboFollowing', 'redFollowing', 'xFollowing', 'followedLiveRooms'];
     const objectKeys = ['chats'];
-    const stringKeys = ['page', 'wechatTab', 'weiboTab', 'redTab', 'xTab', 'activeLiveId', 'selectedContact', 'notes', 'activeNoteId', 'browserUrl', 'browserQuery', 'selectedAlbum', 'calendarView', 'walletViewMonth', 'walletTypeFilter', 'walletCategoryFilter', 'walletSearchQuery'];
+    const stringKeys = ['page', 'wechatTab', 'weiboTab', 'redTab', 'xTab', 'activeLiveId', 'selectedContact', 'notes', 'activeNoteId', 'browserUrl', 'browserQuery', 'selectedAlbum', 'calendarView', 'walletViewMonth', 'walletTypeFilter', 'walletCategoryFilter', 'walletSearchQuery', 'weiboSearchQuery', 'redSearchQuery', 'xSearchQuery'];
     const booleanKeys = [];
     const numberKeys = ['liveViewers', 'liveHeat', 'wallet', 'giftsSent'];
     for (const key of arrayKeys) {
@@ -509,40 +512,40 @@
     const tab = state.weiboTab || 'recommend';
     const following = state.weiboFollowing || [];
     const all = state.weiboPosts || [];
-    const visible = tab === 'following' ? all.filter(p => p.user === '{{user}}' || following.includes(p.user)) : tab === 'mine' ? all.filter(p => p.user === '{{user}}') : all;
+    const visible = (tab === 'following' ? all.filter(p => p.user === '{{user}}' || following.includes(p.user)) : tab === 'mine' ? all.filter(p => p.user === '{{user}}') : tab === 'favorites' ? all.filter(p => p.favorite) : all).filter(p=>!state.weiboSearchQuery || [p.user,p.text,p.tag].join(' ').toLocaleLowerCase().includes(state.weiboSearchQuery.toLocaleLowerCase()));
     const posts = visible.map(p => {
       const comments = Array.isArray(p.commentList) ? p.commentList : [];
       const count = Math.max(Number(p.comments) || 0, comments.length);
       const reposts = Number(p.reposts) || 0;
       const repostOf = p.repostOf ? all.find(x => x.id === p.repostOf) : null;
-      return `<article class="xp-social-post" data-post-id="${escapeHtml(p.id)}"><div class="xp-post-author"><span class="xp-avatar xp-avatar-red">${escapeHtml(p.avatar || p.user?.[0] || '用')}</span><strong>${escapeHtml(p.user)}</strong><small>${escapeHtml(p.time || '刚刚')}</small>${p.user !== '{{user}}' ? `<button class="xp-weibo-follow ${following.includes(p.user)?'following':''}" data-follow-weibo="${escapeHtml(p.user)}">${following.includes(p.user)?'已关注':'＋关注'}</button>` : ''}</div>${p.repostOf ? '<div class="xp-weibo-repost-label">↗ 转发动态</div>' : ''}<p>${escapeHtml(p.text)}</p>${repostOf ? `<div class="xp-weibo-original"><b>@${escapeHtml(repostOf.user)}</b><p>${escapeHtml(repostOf.text)}</p></div>` : ''}<a class="xp-hashtag">${escapeHtml(p.tag || '#日常#')}</a>${comments.slice(-2).map(c=>`<div class="xp-last-comment"><b>${escapeHtml(c.user || '用户')}：</b>${escapeHtml(c.text)}</div>`).join('')}${p.lastComment && !comments.length ? `<div class="xp-last-comment"><b>最新评论：</b>${escapeHtml(p.lastComment)}</div>` : ''}<div class="xp-post-actions"><button data-like-post="${escapeHtml(p.id)}" class="${p.liked ? 'is-liked' : ''}">♡ ${Number(p.likes)||0}</button><button data-action="weibo-comment">评论 ${count}</button><button data-share-weibo="${escapeHtml(p.id)}">↗ 转发 ${reposts}</button></div></article>`;
+      return `<article class="xp-social-post" data-post-id="${escapeHtml(p.id)}"><div class="xp-post-author"><span class="xp-avatar xp-avatar-red">${escapeHtml(p.avatar || p.user?.[0] || '用')}</span><strong>${escapeHtml(p.user)}</strong><small>${escapeHtml(p.time || '刚刚')}</small>${p.user !== '{{user}}' ? `<button class="xp-weibo-follow ${following.includes(p.user)?'following':''}" data-follow-weibo="${escapeHtml(p.user)}">${following.includes(p.user)?'已关注':'＋关注'}</button>` : ''}</div>${p.repostOf ? '<div class="xp-weibo-repost-label">↗ 转发动态</div>' : ''}<p>${escapeHtml(p.text)}</p>${repostOf ? `<div class="xp-weibo-original"><b>@${escapeHtml(repostOf.user)}</b><p>${escapeHtml(repostOf.text)}</p></div>` : ''}<a class="xp-hashtag">${escapeHtml(p.tag || '#日常#')}</a>${comments.slice(-2).map(c=>`<div class="xp-last-comment"><b>${escapeHtml(c.user || '用户')}：</b>${escapeHtml(c.text)}</div>`).join('')}${p.lastComment && !comments.length ? `<div class="xp-last-comment"><b>最新评论：</b>${escapeHtml(p.lastComment)}</div>` : ''}<div class="xp-post-actions"><button data-like-post="${escapeHtml(p.id)}" class="${p.liked ? 'is-liked' : ''}">♡ ${Number(p.likes)||0}</button><button data-action="weibo-comment">评论 ${count}</button><button data-weibo-favorite="${escapeHtml(p.id)}" class="${p.favorite?'is-favorited':''}">${p.favorite?'★ 已收藏':'☆ 收藏'}</button><button data-share-weibo="${escapeHtml(p.id)}">↗ 转发 ${reposts}</button></div></article>`;
     }).join('');
-    const tabs = [['recommend','推荐'],['following','关注'],['mine','我的']].map(([id,label])=>`<button type="button" data-weibo-tab="${id}" class="${tab===id?'active':''}">${label}</button>`).join('');
+    const tabs = [['recommend','推荐'],['following','关注'],['favorites','收藏'],['mine','我的']].map(([id,label])=>`<button type="button" data-weibo-tab="${id}" class="${tab===id?'active':''}">${label}</button>`).join('');
     const mine = all.filter(p=>p.user==='{{user}}');
-    return `<section class="xp-page xp-weibo"><div class="xp-appbar"><div class="xp-app-title xp-weibo-brand">微博</div><div class="xp-weibo-head-actions"><button class="xp-circle-btn" data-action="weibo-profile">我</button><button class="xp-circle-btn" data-action="weibo-compose">＋</button></div></div><div class="xp-social-search"><span>⌕</span><input type="search" data-weibo-search placeholder="搜索用户、动态或话题"></div><div class="xp-weibo-tabs">${tabs}</div>${tab==='mine'? `<div class="xp-weibo-profile"><div class="xp-weibo-profile-avatar">我</div><strong>我的微博</strong><small>本地模拟账号 · 分享你的生活</small><div><span><b>${mine.length}</b> 动态</span><span><b>${mine.reduce((n,p)=>n+(Number(p.likes)||0),0)}</b> 获赞</span><span><b>${following.length}</b> 关注</span></div><button data-action="weibo-compose">发布新动态</button></div>` : '<div class="xp-hot-search"><strong>热搜榜</strong><span>1　直播间新话题　热</span><span>2　主播互动边界讨论　沸</span><span>3　深夜闲聊切片　新</span></div>'}${posts || '<div class="xp-empty">暂时没有微博动态</div>'}</section>`;
+    return `<section class="xp-page xp-weibo"><div class="xp-appbar"><div class="xp-app-title xp-weibo-brand">微博</div><div class="xp-weibo-head-actions"><button class="xp-circle-btn" data-action="weibo-profile">我</button><button class="xp-circle-btn" data-action="weibo-compose">＋</button></div></div><div class="xp-social-search"><span>⌕</span><input type="search" data-weibo-search value="${escapeHtml(state.weiboSearchQuery || '')}" placeholder="搜索用户、动态或话题"></div><div class="xp-weibo-tabs">${tabs}</div>${tab==='mine'? `<div class="xp-weibo-profile"><div class="xp-weibo-profile-avatar">我</div><strong>我的微博</strong><small>本地模拟账号 · 分享你的生活</small><div><span><b>${mine.length}</b> 动态</span><span><b>${mine.reduce((n,p)=>n+(Number(p.likes)||0),0)}</b> 获赞</span><span><b>${following.length}</b> 关注</span></div><button data-action="weibo-compose">发布新动态</button></div>` : '<div class="xp-hot-search"><strong>热搜榜</strong><span>1　直播间新话题　热</span><span>2　主播互动边界讨论　沸</span><span>3　深夜闲聊切片　新</span></div>'}${posts || '<div class="xp-empty">暂时没有微博动态</div>'}</section>`;
   }
 
   function renderRed() {
     const tab = state.redTab || 'recommend';
     const all = state.redPosts || [];
-    const visible = tab === 'following' ? all.filter(p => p.user === '{{user}}' || (state.redFollowing || []).includes(p.user)) : tab === 'nearby' ? all.filter(p => p.nearby !== false) : tab === 'favorites' ? all.filter(p => p.favorite) : all;
+    const visible = (tab === 'following' ? all.filter(p => p.user === '{{user}}' || (state.redFollowing || []).includes(p.user)) : tab === 'nearby' ? all.filter(p => p.nearby !== false) : tab === 'favorites' ? all.filter(p => p.favorite) : all).filter(p => !state.redSearchQuery || [p.title,p.desc,p.user].join(' ').toLocaleLowerCase().includes(state.redSearchQuery.toLocaleLowerCase()));
     const posts = visible.map(p => {
       const comments = Array.isArray(p.comments) ? p.comments : [];
       const following = (state.redFollowing || []).includes(p.user);
       return `<article class="xp-red-card"><div class="xp-red-cover ${escapeHtml(p.color || 'peach')}"><span>生活灵感</span></div><div class="xp-red-card-body"><div class="xp-red-author"><strong>${escapeHtml(p.title)}</strong><small>${escapeHtml(p.user)}</small></div><p>${escapeHtml(p.desc)}</p><div class="xp-red-actions"><button data-like-red="${escapeHtml(p.id)}" class="${p.liked ? 'is-liked' : ''}">♡ ${escapeHtml(p.likes)}</button><button data-favorite-red="${escapeHtml(p.id)}" class="${p.favorite ? 'is-favorited' : ''}">${p.favorite ? '★ 已收藏' : '☆ 收藏'}</button><button data-comment-red="${escapeHtml(p.id)}">评论 ${comments.length}</button>${p.user !== '{{user}}' ? `<button data-follow-red="${escapeHtml(p.user)}">${following ? '已关注' : '+ 关注'}</button>` : ''}</div>${comments.slice(-2).map(c => `<div class="xp-red-comment"><b>${escapeHtml(c.user || '用户')}：</b>${escapeHtml(c.text)}</div>`).join('')}</div></article>`;
     }).join('');
     const tabs = [['recommend','推荐'],['following','关注'],['nearby','附近'],['favorites','收藏']].map(([id,label]) => `<button type="button" data-red-tab="${id}" class="${tab===id?'active':''}">${label}</button>`).join('');
-    return `<section class="xp-page xp-red"><div class="xp-appbar"><div class="xp-app-title xp-red-brand">小红书</div><button class="xp-circle-btn" data-action="red-compose">＋</button></div><div class="xp-red-tabs">${tabs}</div>${posts || '<div class="xp-empty">这里暂时没有笔记</div>'}</section>`;
+    return `<section class="xp-page xp-red"><div class="xp-appbar"><div class="xp-app-title xp-red-brand">小红书</div><button class="xp-circle-btn" data-action="red-compose">＋</button></div><div class="xp-social-search"><span>⌕</span><input type="search" data-red-search value="${escapeHtml(state.redSearchQuery || '')}" placeholder="搜索笔记、作者和关键词"></div><div class="xp-red-tabs">${tabs}</div>${posts || '<div class="xp-empty">这里暂时没有笔记</div>'}</section>`;
   }
 
   function renderXPlatform() {
     const rooms = getLiveRooms().map((room,index)=>({...room,viewers:room.id==='main'?state.liveViewers:null,heat:room.id==='main'?state.liveHeat:null,tag:room.category,cover:'LIVE'}));
     const tab=state.xTab||'recommend', following=state.xFollowing||[];
-    const filtered=(state.xPosts||[]).filter(p=>tab==='following'?following.includes(p.user)||p.user==='{{user}}':tab==='game'?p.room==='game':tab==='voice'?p.room==='voice':tab==='beauty'?p.room==='main':true);
+    const filtered=(state.xPosts||[]).filter(p=>tab==='following'?following.includes(p.user)||p.user==='{{user}}':tab==='game'?p.room==='game':tab==='voice'?p.room==='voice':tab==='beauty'?p.room==='main':true).filter(p=>!state.xSearchQuery||[p.user,p.text].join(' ').toLocaleLowerCase().includes(state.xSearchQuery.toLocaleLowerCase()));
     const posts=filtered.map(p=>{const cs=Array.isArray(p.comments)?p.comments:[];return `<article class="xp-x-post"><div class="xp-x-post-author"><span>${escapeHtml(p.avatar||p.user?.[0]||'用')}</span><b>${escapeHtml(p.user)}</b><small>${escapeHtml(p.time||'刚刚')}</small>${p.user!=='{{user}}'? `<button data-x-follow="${escapeHtml(p.user)}">${following.includes(p.user)?'已关注':'＋关注'}</button>`:''}</div><p>${escapeHtml(p.text)}</p><div class="xp-x-post-actions"><button data-x-like="${escapeHtml(p.id)}" class="${p.liked?'is-liked':''}">♡ ${Number(p.likes)||0}</button><button data-x-comment="${escapeHtml(p.id)}">评论 ${cs.length}</button><button data-x-enter-room="${escapeHtml(p.room||'main')}">进入直播间 ↗</button></div>${cs.slice(-2).map(c=>`<div class="xp-x-comment"><b>${escapeHtml(c.user||'用户')}：</b>${escapeHtml(c.text)}</div>`).join('')}</article>`;}).join('');
     const tabs=[['recommend','推荐'],['following','关注'],['game','游戏'],['voice','语音'],['beauty','颜值']].map(([id,n])=>`<button data-x-tab="${id}" class="${tab===id?'active':''}">${n}</button>`).join('');
     const cards=rooms.map(r=>`<article class="xp-live-card"><div class="xp-live-cover xp-live-cover-${r.id}"><span class="xp-live-tag">● LIVE</span>${r.viewers===null?'<span class="xp-live-count">剧情记录</span>':`<span class="xp-live-count">${Number(r.viewers).toLocaleString('zh-CN')} 人在线</span>`}<div class="xp-live-cover-title">${escapeHtml(r.title)}</div></div><div class="xp-live-info"><strong>${escapeHtml(r.name)}</strong><small>${escapeHtml(r.category)}${r.heat===null?'':'　热度 '+Number(r.heat).toLocaleString('zh-CN')}</small><button data-x-enter-room="${escapeHtml(r.id)}">进入直播间　›</button></div></article>`).join('');
-    return `<section class="xp-page xp-xplatform"><div class="xp-x-top"><div class="xp-x-logo">X</div><div><strong>X平台</strong><small>综合直播社区</small></div><button data-action="notifications">♧</button></div><div class="xp-x-tabs">${tabs}</div><div class="xp-x-section-title">正在直播</div>${cards}<div class="xp-x-section-title">动态广场 <button data-action="x-compose">＋ 发布动态</button></div>${posts||'<div class="xp-empty">这里暂时没有动态</div>'}<div class="xp-x-bottom"><button data-action="x-home">首页</button><button data-x-tab="following">关注</button><button data-action="x-compose">＋</button><button data-action="notifications">消息</button><button data-action="x-profile">我的</button></div></section>`;
+    return `<section class="xp-page xp-xplatform"><div class="xp-x-top"><div class="xp-x-logo">X</div><div><strong>X平台</strong><small>综合直播社区</small></div><button data-action="notifications">♧</button></div><div class="xp-social-search"><span>⌕</span><input type="search" data-x-search value="${escapeHtml(state.xSearchQuery || '')}" placeholder="搜索主播、动态或关键词"></div><div class="xp-x-tabs">${tabs}</div><div class="xp-x-section-title">正在直播</div>${cards}<div class="xp-x-section-title">动态广场 <button data-action="x-compose">＋ 发布动态</button></div>${posts||'<div class="xp-empty">这里暂时没有动态</div>'}<div class="xp-x-bottom"><button data-action="x-home">首页</button><button data-x-tab="following">关注</button><button data-action="x-compose">＋</button><button data-action="notifications">消息</button><button data-action="x-profile">我的</button></div></section>`;
   }
 
   function getLiveRooms() {
@@ -819,6 +822,8 @@
       persistState();
       return;
     }
+    const weiboFavorite=event.target.closest('[data-weibo-favorite]');
+    if(weiboFavorite){const p=(state.weiboPosts||[]).find(x=>x.id===weiboFavorite.dataset.weiboFavorite);if(p)p.favorite=!p.favorite;renderScreen();persistState();return;}
     const likePost = event.target.closest('[data-like-post]');
     if (likePost) { const p = state.weiboPosts.find(x => x.id === likePost.dataset.likePost); if (p) { p.liked = !p.liked; p.likes += p.liked ? 1 : -1; renderScreen(); persistState(); } return; }
     const weiboTab = event.target.closest('[data-weibo-tab]');
@@ -1100,11 +1105,14 @@
     }
     if (event.target.matches('[data-note-title]')) { const note = (state.notesList || []).find(n => n.id === state.activeNoteId); if (note) { note.title = event.target.value.slice(0,60); note.updatedAt = nowTime(); const row = Array.from(event.target.closest('.xp-notes-page')?.querySelectorAll('[data-note-open]') || []).find(el => el.dataset.noteOpen === note.id); const title = row?.querySelector('strong'); if (title) title.textContent = note.title || '无标题'; persistState(); } }
     if (event.target.matches('[data-weibo-search]')) {
-      const query = event.target.value.trim().toLocaleLowerCase();
+      state.weiboSearchQuery = event.target.value;
+      const query = state.weiboSearchQuery.trim().toLocaleLowerCase();
       event.target.closest('.xp-weibo')?.querySelectorAll('.xp-social-post').forEach(post => {
         post.hidden = !post.textContent.toLocaleLowerCase().includes(query);
       });
     }
+    if (event.target.matches('[data-red-search]')) { state.redSearchQuery=event.target.value; const q=state.redSearchQuery.trim().toLocaleLowerCase(); event.target.closest('.xp-red')?.querySelectorAll('.xp-red-card').forEach(card=>{card.hidden=!card.textContent.toLocaleLowerCase().includes(q);}); persistState(); }
+    if (event.target.matches('[data-x-search]')) { state.xSearchQuery=event.target.value; const q=state.xSearchQuery.trim().toLocaleLowerCase(); event.target.closest('.xp-xplatform')?.querySelectorAll('.xp-x-post').forEach(post=>{post.hidden=!post.textContent.toLocaleLowerCase().includes(q);}); persistState(); }
     if (event.target.matches('[data-contact-search]')) {
       const query = event.target.value.trim().toLocaleLowerCase();
       const page = event.target.closest('.xp-wechat');
