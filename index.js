@@ -596,6 +596,14 @@
       floating.addEventListener('pointerup',finish);floating.addEventListener('pointercancel',finish);floating.addEventListener('click',e=>{if(moved){e.preventDefault();return;}openPhone();});
       window.addEventListener('resize',place);window.visualViewport?.addEventListener('resize',place);window.visualViewport?.addEventListener('scroll',place);place();
     }
+    if (floating) {
+      floating.style.setProperty('position','fixed','important');
+      floating.style.setProperty('display','flex','important');
+      floating.style.setProperty('visibility','visible','important');
+      floating.style.setProperty('opacity','1','important');
+      floating.style.setProperty('pointer-events','auto','important');
+      floating.style.setProperty('z-index','2147483646','important');
+    }
     const topbar=document.querySelector('#top-bar, #top-settings-holder');
     if(topbar&&!document.getElementById('xphone-topbar-entry')){const btn=document.createElement('div');btn.id='xphone-topbar-entry';btn.className='xphone-topbar-entry menu_button';btn.title='打开手机模拟器';btn.innerHTML='<i class="fa-solid fa-mobile-screen-button"></i><span>手机</span>';btn.addEventListener('click',()=>openPhone());topbar.appendChild(btn);}
   }
