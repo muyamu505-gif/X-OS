@@ -30,6 +30,7 @@
     friendRequests: [],
     friendRequestTab: 'received',
     friendSearchQuery: '',
+    chatTypingContact: '',
     weiboTab: 'recommend',
     weiboSearchQuery: '',
     weiboFollowing: [],
@@ -151,7 +152,7 @@
     const arrayKeys = ['stack', 'notifications', 'moments', 'wechatFavorites', 'notesList', 'contacts', 'wechatDirectory', 'friendRequests', 'weiboPosts', 'redPosts', 'liveMessages', 'importedLiveRooms', 'browserResults', 'photos', 'calendar', 'walletTransactions', 'xPosts'];
     const stringArrayKeys = ['weiboFollowing', 'redFollowing', 'xFollowing', 'followedLiveRooms'];
     const objectKeys = ['chats'];
-    const stringKeys = ['page', 'wechatTab', 'weiboTab', 'redTab', 'xTab', 'activeLiveId', 'selectedContact', 'selectedRedPostId', 'selectedWeiboPostId', 'selectedXUser', 'friendRequestTab', 'friendSearchQuery', 'chatSearchQuery', 'notes', 'activeNoteId', 'browserUrl', 'browserQuery', 'selectedAlbum', 'calendarView', 'walletViewMonth', 'walletTypeFilter', 'walletCategoryFilter', 'walletSearchQuery', 'weiboSearchQuery', 'redSearchQuery', 'xSearchQuery'];
+    const stringKeys = ['page', 'wechatTab', 'weiboTab', 'redTab', 'xTab', 'activeLiveId', 'selectedContact', 'selectedRedPostId', 'selectedWeiboPostId', 'selectedXUser', 'friendRequestTab', 'friendSearchQuery', 'chatTypingContact', 'chatSearchQuery', 'notes', 'activeNoteId', 'browserUrl', 'browserQuery', 'selectedAlbum', 'calendarView', 'walletViewMonth', 'walletTypeFilter', 'walletCategoryFilter', 'walletSearchQuery', 'weiboSearchQuery', 'redSearchQuery', 'xSearchQuery'];
     const booleanKeys = [];
     const numberKeys = ['liveViewers', 'liveHeat', 'wallet', 'giftsSent'];
     for (const key of arrayKeys) {
@@ -485,7 +486,7 @@
     const tab = state.wechatTab || 'chats';
     const rows = state.contacts.map(c => {
       const msgs = state.chats[c.id] || []; const last = msgs[msgs.length - 1];
-      return '<button class="xp-contact" data-contact="' + escapeHtml(c.id) + '"><span class="xp-avatar xp-avatar-green">' + escapeHtml(c.avatar) + '</span><span class="xp-contact-main"><strong>' + (c.isGroup?'群聊 · ':'') + escapeHtml(c.name) + '</strong><small>' + escapeHtml(last?.text || c.note) + '</small></span><time>' + escapeHtml(last?.time || '') + '</time></button>';
+      return '<button class="xp-contact" data-contact="' + escapeHtml(c.id) + '"><span class="xp-avatar xp-avatar-green">' + escapeHtml(c.avatar) + '</span><span class="xp-contact-main"><strong>' + (c.isGroup?'群聊 · ':'') + escapeHtml(c.name) + '</strong><small>' + escapeHtml(last?.text || c.note) + '</small></span><time>' + escapeHtml(last?.time || '') + '</time>' + (Number(c.unread)>0?'<em class="xp-chat-unread">'+Number(c.unread)+'</em>':'') + '</button>';
     }).join('');
     const pendingCount=(state.friendRequests||[]).filter(r=>r.status==='pending'&&r.direction==='incoming').length;
     const tabs = [['chats','微信','▤'],['contacts','通讯录','♙'],['discover','发现','◎'],['me','我','●']];
@@ -525,7 +526,7 @@
     // A chat page can survive in an older save after its contact was deleted; render a safe empty state.
     if (!contact) return `<section class="xp-page xp-chat-page"><div class="xp-chat-title"><button type="button" data-action="wechat-list" aria-label="返回微信">‹</button><span>微信<small>暂无联系人</small></span></div><div class="xp-chat-history"><div class="xp-empty">还没有联系人，先到通讯录添加一位联系人吧</div></div><div class="xp-chat-compose"><button type="button" data-action="wechat-list">返回微信</button></div></section>`;
     const msgs = state.chats[contact.id] || [];
-    const bubbles = msgs.map((m, index) => `<div class="xp-chat-row ${m.from === 'me' ? 'mine' : ''}"><span class="xp-chat-avatar">${m.from === 'me' ? '{{user}}' : escapeHtml(m.avatar || contact.avatar)}</span><div class="xp-chat-bubble">${contact.isGroup && m.from !== 'me' ? `<b class="xp-chat-sender">${escapeHtml(m.user || '群成员')}</b>` : ''}${m.kind && m.kind !== 'text' ? `<span class="xp-chat-attachment">${({image:'▧ 图片消息',voice:'◖ 语音消息',file:'▤ 文件消息'}[m.kind] || '消息')}</span><span>${escapeHtml(m.text)}</span>` : escapeHtml(m.text)}<small>${escapeHtml(m.time || '')}</small></div><button type="button" class="xp-chat-save" data-save-chat-message="${index}" aria-label="收藏消息" title="收藏消息">☆</button><button type="button" class="xp-chat-delete" data-delete-chat-message="${index}" aria-label="删除这条消息" title="删除消息">×</button></div>`).join('');
+    const bubbles = msgs.map((m, index) => `<div class="xp-chat-row ${m.from === 'me' ? 'mine' : ''}"><span class="xp-chat-avatar">${m.from === 'me' ? '{{user}}' : escapeHtml(m.avatar || contact.avatar)}</span><div class="xp-chat-bubble">${contact.isGroup && m.from !== 'me' ? `<b class="xp-chat-sender">${escapeHtml(m.user || '群成员')}</b>` : ''}${m.kind && m.kind !== 'text' ? `<span class="xp-chat-attachment">${({image:'▧ 图片消息',voice:'◖ 语音消息',file:'▤ 文件消息'}[m.kind] || '消息')}</span><span>${escapeHtml(m.text)}</span>` : escapeHtml(m.text)}<small>${escapeHtml(m.time || '')}</small></div><button type="button" class="xp-chat-save" data-save-chat-message="${index}" aria-label="收藏消息" title="收藏消息">☆</button><button type="button" class="xp-chat-delete" data-delete-chat-message="${index}" aria-label="删除这条消息" title="删除消息">×</button></div>`).join('') + (state.chatTypingContact===contact.id?'<div class="xp-chat-typing">对方正在输入…</div>':'');
     return `<section class="xp-page xp-chat-page"><div class="xp-chat-title"><button type="button" data-action="wechat-list" aria-label="返回微信">‹</button><span>${escapeHtml(contact.name)}<small>${contact.isGroup ? `${(contact.members || []).length + 1} 位成员` : (contact.online ? '在线' : '最近在线')}</small></span><button type="button" class="xp-chat-clear" data-action="wechat-chat-info" aria-label="聊天信息" title="聊天信息">···</button><button type="button" class="xp-chat-clear" data-action="clear-chat" aria-label="清空聊天记录" title="清空聊天记录">清空</button></div><div class="xp-chat-search"><span>⌕</span><input type="search" data-chat-search value="${escapeHtml(state.chatSearchQuery || '')}" placeholder="搜索聊天记录"><button type="button" data-chat-search-clear>清除</button></div><div class="xp-chat-history">${bubbles || '<div class="xp-empty">还没有聊天记录</div>'}</div><form class="xp-chat-compose" data-form="wechat"><select name="messageKind" aria-label="消息类型"><option value="text">文字</option><option value="image">图片</option><option value="voice">语音</option><option value="file">文件</option></select><input name="message" autocomplete="off" placeholder="发送消息…" maxlength="300"><button type="submit">发送</button></form></section>`;
   }
 
@@ -838,7 +839,7 @@
     const momentComment=event.target.closest('[data-comment-moment]');
     if(momentComment){openActionDialog('wechat-moment-comment','评论朋友圈','评论会保存在本地模拟朋友圈中',inlineHost,'写下评论……',momentComment.dataset.commentMoment);return;}
     const contactButton = event.target.closest('[data-contact]');
-    if (contactButton) { state.selectedContact = contactButton.dataset.contact; setPage('chat', 'wechat'); return; }
+    if (contactButton) { state.selectedContact = contactButton.dataset.contact; const c=state.contacts.find(x=>x.id===state.selectedContact); if(c)c.unread=0; setPage('chat', 'wechat'); persistState(); return; }
     const clearChatSearch=event.target.closest('[data-chat-search-clear]');if(clearChatSearch){state.chatSearchQuery='';renderScreen();persistState();return;}
     const saveChatMessage = event.target.closest('[data-save-chat-message]');
     if (saveChatMessage) {
@@ -1181,6 +1182,28 @@
     }
   }
 
+  async function generateWechatReply(contactId, userText, chatIdAtSend) {
+    const context=currentContext(), contact=state.contacts.find(c=>c.id===contactId);
+    if(!contact||contact.isGroup)return;
+    if(!context||typeof context.generateRaw!=='function'){addNotification('微信','暂时无法自动回复','当前酒馆没有可用的文本生成接口；消息已发送并保存。');renderScreen();persistState();return;}
+    state.chatTypingContact=contactId;renderScreen();persistState();
+    const character=context.characters&&context.characters[context.characterId]||null;
+    const cardName=String(character&&character.name||'').trim();
+    const isMainCharacter=contact.name==='{{char}}'||(cardName&&contact.name===cardName);
+    const cardDetails=isMainCharacter?['角色名：'+(character.name||''),'角色描述：'+(character.description||character.data&&character.data.description||''),'性格：'+(character.personality||character.data&&character.data.personality||''),'背景：'+(character.scenario||character.data&&character.data.scenario||'')].join('\n'):'联系人身份：'+String(contact.note||'当前剧情中的联系人');
+    const history=(state.chats[contactId]||[]).slice(-18).map(m=>(m.from==='me'?'我':String(m.user||contact.name))+'：'+String(m.text||'')).join('\n');
+    const prompt=['你正在为 X-OS 手机中的微信联系人生成一条真实聊天回复。','你扮演的联系人是：'+contact.name,cardDetails,'当前关系：已经通过好友申请，双方是微信好友。','最近聊天记录：\n'+history,'用户刚刚发送：'+userText,'请严格以联系人本人身份回复，遵守角色卡与剧情事实。不要替用户说话，不要描述界面或生成说明，不要输出多个备选，不要使用“作为AI”。','回复应像真实微信消息，符合人物语气和关系，可以简短，也可以根据上下文自然展开。只输出消息正文。'].join('\n\n');
+    try{
+      const result=await context.generateRaw({prompt:prompt,systemPrompt:'你是角色扮演对话中的微信联系人。只扮演指定联系人，严格遵守提供的角色设定与聊天上下文；不得控制用户角色，不得编造已发生的事实。只输出一条自然的聊天消息。'});
+      const active=currentContext();if(!active||active.chatId!==chatIdAtSend||active.chatMetadata!==context.chatMetadata)return;
+      let raw=typeof result==='string'?result:(result&&(result.content||result.text))||'';let reply=String(raw).replace(/^\s*\x60{3}(?:text)?/i,'').replace(/\x60{3}\s*$/,'').trim().slice(0,1600);
+      if(!reply)throw new Error('模型没有返回消息内容');
+      const arr=state.chats[contactId]||(state.chats[contactId]=[]);arr.push({from:'them',user:contact.name,avatar:contact.avatar,text:reply,kind:'text',time:nowTime(),status:'received'});if(arr.length>200)arr.splice(0,arr.length-200);
+      contact.online=true;const viewing=state.page==='chat'&&state.selectedContact===contactId;if(viewing)contact.unread=0;else{contact.unread=(Number(contact.unread)||0)+1;addNotification('微信',contact.name+' 发来消息',reply.slice(0,80));}
+      state.chatTypingContact='';if(viewing)renderScreen();persistState();
+    }catch(error){const active=currentContext();if(!active||active.chatId!==chatIdAtSend)return;state.chatTypingContact='';addNotification('微信','消息已发送，对方暂未回复',String(error&&error.message||error).slice(0,100));renderScreen();persistState();}
+  }
+
   function handleSubmit(event) {
     const form = event.target.closest('form[data-form]');
     if (!form) return;
@@ -1193,11 +1216,13 @@
       const kind = String(data.get('messageKind') || 'text');
       if (!text || !state.selectedContact) return;
       const arr = state.chats[state.selectedContact] || (state.chats[state.selectedContact] = []);
-      arr.push({ from: 'me', text, kind: ['text','image','voice','file'].includes(kind)?kind:'text', time: nowTime() });
+      const contactId=state.selectedContact,context=currentContext(),chatIdAtSend=context&&context.chatId;
+      arr.push({ from: 'me', text, kind: ['text','image','voice','file'].includes(kind)?kind:'text', time: nowTime(), status:'sent' });
       if (arr.length > 200) arr.splice(0, arr.length - 200);
-      const contactIndex = state.contacts.findIndex(contact => contact.id === state.selectedContact);
+      const contactIndex = state.contacts.findIndex(contact => contact.id === contactId);
       if (contactIndex > 0) state.contacts.unshift(state.contacts.splice(contactIndex, 1)[0]);
       renderScreen(); persistState();
+      if(kind==='text') generateWechatReply(contactId,text,chatIdAtSend);
     } else if (type === 'barrage') {
       const text = String(data.get('message') || '').trim();
       if (!text) return;
