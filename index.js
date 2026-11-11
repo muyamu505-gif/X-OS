@@ -16,6 +16,7 @@
     app: null,
     stack: [],
     selectedContact: null,
+    selectedRedPostId: '',
     chatSearchQuery: '',
     notifications: [],
     wechatTab: 'chats',
@@ -144,7 +145,7 @@
     const arrayKeys = ['stack', 'notifications', 'moments', 'wechatFavorites', 'notesList', 'contacts', 'weiboPosts', 'redPosts', 'liveMessages', 'importedLiveRooms', 'browserResults', 'photos', 'calendar', 'walletTransactions', 'xPosts'];
     const stringArrayKeys = ['weiboFollowing', 'redFollowing', 'xFollowing', 'followedLiveRooms'];
     const objectKeys = ['chats'];
-    const stringKeys = ['page', 'wechatTab', 'weiboTab', 'redTab', 'xTab', 'activeLiveId', 'selectedContact', 'chatSearchQuery', 'notes', 'activeNoteId', 'browserUrl', 'browserQuery', 'selectedAlbum', 'calendarView', 'walletViewMonth', 'walletTypeFilter', 'walletCategoryFilter', 'walletSearchQuery', 'weiboSearchQuery', 'redSearchQuery', 'xSearchQuery'];
+    const stringKeys = ['page', 'wechatTab', 'weiboTab', 'redTab', 'xTab', 'activeLiveId', 'selectedContact', 'selectedRedPostId', 'chatSearchQuery', 'notes', 'activeNoteId', 'browserUrl', 'browserQuery', 'selectedAlbum', 'calendarView', 'walletViewMonth', 'walletTypeFilter', 'walletCategoryFilter', 'walletSearchQuery', 'weiboSearchQuery', 'redSearchQuery', 'xSearchQuery'];
     const booleanKeys = [];
     const numberKeys = ['liveViewers', 'liveHeat', 'wallet', 'giftsSent'];
     for (const key of arrayKeys) {
@@ -533,10 +534,18 @@
     const posts = visible.map(p => {
       const comments = Array.isArray(p.comments) ? p.comments : [];
       const following = (state.redFollowing || []).includes(p.user);
-      return `<article class="xp-red-card"><div class="xp-red-cover ${escapeHtml(p.color || 'peach')}"><span>生活灵感</span></div><div class="xp-red-card-body"><div class="xp-red-author"><strong>${escapeHtml(p.title)}</strong><small>${escapeHtml(p.user)}</small></div><p>${escapeHtml(p.desc)}</p><div class="xp-red-actions"><button data-like-red="${escapeHtml(p.id)}" class="${p.liked ? 'is-liked' : ''}">♡ ${escapeHtml(p.likes)}</button><button data-favorite-red="${escapeHtml(p.id)}" class="${p.favorite ? 'is-favorited' : ''}">${p.favorite ? '★ 已收藏' : '☆ 收藏'}</button><button data-comment-red="${escapeHtml(p.id)}">评论 ${comments.length}</button>${p.user !== '{{user}}' ? `<button data-follow-red="${escapeHtml(p.user)}">${following ? '已关注' : '+ 关注'}</button>` : ''}</div>${comments.slice(-2).map(c => `<div class="xp-red-comment"><b>${escapeHtml(c.user || '用户')}：</b>${escapeHtml(c.text)}</div>`).join('')}</div></article>`;
+      return `<article class="xp-red-card"><button type="button" class="xp-red-open" data-red-open="${escapeHtml(p.id)}" aria-label="查看笔记详情"><div class="xp-red-cover ${escapeHtml(p.color || 'peach')}"><span>生活灵感</span></div><div class="xp-red-card-body"><div class="xp-red-author"><strong>${escapeHtml(p.title)}</strong><small>${escapeHtml(p.user)}</small></div><p>${escapeHtml(p.desc)}</p></button><div class="xp-red-actions"><button data-like-red="${escapeHtml(p.id)}" class="${p.liked ? 'is-liked' : ''}">♡ ${escapeHtml(p.likes)}</button><button data-favorite-red="${escapeHtml(p.id)}" class="${p.favorite ? 'is-favorited' : ''}">${p.favorite ? '★ 已收藏' : '☆ 收藏'}</button><button data-comment-red="${escapeHtml(p.id)}">评论 ${comments.length}</button>${p.user !== '{{user}}' ? `<button data-follow-red="${escapeHtml(p.user)}">${following ? '已关注' : '+ 关注'}</button>` : ''}</div>${comments.slice(-2).map(c => `<div class="xp-red-comment"><b>${escapeHtml(c.user || '用户')}：</b>${escapeHtml(c.text)}</div>`).join('')}</div></article>`;
     }).join('');
     const tabs = [['recommend','推荐'],['following','关注'],['nearby','附近'],['favorites','收藏']].map(([id,label]) => `<button type="button" data-red-tab="${id}" class="${tab===id?'active':''}">${label}</button>`).join('');
     return `<section class="xp-page xp-red"><div class="xp-appbar"><div class="xp-app-title xp-red-brand">小红书</div><button class="xp-circle-btn" data-action="red-compose">＋</button></div><div class="xp-social-search"><span>⌕</span><input type="search" data-red-search value="${escapeHtml(state.redSearchQuery || '')}" placeholder="搜索笔记、作者和关键词"></div><div class="xp-red-tabs">${tabs}</div>${posts || '<div class="xp-empty">这里暂时没有笔记</div>'}</section>`;
+  }
+
+  function renderRedDetail() {
+    const p=(state.redPosts||[]).find(item=>item.id===state.selectedRedPostId);
+    if(!p)return '<section class="xp-page xp-red-detail"><button data-action="back">‹ 返回</button><div class="xp-empty">这篇笔记可能已被删除</div></section>';
+    const comments=Array.isArray(p.comments)?p.comments:[];
+    const following=(state.redFollowing||[]).includes(p.user);
+    return `<section class="xp-page xp-red-detail"><header class="xp-red-detail-head"><button data-action="back" aria-label="返回小红书">‹</button><strong>笔记详情</strong><button data-action="red">完成</button></header><div class="xp-red-detail-cover ${escapeHtml(p.color||'peach')}">生活灵感</div><article class="xp-red-detail-body"><h2>${escapeHtml(p.title)}</h2><div class="xp-red-detail-author"><b>${escapeHtml(p.user||'用户')}</b>${p.user!=='{{user}}'?'<button data-follow-red="${escapeHtml(p.user)}">'+(following?'已关注':'＋ 关注')+'</button>':''}</div><p>${escapeHtml(p.desc)}</p><small>${escapeHtml(p.time||'')}</small></article><div class="xp-red-detail-comments"><strong>全部评论（${comments.length}）</strong>${comments.map(c=>`<div class="xp-red-comment"><b>${escapeHtml(c.user||'用户')}：</b>${escapeHtml(c.text)}<small>${escapeHtml(c.time||'')}</small></div>`).join('')||'<div class="xp-empty">还没有评论，来发表第一条评论吧</div>'}</div><footer class="xp-red-detail-actions"><button data-like-red="${escapeHtml(p.id)}" class="${p.liked?'is-liked':''}">♡ ${Number(p.likes)||0}</button><button data-favorite-red="${escapeHtml(p.id)}">${p.favorite?'★ 已收藏':'☆ 收藏'}</button><button data-comment-red="${escapeHtml(p.id)}">写评论</button></footer></section>`;
   }
 
   function renderXPlatform() {
@@ -732,7 +741,7 @@
 
   function renderScreen() {
     const titles = { home: '手机', notifications: '通知中心', wechat: '微信', 'wechat-moments': '朋友圈', 'wechat-favorites': '我的收藏', chat: '微信', weibo: '微博', red: '小红书', xplatform: 'X平台', live: '直播间', wallet: '钱包', photos: '相册', browser: '浏览器', calendar: '日历', notes: '备忘录', settings: '设置' };
-    const renderers = { home: renderHome, notifications: renderNotifications, wechat: renderWechat, 'wechat-moments': renderWechatMoments, 'wechat-favorites': renderWechatFavorites, chat: renderChat, weibo: renderWeibo, red: renderRed, xplatform: renderXPlatform, live: renderLive, wallet: renderWallet, photos: renderPhotos, browser: renderBrowser, calendar: renderCalendar, notes: renderNotes, settings: renderSettings };
+    const renderers = { home: renderHome, notifications: renderNotifications, wechat: renderWechat, 'wechat-moments': renderWechatMoments, 'wechat-favorites': renderWechatFavorites, chat: renderChat, weibo: renderWeibo, red: renderRed, 'red-detail': renderRedDetail, xplatform: renderXPlatform, live: renderLive, wallet: renderWallet, photos: renderPhotos, browser: renderBrowser, calendar: renderCalendar, notes: renderNotes, settings: renderSettings };
     const renderer = renderers[state.page] || renderHome;
     if (phoneScreen && overlay) {
       phoneScreen.innerHTML = renderer();
@@ -847,6 +856,7 @@
     if(xEnter){state.activeLiveId=xEnter.dataset.xEnterRoom;setPage('live','xplatform');return;}
     const likeRed = event.target.closest('[data-like-red]');
     if (likeRed) { const p = state.redPosts.find(x => x.id === likeRed.dataset.likeRed); if (p) { p.liked = !p.liked; p.likes = Math.max(0,(Number(p.likes)||0) + (p.liked ? 1 : -1)); renderScreen(); persistState(); } return; }
+    const redOpen=event.target.closest('[data-red-open]');if(redOpen){state.selectedRedPostId=redOpen.dataset.redOpen;setPage('red-detail','red');return;}
     const redTab = event.target.closest('[data-red-tab]');
     if (redTab) { state.redTab = redTab.dataset.redTab; renderScreen(); persistState(); return; }
     const redFavorite = event.target.closest('[data-favorite-red]');
