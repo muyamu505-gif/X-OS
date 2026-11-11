@@ -32,7 +32,11 @@
 
 ## 版本
 
-当前版本：**1.1.89**
+当前版本：**1.1.90**
+
+### 1.1.90
+- Add a dedicated AI Center app on the phone home screen with visible model test, story sync, connection status and a direct route to API settings.
+- Fix the story-import click handler so the “识别并导入当前剧情” action is actually dispatched.
 
 ### 1.1.89
 - Add AI-generated audience barrage replies after host responses, using only viewer names explicitly listed in the room and characters with imported story profiles.
