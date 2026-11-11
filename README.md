@@ -32,7 +32,7 @@
 
 ## 版本
 
-当前版本：**1.1.48**
+当前版本：**1.1.49**
 
 扩展源文件：`index.js`、`style.css`、`manifest.json`。
 
@@ -259,3 +259,8 @@
 ### 1.1.48
 - Start with an empty X-platform following list instead of automatically following the `{{char}}` template macro.
 - Sanitize legacy saved following lists to remove `{{user}}` and `{{char}}` macros; template placeholders are not creator accounts.
+
+
+### 1.1.49
+- Fix persistence migration for creator-following lists: Weibo, Xiaohongshu, and X following arrays are now restored as strings instead of being incorrectly filtered as object records.
+- Preserve the existing cleanup of `{{user}}` and `{{char}}` template macros from X following.
