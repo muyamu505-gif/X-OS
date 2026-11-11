@@ -358,3 +358,7 @@ html #xphone-overlay .xphone-resize-handle{background:transparent!important;bord
 .xp-gesture-nav span{display:block;width:108px;height:4px;border-radius:99px;background:#17191d}
 .xp-inline-gesture-nav{height:27px;min-height:27px;flex-basis:27px;background:#f8f9fb}
 .xp-inline-gesture-nav span{width:104px;height:4px}
+
+.xp-gesture-nav:active span{transform:scaleX(.88);opacity:.72}
+.xp-gesture-nav:focus-visible{outline:2px solid #3478d4;outline-offset:-4px;border-radius:8px}
+.xp-gesture-nav span{transition:transform .12s ease,opacity .12s ease}
