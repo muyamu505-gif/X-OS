@@ -1,4 +1,4 @@
-/* X手机模拟器 - SillyTavern UI Extension
+/* X-OS 手机系统 - SillyTavern UI Extension
  * All content is local fiction. No external social platform APIs are contacted.
  */
 (() => {
@@ -294,7 +294,7 @@
     overlay.innerHTML = `
       <div class="xphone-backdrop" aria-hidden="true"></div>
       <button class="xphone-external-close" type="button" aria-label="关闭小手机" title="关闭小手机">×</button>
-      <section class="xphone-shell" role="dialog" aria-modal="true" aria-label="手机模拟器" style="width:320px;height:620px;left:calc(50% - 160px);top:calc(50% - 310px);">
+      <section class="xphone-shell" role="dialog" aria-modal="true" aria-label="手机系统" style="width:320px;height:620px;left:calc(50% - 160px);top:calc(50% - 310px);">
         <div class="xphone-content">
           <div class="xphone-notch"><span></span></div>
           <div class="xphone-status"><span class="xp-clock">09:41</span><span class="xp-status-right">5G　●●●　▰</span></div>
@@ -899,10 +899,10 @@
       case 'wechat-moments': setPage('wechat-moments', 'wechat'); break;
       case 'wechat-moment-compose': openActionDialog('wechat-moment-compose','发表朋友圈','分享此刻的生活',inlineHost,'这一刻的想法……'); break;
       case 'wechat-search': state.wechatTab='chats'; setPage('wechat','wechat'); break;
-      case 'wechat-channels': openInfoDialog('视频号','这里展示本地模拟的视频号内容。',inlineHost); break;
-      case 'wechat-mini': openInfoDialog('小程序','这里是本地模拟的小程序入口。',inlineHost); break;
+      case 'wechat-channels': openInfoDialog('视频号','视频号入口已保留。视频内容列表、作者主页、点赞与评论会使用本机内容数据；当前版本暂未接入真实视频流或外部账号。',inlineHost); break;
+      case 'wechat-mini': openInfoDialog('小程序','小程序入口已启用。当前提供本机功能入口；第三方服务和支付能力不会伪装成已接通。',inlineHost); break;
       case 'wechat-favorites': setPage('wechat-favorites','wechat'); break;
-      case 'wechat-files': openInfoDialog('卡包与文件','这里可以查看本地模拟的卡包与文件。',inlineHost); break;
+      case 'wechat-files': openInfoDialog('卡包与文件','文件消息可在对应聊天记录中查看；收藏的聊天内容可在“我的收藏”管理。外部文件传输服务未连接。',inlineHost); break;
       case 'wechat-settings': openInfoDialog('微信设置','账号与安全、消息通知、通用、隐私和关于微信。',inlineHost); break;
       case 'clear-chat': openActionDialog('clear-chat', '清空聊天记录', '确定删除与当前联系人的全部聊天记录吗？', inlineHost); break;
       case 'clear-notices': state.notifications.forEach(n => n.unread = false); renderScreen(); persistState(); break;
@@ -1262,7 +1262,7 @@
       } : {};
       const transcript = recent.map(m=>({role:m.is_user?'user':m.is_system?'system':'assistant',name:m.name||'',text:String(m.mes||m.message||'').slice(0,5000)}));
       const prompt = [
-        '请根据当前 SillyTavern 会话内容，提取适合导入通用手机模拟器 X-OS 的剧情资料。',
+        '请根据当前 SillyTavern 会话内容，提取适合导入通用手机系统 X-OS 的剧情资料。',
         '只把当前角色卡、明确提供的世界书内容、聊天记录中有证据的人物与事实写入结果。不要编造未出现的 NPC，不要把示例人物当成固定角色。',
         '角色引用必须使用 {{user}} 表示用户，使用 {{char}} 表示当前主角；其他 NPC 必须使用剧情中真实出现的名字。不要替 {{user}} 或 {{char}} 编造姓名、性别、身份或关系。',
         '仅输出 JSON。若没有明确 NPC，characters 为空数组；若无动态内容，socialPosts 为空数组。不得把模型猜测当事实。',
@@ -1374,7 +1374,7 @@
     let floating=document.getElementById('xphone-floating-entry');
     if(!floating){
       floating=document.createElement('button');floating.id='xphone-floating-entry';floating.type='button';
-      floating.setAttribute('aria-label','打开 X 手机模拟器');floating.title='X 手机 · 点击打开，拖动移动';
+      floating.setAttribute('aria-label','打开 X 手机系统');floating.title='X 手机 · 点击打开，拖动移动';
       floating.innerHTML='<span class="xphone-fab-mark">X</span><small>手机</small>';document.documentElement.appendChild(floating);
       const key=`${EXT_ID}:floatingPosition`,clamp=(v,l,h)=>Math.max(l,Math.min(h,v)),size=54,margin=12;
       let saved=null;try{saved=JSON.parse(localStorage.getItem(key)||'null');}catch(_){}
@@ -1448,7 +1448,7 @@
     const target = document.querySelector('#extensions_settings2, #extensions_settings');
     if (!target || document.getElementById('xphone-settings')) return;
     const panel = document.createElement('div'); panel.id = 'xphone-settings'; panel.className = 'inline-drawer';
-    panel.innerHTML = `<div class="inline-drawer-toggle inline-drawer-header"><b>X手机模拟器</b><div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div></div><div class="inline-drawer-content"><p>打开手机桌面，体验微信、微博、小红书与X平台的本地模拟交互。</p><div class="flex-container"><button id="xphone-settings-open" class="menu_button">打开手机</button><button id="xphone-settings-reset" class="menu_button">重置演示数据</button></div><div id="xphone-reset-confirm" class="xphone-reset-confirm" hidden><p>确定重置当前聊天的手机模拟数据吗？此操作无法撤销。</p><div class="flex-container"><button id="xphone-reset-cancel" class="menu_button">取消</button><button id="xphone-reset-accept" class="menu_button">确认重置</button></div></div><small>数据默认按当前聊天保存；所有社交内容、礼物与钱包均为本地虚构模拟，不会连接外部平台或真实支付。</small></div>`;
+    panel.innerHTML = `<div class="inline-drawer-toggle inline-drawer-header"><b>X-OS 手机系统</b><div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div></div><div class="inline-drawer-content"><p>打开手机桌面，体验微信、微博、小红书与X平台的本机应用交互。</p><div class="flex-container"><button id="xphone-settings-open" class="menu_button">打开手机</button><button id="xphone-settings-reset" class="menu_button">清空手机数据</button></div><div id="xphone-reset-confirm" class="xphone-reset-confirm" hidden><p>确定重置当前聊天的手机模拟数据吗？此操作无法撤销。</p><div class="flex-container"><button id="xphone-reset-cancel" class="menu_button">取消</button><button id="xphone-reset-accept" class="menu_button">确认重置</button></div></div><small>数据默认按当前聊天保存；所有社交内容、礼物与钱包均为本地虚构模拟，不会连接外部平台或真实支付。</small></div>`;
     target.appendChild(panel);
     panel.querySelector('.inline-drawer-toggle').addEventListener('click', () => panel.classList.toggle('open'));
     panel.querySelector('#xphone-settings-open').addEventListener('click', () => openPhone());
@@ -1461,7 +1461,7 @@
       renderScreen();
       resetConfirm.hidden = true;
       panel.querySelector('#xphone-settings-reset').textContent = '已重置';
-      window.setTimeout(() => { const button = panel.querySelector('#xphone-settings-reset'); if (button) button.textContent = '重置演示数据'; }, 1600);
+      window.setTimeout(() => { const button = panel.querySelector('#xphone-settings-reset'); if (button) button.textContent = '清空手机数据'; }, 1600);
     });
   }
 
