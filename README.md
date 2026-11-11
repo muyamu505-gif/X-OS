@@ -32,7 +32,12 @@
 
 ## 版本
 
-当前版本：**1.1.86**
+当前版本：**1.1.87**
+
+### 1.1.87
+- Add a direct streamer-profile entry from each live room, preserving the two-way room/profile navigation.
+- Add room-scoped gift history with recipient, sender, gift, amount and time; each gift also carries its room and streamer into the wallet ledger.
+- Add a viewer-list entry that displays only names explicitly supplied by story data; show a clear unrecorded state instead of inventing viewers.
 
 扩展源文件：`index.js`、`style.css`、`manifest.json`。
 
