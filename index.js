@@ -106,8 +106,17 @@
     }
     const pages = new Set(['home', 'notifications', 'wechat', 'chat', 'weibo', 'red', 'xplatform', 'live', 'wallet', 'photos', 'browser', 'calendar', 'notes']);
     if (!pages.has(base.page)) base.page = 'home';
+    // The chat renderer always needs a contact to display; recover the built-in
+    // starter contacts if an old or damaged save contains an empty contact list.
+    if (!base.contacts.length) base.contacts = structuredCloneSafe(DEFAULT_STATE.contacts);
     const contactIds = new Set(base.contacts.map(contact => String(contact.id)));
     if (!contactIds.has(base.selectedContact)) base.selectedContact = base.contacts[0]?.id || null;
+    for (const contact of base.contacts) {
+      if (typeof contact.id !== 'string' || !contact.id) contact.id = `contact-${Math.random().toString(36).slice(2, 9)}`;
+      if (typeof contact.name !== 'string') contact.name = '未命名联系人';
+      if (typeof contact.avatar !== 'string') contact.avatar = contact.name.slice(0, 1);
+      if (!Array.isArray(base.chats[contact.id])) base.chats[contact.id] = [];
+    }
     base.stack = base.stack.filter(entry => entry && typeof entry.page === 'string' && pages.has(entry.page)).map(entry => ({
       page: entry.page,
       app: typeof entry.app === 'string' ? entry.app : null,
