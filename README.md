@@ -32,7 +32,7 @@
 
 ## 版本
 
-当前版本：**1.1.24**
+当前版本：**1.1.25**
 
 扩展源文件：`index.js`、`style.css`、`manifest.json`。
 
@@ -134,3 +134,7 @@
 ### 1.1.24
 - Move a contact to the top of the WeChat conversation list after sending a message.
 - Prevent duplicate WeChat contacts with the same name (case-insensitive); show a notification instead.
+
+
+### 1.1.25
+- Escape saved social-post style and counter fields before rendering, and tolerate incomplete author data in restored Weibo posts.
