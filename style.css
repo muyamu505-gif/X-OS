@@ -497,3 +497,7 @@ html #xphone-overlay .xphone-resize-handle{background:transparent!important;bord
 
 /* X-OS mobile API settings */
 .xp-system-settings .xp-settings-actions{display:flex;flex-wrap:wrap;gap:8px}.xp-system-settings .xp-settings-actions button{min-width:0;flex:1 1 92px;white-space:normal;line-height:1.35}.xp-system-settings [data-setting="apiModel"]{width:100%;min-width:0}.xp-system-settings .xp-settings-note{display:block;line-height:1.55;overflow-wrap:anywhere}
+
+
+/* API request state and timeout controls */
+.xp-api-status{margin:10px 0;padding:10px 12px;border:1px solid #e4ebf0;border-radius:10px;background:#f5f8fa;color:#718596;font-size:11px;line-height:1.5;overflow-wrap:anywhere}.xp-api-status.loading{background:#f3f7fa;color:#64829a}.xp-api-status.success{background:#f1f7f4;color:#5e8873}.xp-api-status.error{background:#fbf4f2;color:#a46f67}.xp-system-settings input[list]{width:100%;min-width:0}
