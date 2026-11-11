@@ -16,6 +16,7 @@
     app: null,
     stack: [],
     selectedContact: null,
+    chatSearchQuery: '',
     notifications: [],
     wechatTab: 'chats',
     moments: [],
@@ -143,7 +144,7 @@
     const arrayKeys = ['stack', 'notifications', 'moments', 'wechatFavorites', 'notesList', 'contacts', 'weiboPosts', 'redPosts', 'liveMessages', 'importedLiveRooms', 'browserResults', 'photos', 'calendar', 'walletTransactions', 'xPosts'];
     const stringArrayKeys = ['weiboFollowing', 'redFollowing', 'xFollowing', 'followedLiveRooms'];
     const objectKeys = ['chats'];
-    const stringKeys = ['page', 'wechatTab', 'weiboTab', 'redTab', 'xTab', 'activeLiveId', 'selectedContact', 'notes', 'activeNoteId', 'browserUrl', 'browserQuery', 'selectedAlbum', 'calendarView', 'walletViewMonth', 'walletTypeFilter', 'walletCategoryFilter', 'walletSearchQuery', 'weiboSearchQuery', 'redSearchQuery', 'xSearchQuery'];
+    const stringKeys = ['page', 'wechatTab', 'weiboTab', 'redTab', 'xTab', 'activeLiveId', 'selectedContact', 'chatSearchQuery', 'notes', 'activeNoteId', 'browserUrl', 'browserQuery', 'selectedAlbum', 'calendarView', 'walletViewMonth', 'walletTypeFilter', 'walletCategoryFilter', 'walletSearchQuery', 'weiboSearchQuery', 'redSearchQuery', 'xSearchQuery'];
     const booleanKeys = [];
     const numberKeys = ['liveViewers', 'liveHeat', 'wallet', 'giftsSent'];
     for (const key of arrayKeys) {
@@ -505,7 +506,7 @@
     if (!contact) return `<section class="xp-page xp-chat-page"><div class="xp-chat-title"><button type="button" data-action="wechat-list" aria-label="返回微信">‹</button><span>微信<small>暂无联系人</small></span></div><div class="xp-chat-history"><div class="xp-empty">还没有联系人，先到通讯录添加一位联系人吧</div></div><div class="xp-chat-compose"><button type="button" data-action="wechat-list">返回微信</button></div></section>`;
     const msgs = state.chats[contact.id] || [];
     const bubbles = msgs.map((m, index) => `<div class="xp-chat-row ${m.from === 'me' ? 'mine' : ''}"><span class="xp-chat-avatar">${m.from === 'me' ? '{{user}}' : escapeHtml(m.avatar || contact.avatar)}</span><div class="xp-chat-bubble">${contact.isGroup && m.from !== 'me' ? `<b class="xp-chat-sender">${escapeHtml(m.user || '群成员')}</b>` : ''}${m.kind && m.kind !== 'text' ? `<span class="xp-chat-attachment">${({image:'▧ 图片消息',voice:'◖ 语音消息',file:'▤ 文件消息'}[m.kind] || '消息')}</span><span>${escapeHtml(m.text)}</span>` : escapeHtml(m.text)}<small>${escapeHtml(m.time || '')}</small></div><button type="button" class="xp-chat-save" data-save-chat-message="${index}" aria-label="收藏消息" title="收藏消息">☆</button><button type="button" class="xp-chat-delete" data-delete-chat-message="${index}" aria-label="删除这条消息" title="删除消息">×</button></div>`).join('');
-    return `<section class="xp-page xp-chat-page"><div class="xp-chat-title"><button type="button" data-action="wechat-list" aria-label="返回微信">‹</button><span>${escapeHtml(contact.name)}<small>${contact.isGroup ? `${(contact.members || []).length + 1} 位成员` : (contact.online ? '在线' : '最近在线')}</small></span><button type="button" class="xp-chat-clear" data-action="wechat-chat-info" aria-label="聊天信息" title="聊天信息">···</button><button type="button" class="xp-chat-clear" data-action="clear-chat" aria-label="清空聊天记录" title="清空聊天记录">清空</button></div><div class="xp-chat-history">${bubbles || '<div class="xp-empty">还没有聊天记录</div>'}</div><form class="xp-chat-compose" data-form="wechat"><select name="messageKind" aria-label="消息类型"><option value="text">文字</option><option value="image">图片</option><option value="voice">语音</option><option value="file">文件</option></select><input name="message" autocomplete="off" placeholder="发送消息…" maxlength="300"><button type="submit">发送</button></form></section>`;
+    return `<section class="xp-page xp-chat-page"><div class="xp-chat-title"><button type="button" data-action="wechat-list" aria-label="返回微信">‹</button><span>${escapeHtml(contact.name)}<small>${contact.isGroup ? `${(contact.members || []).length + 1} 位成员` : (contact.online ? '在线' : '最近在线')}</small></span><button type="button" class="xp-chat-clear" data-action="wechat-chat-info" aria-label="聊天信息" title="聊天信息">···</button><button type="button" class="xp-chat-clear" data-action="clear-chat" aria-label="清空聊天记录" title="清空聊天记录">清空</button></div><div class="xp-chat-search"><span>⌕</span><input type="search" data-chat-search value="${escapeHtml(state.chatSearchQuery || '')}" placeholder="搜索聊天记录"><button type="button" data-chat-search-clear>清除</button></div><div class="xp-chat-history">${bubbles || '<div class="xp-empty">还没有聊天记录</div>'}</div><form class="xp-chat-compose" data-form="wechat"><select name="messageKind" aria-label="消息类型"><option value="text">文字</option><option value="image">图片</option><option value="voice">语音</option><option value="file">文件</option></select><input name="message" autocomplete="off" placeholder="发送消息…" maxlength="300"><button type="submit">发送</button></form></section>`;
   }
 
   function renderWeibo() {
@@ -522,7 +523,7 @@
     }).join('');
     const tabs = [['recommend','推荐'],['following','关注'],['favorites','收藏'],['mine','我的']].map(([id,label])=>`<button type="button" data-weibo-tab="${id}" class="${tab===id?'active':''}">${label}</button>`).join('');
     const mine = all.filter(p=>p.user==='{{user}}');
-    return `<section class="xp-page xp-weibo"><div class="xp-appbar"><div class="xp-app-title xp-weibo-brand">微博</div><div class="xp-weibo-head-actions"><button class="xp-circle-btn" data-action="weibo-profile">我</button><button class="xp-circle-btn" data-action="weibo-compose">＋</button></div></div><div class="xp-social-search"><span>⌕</span><input type="search" data-weibo-search value="${escapeHtml(state.weiboSearchQuery || '')}" placeholder="搜索用户、动态或话题"></div><div class="xp-weibo-tabs">${tabs}</div>${tab==='mine'? `<div class="xp-weibo-profile"><div class="xp-weibo-profile-avatar">我</div><strong>我的微博</strong><small>本地模拟账号 · 分享你的生活</small><div><span><b>${mine.length}</b> 动态</span><span><b>${mine.reduce((n,p)=>n+(Number(p.likes)||0),0)}</b> 获赞</span><span><b>${following.length}</b> 关注</span></div><button data-action="weibo-compose">发布新动态</button></div>` : '<div class="xp-hot-search"><strong>热搜榜</strong><span>1　直播间新话题　热</span><span>2　主播互动边界讨论　沸</span><span>3　深夜闲聊切片　新</span></div>'}${posts || '<div class="xp-empty">暂时没有微博动态</div>'}</section>`;
+    return `<section class="xp-page xp-weibo"><div class="xp-appbar"><div class="xp-app-title xp-weibo-brand">微博</div><div class="xp-weibo-head-actions"><button class="xp-circle-btn" data-action="weibo-profile">我</button><button class="xp-circle-btn" data-action="weibo-compose">＋</button></div></div><div class="xp-social-search"><span>⌕</span><input type="search" data-weibo-search value="${escapeHtml(state.weiboSearchQuery || '')}" placeholder="搜索用户、动态或话题"></div><div class="xp-weibo-tabs">${tabs}</div>${tab==='mine'? `<div class="xp-weibo-profile"><div class="xp-weibo-profile-avatar">我</div><strong>我的微博</strong><small>本地模拟账号 · 分享你的生活</small><div><span><b>${mine.length}</b> 动态</span><span><b>${mine.reduce((n,p)=>n+(Number(p.likes)||0),0)}</b> 获赞</span><span><b>${following.length}</b> 关注</span></div><button data-action="weibo-compose">发布新动态</button></div>` : '<div class="xp-hot-search"><strong>热搜榜</strong><button type="button" data-weibo-hot="直播间新话题">1　直播间新话题　热</button><button type="button" data-weibo-hot="主播互动边界讨论">2　主播互动边界讨论　沸</button><button type="button" data-weibo-hot="深夜闲聊切片">3　深夜闲聊切片　新</button></div>'}${posts || '<div class="xp-empty">暂时没有微博动态</div>'}</section>`;
   }
 
   function renderRed() {
@@ -793,6 +794,7 @@
     if(momentComment){openActionDialog('wechat-moment-comment','评论朋友圈','评论会保存在本地模拟朋友圈中',inlineHost,'写下评论……',momentComment.dataset.commentMoment);return;}
     const contactButton = event.target.closest('[data-contact]');
     if (contactButton) { state.selectedContact = contactButton.dataset.contact; setPage('chat', 'wechat'); return; }
+    const clearChatSearch=event.target.closest('[data-chat-search-clear]');if(clearChatSearch){state.chatSearchQuery='';renderScreen();persistState();return;}
     const saveChatMessage = event.target.closest('[data-save-chat-message]');
     if (saveChatMessage) {
       const message = (state.chats[state.selectedContact] || [])[Number(saveChatMessage.dataset.saveChatMessage)];
@@ -822,6 +824,7 @@
       persistState();
       return;
     }
+    const hotSearch=event.target.closest('[data-weibo-hot]');if(hotSearch){state.weiboSearchQuery=hotSearch.dataset.weiboHot;state.weiboTab='recommend';renderScreen();persistState();return;}
     const weiboFavorite=event.target.closest('[data-weibo-favorite]');
     if(weiboFavorite){const p=(state.weiboPosts||[]).find(x=>x.id===weiboFavorite.dataset.weiboFavorite);if(p)p.favorite=!p.favorite;renderScreen();persistState();return;}
     const likePost = event.target.closest('[data-like-post]');
@@ -1113,6 +1116,7 @@
     }
     if (event.target.matches('[data-red-search]')) { state.redSearchQuery=event.target.value; const q=state.redSearchQuery.trim().toLocaleLowerCase(); event.target.closest('.xp-red')?.querySelectorAll('.xp-red-card').forEach(card=>{card.hidden=!card.textContent.toLocaleLowerCase().includes(q);}); persistState(); }
     if (event.target.matches('[data-x-search]')) { state.xSearchQuery=event.target.value; const q=state.xSearchQuery.trim().toLocaleLowerCase(); event.target.closest('.xp-xplatform')?.querySelectorAll('.xp-x-post').forEach(post=>{post.hidden=!post.textContent.toLocaleLowerCase().includes(q);}); persistState(); }
+    if(event.target.matches('[data-chat-search]')){state.chatSearchQuery=event.target.value;const q=state.chatSearchQuery.trim().toLocaleLowerCase();event.target.closest('.xp-chat-page')?.querySelectorAll('.xp-chat-row').forEach(row=>{row.hidden=!row.textContent.toLocaleLowerCase().includes(q);});persistState();}
     if (event.target.matches('[data-contact-search]')) {
       const query = event.target.value.trim().toLocaleLowerCase();
       const page = event.target.closest('.xp-wechat');
