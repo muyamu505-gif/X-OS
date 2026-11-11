@@ -41,9 +41,11 @@
       { id: 'w2', user: '今天也要开心', avatar: '今', text: '感觉最近大家都在讨论主播和粉丝之间的边界感。', tag: '#网络社交#', likes: 806, comments: 93, liked: false }
     ],
     redPosts: [
-      { id: 'r1', user: '一颗晚睡的栗子', title: '深夜直播桌面布置分享', desc: '暖光灯、麦克风和一杯冰美式，记录一点日常。', likes: 1280, liked: false, color: 'peach' },
-      { id: 'r2', user: '穿搭备忘录', title: '秋冬通勤穿搭｜简单但有氛围', desc: '最近很喜欢低饱和的日常搭配。', likes: 926, liked: false, color: 'sage' }
+      { id: 'r1', user: '一颗晚睡的栗子', title: '深夜直播桌面布置分享', desc: '暖光灯、麦克风和一杯冰美式，记录一点日常。', likes: 1280, liked: false, favorite: false, comments: [], color: 'peach' },
+      { id: 'r2', user: '穿搭备忘录', title: '秋冬通勤穿搭｜简单但有氛围', desc: '最近很喜欢低饱和的日常搭配。', likes: 926, liked: false, favorite: false, comments: [], color: 'sage' }
     ],
+    redTab: 'recommend',
+    redFollowing: ['一颗晚睡的栗子'],
     followed: false,
     liveMessages: [
       { user: '汽水不加冰', text: '主播晚上好！' },
@@ -97,9 +99,9 @@
   function mergeDefaults(saved) {
     const base = structuredCloneSafe(DEFAULT_STATE);
     if (!saved || typeof saved !== 'object' || Array.isArray(saved)) return base;
-    const arrayKeys = ['stack', 'notifications', 'moments', 'contacts', 'weiboPosts', 'redPosts', 'liveMessages', 'browserResults', 'photos', 'calendar', 'walletTransactions'];
+    const arrayKeys = ['stack', 'notifications', 'moments', 'contacts', 'weiboPosts', 'redPosts', 'redFollowing', 'liveMessages', 'browserResults', 'photos', 'calendar', 'walletTransactions'];
     const objectKeys = ['chats'];
-    const stringKeys = ['page', 'wechatTab', 'selectedContact', 'notes', 'browserUrl', 'browserQuery', 'selectedAlbum'];
+    const stringKeys = ['page', 'wechatTab', 'redTab', 'selectedContact', 'notes', 'browserUrl', 'browserQuery', 'selectedAlbum'];
     const booleanKeys = ['followed'];
     const numberKeys = ['liveViewers', 'liveHeat', 'wallet', 'giftsSent'];
     for (const key of arrayKeys) {
@@ -368,8 +370,16 @@
   }
 
   function renderRed() {
-    const posts = state.redPosts.map(p => `<article class="xp-red-card"><div class="xp-red-cover ${escapeHtml(p.color)}"><span>生活灵感</span></div><div class="xp-red-card-body"><strong>${escapeHtml(p.title)}</strong><p>${escapeHtml(p.desc)}</p><div><small>${escapeHtml(p.user)}</small><button data-like-red="${escapeHtml(p.id)}" class="${p.liked ? 'is-liked' : ''}">♡ ${escapeHtml(p.likes)}</button></div></div></article>`).join('');
-    return `<section class="xp-page xp-red"><div class="xp-appbar"><div class="xp-app-title xp-red-brand">小红书</div><button class="xp-circle-btn" data-action="red-compose">＋</button></div><div class="xp-red-tabs"><b>推荐</b><span>关注</span><span>附近</span></div>${posts}</section>`;
+    const tab = state.redTab || 'recommend';
+    const all = state.redPosts || [];
+    const visible = tab === 'following' ? all.filter(p => p.user === '我' || (state.redFollowing || []).includes(p.user)) : tab === 'nearby' ? all.filter(p => p.nearby !== false) : all;
+    const posts = visible.map(p => {
+      const comments = Array.isArray(p.comments) ? p.comments : [];
+      const following = (state.redFollowing || []).includes(p.user);
+      return `<article class="xp-red-card"><div class="xp-red-cover ${escapeHtml(p.color || 'peach')}"><span>生活灵感</span></div><div class="xp-red-card-body"><div class="xp-red-author"><strong>${escapeHtml(p.title)}</strong><small>${escapeHtml(p.user)}</small></div><p>${escapeHtml(p.desc)}</p><div class="xp-red-actions"><button data-like-red="${escapeHtml(p.id)}" class="${p.liked ? 'is-liked' : ''}">♡ ${escapeHtml(p.likes)}</button><button data-favorite-red="${escapeHtml(p.id)}" class="${p.favorite ? 'is-favorited' : ''}">${p.favorite ? '★ 已收藏' : '☆ 收藏'}</button><button data-comment-red="${escapeHtml(p.id)}">评论 ${comments.length}</button>${p.user !== '我' ? `<button data-follow-red="${escapeHtml(p.user)}">${following ? '已关注' : '+ 关注'}</button>` : ''}</div>${comments.slice(-2).map(c => `<div class="xp-red-comment"><b>${escapeHtml(c.user || '用户')}：</b>${escapeHtml(c.text)}</div>`).join('')}</div></article>`;
+    }).join('');
+    const tabs = [['recommend','推荐'],['following','关注'],['nearby','附近']].map(([id,label]) => `<button type="button" data-red-tab="${id}" class="${tab===id?'active':''}">${label}</button>`).join('');
+    return `<section class="xp-page xp-red"><div class="xp-appbar"><div class="xp-app-title xp-red-brand">小红书</div><button class="xp-circle-btn" data-action="red-compose">＋</button></div><div class="xp-red-tabs">${tabs}</div>${posts || '<div class="xp-empty">这里暂时没有笔记</div>'}</section>`;
   }
 
   function renderXPlatform() {
@@ -476,6 +486,14 @@
     if (likePost) { const p = state.weiboPosts.find(x => x.id === likePost.dataset.likePost); if (p) { p.liked = !p.liked; p.likes += p.liked ? 1 : -1; renderScreen(); persistState(); } return; }
     const likeRed = event.target.closest('[data-like-red]');
     if (likeRed) { const p = state.redPosts.find(x => x.id === likeRed.dataset.likeRed); if (p) { p.liked = !p.liked; p.likes += p.liked ? 1 : -1; renderScreen(); persistState(); } return; }
+    const redTab = event.target.closest('[data-red-tab]');
+    if (redTab) { state.redTab = redTab.dataset.redTab; renderScreen(); persistState(); return; }
+    const redFavorite = event.target.closest('[data-favorite-red]');
+    if (redFavorite) { const p = state.redPosts.find(x => x.id === redFavorite.dataset.favoriteRed); if (p) p.favorite = !p.favorite; renderScreen(); persistState(); return; }
+    const redFollow = event.target.closest('[data-follow-red]');
+    if (redFollow) { state.redFollowing = state.redFollowing || []; const name = redFollow.dataset.followRed; state.redFollowing = state.redFollowing.includes(name) ? state.redFollowing.filter(x => x !== name) : [...state.redFollowing, name]; renderScreen(); persistState(); return; }
+    const redComment = event.target.closest('[data-comment-red]');
+    if (redComment) { openActionDialog('red-comment', '评论笔记', '评论会保存在本地模拟笔记中', inlineHost, '说点真实感受……', redComment.dataset.commentRed); return; }
     const album = event.target.closest('[data-album]');
     if (album) { state.selectedAlbum = album.dataset.album; renderScreen(); persistState(); return; }
     const favoritePhoto = event.target.closest('[data-favorite-photo]');
@@ -577,11 +595,14 @@
       state.weiboPosts.unshift({ id: `w${Date.now()}`, user: '我', avatar: '我', text: value, tag: '#我的动态#', likes: 0, comments: 0, liked: false });
       state.weiboPosts = state.weiboPosts.slice(0, 100);
     } else if (kind === 'red-compose' && value) {
-      state.redPosts.unshift({ id: `r${Date.now()}`, user: '我', title: value, desc: '刚刚发布 · 本地模拟笔记', likes: 0, liked: false, color: 'peach' });
+      state.redPosts.unshift({ id: `r${Date.now()}`, user: '我', title: value, desc: '刚刚发布 · 本地模拟笔记', likes: 0, liked: false, favorite: false, comments: [], color: 'peach' });
       state.redPosts = state.redPosts.slice(0, 100);
     } else if (kind === 'comment' && value) {
       const post = state.weiboPosts.find(p => p.id === extra);
       if (post) { post.comments = Number(post.comments || 0) + 1; post.lastComment = value; }
+    } else if (kind === 'red-comment' && value) {
+      const post = state.redPosts.find(p => p.id === extra);
+      if (post) { post.comments = Array.isArray(post.comments) ? post.comments : []; post.comments.push({ user: '我', text: value, time: nowTime() }); post.comments = post.comments.slice(-50); }
     } else if (kind === 'wechat-contact-edit' && value === 'save') {
       const c=state.contacts.find(x=>x.id===extra&&!x.isGroup);if(c){if(contactName)c.name=contactName;c.note=contactNote||'好友';c.avatar=c.avatar||c.name.slice(0,1);}
     } else if (kind === 'wechat-group-create' && value) {
