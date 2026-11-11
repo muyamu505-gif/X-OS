@@ -323,7 +323,7 @@
 
   function renderWeibo() {
     const posts = state.weiboPosts.map(p => `<article class="xp-social-post" data-post-id="${escapeHtml(p.id)}"><div class="xp-post-author"><span class="xp-avatar xp-avatar-red">${escapeHtml(p.avatar || p.user[0])}</span><strong>${escapeHtml(p.user)}</strong><small>刚刚</small></div><p>${escapeHtml(p.text)}</p><a class="xp-hashtag">${escapeHtml(p.tag)}</a>${p.lastComment ? `<div class="xp-last-comment"><b>最新评论：</b>${escapeHtml(p.lastComment)}</div>` : ''}<div class="xp-post-actions"><button data-like-post="${escapeHtml(p.id)}" class="${p.liked ? 'is-liked' : ''}">♡ ${p.likes}</button><button data-action="weibo-comment">评论 ${p.comments}</button><button data-action="share">转发</button></div></article>`).join('');
-    return `<section class="xp-page xp-weibo"><div class="xp-appbar"><div class="xp-app-title xp-weibo-brand">微博</div><button class="xp-circle-btn" data-action="weibo-compose">＋</button></div><div class="xp-hot-search"><strong>热搜榜</strong><span>1　直播间新话题　热</span><span>2　主播互动边界讨论　沸</span><span>3　深夜闲聊切片　新</span></div>${posts}</section>`;
+    return `<section class="xp-page xp-weibo"><div class="xp-appbar"><div class="xp-app-title xp-weibo-brand">微博</div><button class="xp-circle-btn" data-action="weibo-compose">＋</button></div><div class="xp-social-search"><span>⌕</span><input type="search" data-weibo-search placeholder="搜索用户、动态或话题"></div><div class="xp-hot-search"><strong>热搜榜</strong><span>1　直播间新话题　热</span><span>2　主播互动边界讨论　沸</span><span>3　深夜闲聊切片　新</span></div>${posts}</section>`;
   }
 
   function renderRed() {
@@ -349,7 +349,7 @@
     const current = state.selectedAlbum || '最近项目';
     const items = (state.photos || []).filter(p => current === '最近项目' || p.album === current || (current === '收藏' && p.favorite));
     const tiles = albums.map((name, i) => `<button class="xp-photo-album ${current === name ? 'active' : ''}" data-album="${escapeHtml(name)}"><span class="xp-photo-album-art art-${i}">▧</span><b>${name}</b><small>${name === '最近项目' ? (state.photos || []).length : name === '收藏' ? (state.photos || []).filter(p => p.favorite).length : (state.photos || []).filter(p => p.album === name).length} 项</small></button>`).join('');
-    const cards = items.map(p => `<article class="xp-photo-item"><div class="xp-photo-preview">${p.favorite ? '★' : '▧'}</div><div><b>${escapeHtml(p.title)}</b><small>${escapeHtml(p.detail || '')}</small><time>${escapeHtml(p.date || '')}</time></div><button data-favorite-photo="${escapeHtml(p.id)}" title="收藏">${p.favorite ? '★' : '☆'}</button></article>`).join('');
+    const cards = items.map(p => `<article class="xp-photo-item"><div class="xp-photo-preview">${p.favorite ? '★' : '▧'}</div><div><b>${escapeHtml(p.title)}</b><small>${escapeHtml(p.detail || '')}</small><time>${escapeHtml(p.date || '')}</time></div><div class="xp-photo-actions"><button data-favorite-photo="${escapeHtml(p.id)}" title="收藏">${p.favorite ? '★' : '☆'}</button><button data-delete-photo="${escapeHtml(p.id)}" title="删除素材">删除</button></div></article>`).join('');
     return `<section class="xp-page xp-photos"><div class="xp-appbar"><div><div class="xp-app-title">相册</div><small>整理你的灵感与记录</small></div><span class="xp-photo-count">${(state.photos || []).length} 项</span></div><div class="xp-photo-albums">${tiles}</div><div class="xp-section-heading">${escapeHtml(current)} <small>${items.length} 项</small></div><div class="xp-photo-items">${cards || '<div class="xp-empty">这个相册还没有内容</div>'}</div><form class="xp-inline-add-form" data-form="photo"><input name="title" maxlength="36" placeholder="添加一条图片/素材记录" required><input name="detail" maxlength="80" placeholder="备注（可选）"><button type="submit">添加</button></form><p class="xp-muted">相册为本地素材索引，可记录图片名称与用途；不会读取设备私人照片。</p></section>`;
   }
 
@@ -364,11 +364,11 @@
     const days = new Date(year, month + 1, 0).getDate();
     const firstDay = new Date(year, month, 1).getDay();
     const cells = [...Array(firstDay).fill(''), ...Array.from({length: days}, (_,i)=>String(i+1))];
-    return `<section class="xp-page xp-calendar"><div class="xp-appbar"><div><div class="xp-app-title">日历</div><small>安排好每一个重要时刻</small></div><span class="xp-calendar-year">${year}</span></div><div class="xp-calendar-month">${year}年 ${month+1}月</div><div class="xp-calendar-week">日　一　二　三　四　五　六</div><div class="xp-calendar-grid">${cells.map(d=>`<span class="${d && state.calendar.some(e=>Number(e.day)===Number(d)) ? 'has-event' : ''} ${Number(d)===date.getDate() ? 'today' : ''}">${d}</span>`).join('')}</div><div class="xp-section-heading">近期安排 <small>${state.calendar.length} 项</small></div><div class="xp-calendar-events">${state.calendar.map(e=>`<div><b>${escapeHtml(e.day)}日　${escapeHtml(e.title)}</b><small>${escapeHtml(e.desc)}</small></div>`).join('') || '<div class="xp-empty">暂无安排</div>'}</div><form class="xp-calendar-add" data-form="calendar"><input name="day" type="number" min="1" max="31" placeholder="日期" required><input name="title" maxlength="32" placeholder="事项 / 时间" required><input name="desc" maxlength="60" placeholder="备注"><button type="submit">添加日程</button></form></section>`;
+    return `<section class="xp-page xp-calendar"><div class="xp-appbar"><div><div class="xp-app-title">日历</div><small>安排好每一个重要时刻</small></div><span class="xp-calendar-year">${year}</span></div><div class="xp-calendar-month">${year}年 ${month+1}月</div><div class="xp-calendar-week">日　一　二　三　四　五　六</div><div class="xp-calendar-grid">${cells.map(d=>`<span class="${d && state.calendar.some(e=>Number(e.day)===Number(d)) ? 'has-event' : ''} ${Number(d)===date.getDate() ? 'today' : ''}">${d}</span>`).join('')}</div><div class="xp-section-heading">近期安排 <small>${state.calendar.length} 项</small></div><div class="xp-calendar-events">${state.calendar.map((e,i)=>`<div class="xp-calendar-event"><span><b>${escapeHtml(e.day)}日　${escapeHtml(e.title)}</b><small>${escapeHtml(e.desc)}</small></span><button type="button" data-delete-calendar="${i}" aria-label="删除日程">×</button></div>`).join('') || '<div class="xp-empty">暂无安排</div>'}</div><form class="xp-calendar-add" data-form="calendar"><input name="day" type="number" min="1" max="31" placeholder="日期" required><input name="title" maxlength="32" placeholder="事项 / 时间" required><input name="desc" maxlength="60" placeholder="备注"><button type="submit">添加日程</button></form></section>`;
   }
 
   function renderNotes() {
-    return `<section class="xp-page xp-notes-page"><div class="xp-appbar"><div><div class="xp-app-title">备忘录</div><small>随手记下，不遗漏灵感</small></div><span class="xp-notes-saved">自动保存</span></div><div class="xp-notes-paper"><div class="xp-notes-date">${new Intl.DateTimeFormat('zh-CN',{dateStyle:'full'}).format(new Date())}</div><textarea class="xp-notes" data-notes placeholder="写点什么……">${escapeHtml(state.notes)}</textarea></div><p class="xp-muted">内容自动保存在当前聊天。</p></section>`;
+    return `<section class="xp-page xp-notes-page"><div class="xp-appbar"><div><div class="xp-app-title">备忘录</div><small>随手记下，不遗漏灵感</small></div><span class="xp-notes-saved"><span data-notes-count>${String(state.notes || '').length}</span> 字 · 自动保存</span></div><div class="xp-notes-paper"><div class="xp-notes-date">${new Intl.DateTimeFormat('zh-CN',{dateStyle:'full'}).format(new Date())}</div><textarea class="xp-notes" data-notes placeholder="写点什么……">${escapeHtml(state.notes)}</textarea></div><p class="xp-muted">内容自动保存在当前聊天。</p></section>`;
   }
 
   function renderScreen() {
@@ -422,6 +422,10 @@
     if (album) { state.selectedAlbum = album.dataset.album; renderScreen(); persistState(); return; }
     const favoritePhoto = event.target.closest('[data-favorite-photo]');
     if (favoritePhoto) { const p = state.photos.find(x => x.id === favoritePhoto.dataset.favoritePhoto); if (p) p.favorite = !p.favorite; renderScreen(); persistState(); return; }
+    const deletePhoto = event.target.closest('[data-delete-photo]');
+    if (deletePhoto) { state.photos = state.photos.filter(p => p.id !== deletePhoto.dataset.deletePhoto); renderScreen(); persistState(); return; }
+    const deleteCalendar = event.target.closest('[data-delete-calendar]');
+    if (deleteCalendar) { const index = Number(deleteCalendar.dataset.deleteCalendar); if (Number.isInteger(index) && index >= 0 && index < state.calendar.length) state.calendar.splice(index, 1); renderScreen(); persistState(); return; }
     const browserShortcut = event.target.closest('[data-browser-shortcut]');
     if (browserShortcut) { openExternalBrowser(browserShortcut.dataset.browserShortcut); return; }
     const browserResult = event.target.closest('[data-browser-result]');
@@ -520,7 +524,18 @@
   }
 
   function handleInput(event) {
-    if (event.target.matches('[data-notes]')) { state.notes = event.target.value; persistState(); }
+    if (event.target.matches('[data-notes]')) {
+      state.notes = event.target.value;
+      const count = event.target.closest('.xp-notes-page')?.querySelector('[data-notes-count]');
+      if (count) count.textContent = String(state.notes.length);
+      persistState();
+    }
+    if (event.target.matches('[data-weibo-search]')) {
+      const query = event.target.value.trim().toLocaleLowerCase();
+      event.target.closest('.xp-weibo')?.querySelectorAll('.xp-social-post').forEach(post => {
+        post.hidden = !post.textContent.toLocaleLowerCase().includes(query);
+      });
+    }
     if (event.target.matches('[data-contact-search]')) {
       const query = event.target.value.trim().toLocaleLowerCase();
       const page = event.target.closest('.xp-wechat');
