@@ -419,6 +419,7 @@
   }
 
   function handleClick(event) {
+    const inlineHost = event.target.closest('.xphone-inline-host');
     const appButton = event.target.closest('[data-app]');
     if (appButton) { const app = appButton.dataset.app; setPage(app === 'wechat' ? 'wechat' : app); return; }
     const tabButton = event.target.closest('[data-wechat-tab]');
@@ -467,7 +468,6 @@
     if (browserResult) { const r = state.browserResults.find(x => x.id === browserResult.dataset.browserResult); if (r?.page) setPage(r.page); return; }
     const action = event.target.closest('[data-action]')?.dataset.action;
     if (!action) return;
-    const inlineHost = event.target.closest('.xphone-inline-host');
     if (action === 'dialog-close') { closeActionDialog(event); return; }
     switch (action) {
       case 'close':
