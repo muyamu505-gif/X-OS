@@ -128,3 +128,19 @@ html #xphone-overlay #xphone-screen{background:#f6f8fa!important}
 .xp-mini-live>i{font-style:normal;color:#9aa4ad;font-size:20px}
 .xp-x-bottom button{flex:1;min-width:0;border:0;background:transparent;color:inherit;font:inherit;font-size:11px;padding:9px 2px}
 .xp-x-bottom button:active,.xp-mini-live:active{opacity:.7}
+
+
+/* X-OS 1.1.20 wallet ledger and notification controls */
+.xp-notification-row{display:flex;align-items:stretch;gap:5px;margin:7px 0}
+.xp-notification-row .xp-notification{flex:1;min-width:0;margin:0}
+.xp-notice-delete{flex:0 0 30px;border:0;border-radius:10px;background:#f2f4f6;color:#8b959e;font-size:18px}
+.xp-notice-tools{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px}
+.xp-notice-tools button{border:0;background:transparent;color:#71808c;font-size:11px;padding:8px 4px}
+.xp-wallet-records{display:flex;flex-direction:column;gap:7px}
+.xp-wallet-record{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border:1px solid #edf0f2;border-radius:12px;background:#fff}
+.xp-wallet-record>span{display:flex;flex-direction:column;gap:4px;min-width:0}
+.xp-wallet-record b{font-size:12px;color:#3c4650}
+.xp-wallet-record small{font-size:10px;color:#9aa3ab}
+.xp-wallet-record>strong{font-size:13px;font-variant-numeric:tabular-nums}
+.xp-wallet-record .is-minus{color:#d46b65}
+.xp-wallet-record .is-plus{color:#329b75}
