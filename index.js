@@ -951,13 +951,46 @@
       if (active?.chatId !== chatIdAtStart || active?.chatMetadata !== metadataAtStart) throw new Error('识别期间当前聊天已切换，已取消导入以防串档');
       const profile = parseGeneratedJson(typeof result==='string'?result:result?.content||result?.text||JSON.stringify(result));
       const safeChars = (Array.isArray(profile.characters)?profile.characters:[]).filter(x=>x&&typeof x.name==='string'&&x.name.trim()&&x.name!=='{{user}}'&&x.name!=='{{char}}').slice(0,40);
-      state.contacts = safeChars.map((x,i)=>({id:'ctx_'+i+'_'+Date.now(),name:x.name.trim().slice(0,48),note:String(x.relation||'剧情人物').slice(0,80),avatar:x.name.trim().slice(0,1),online:false}));
-      state.chats = {};
-      safeChars.forEach((x,i)=>{const id=state.contacts[i].id;state.chats[id]=x.openingMessage?[{from:'them',text:String(x.openingMessage).slice(0,500),kind:'text',time:'剧情导入'}]:[];});
-      state.moments = []; state.weiboPosts = []; state.redPosts = [];
-      state.xPosts = (Array.isArray(profile.socialPosts)?profile.socialPosts:[]).slice(0,40).map((p,i)=>({id:'ctxpost_'+Date.now()+'_'+i,user:String(p.author||'').slice(0,48),avatar:String(p.author||'？').slice(0,1),text:String(p.text||'').slice(0,800),tag:'',likes:0,comments:[],liked:false,room:'main',time:'剧情导入'})).filter(p=>p.user&&p.text);
-      state.liveMessages = []; state.selectedContact = state.contacts[0]?.id || null;
-      state.importedProfile = {summary:String(profile.summary||'').slice(0,1000),userRole:String(profile.userRole||'').slice(0,500),charRole:String(profile.charRole||'').slice(0,500),characters:safeChars.map(x=>({name:x.name,relation:x.relation})),importedAt:nowTime()};
+      const makeImportKey = (kind, value) => {
+        const raw = kind + ':' + String(value || '').trim().toLocaleLowerCase();
+        let hash = 2166136261;
+        for (let i=0;i<raw.length;i++) { hash ^= raw.charCodeAt(i); hash = Math.imul(hash,16777619); }
+        return (hash>>>0).toString(36);
+      };
+      // Merge context-derived contacts; never replace manually created contacts or chat history.
+      const importedContactIds = [];
+      for (const person of safeChars) {
+        const name = person.name.trim().slice(0,48);
+        const key = makeImportKey('contact',name);
+        let contact = state.contacts.find(c=>c?.source==='xos-context'&&c.sourceKey===key);
+        if (!contact) {
+          const manualMatch = state.contacts.find(c=>String(c?.name||'').trim().toLocaleLowerCase()===name.toLocaleLowerCase());
+          if (manualMatch) { importedContactIds.push(manualMatch.id); continue; }
+          const id = 'ctx_' + key;
+          contact = {id,name,note:String(person.relation||'剧情人物').slice(0,80),avatar:name.slice(0,1),online:false,source:'xos-context',sourceKey:key};
+          state.contacts.push(contact); state.chats[id] = [];
+        } else { contact.lastContextSeen = nowTime(); }
+        importedContactIds.push(contact.id);
+        const history = Array.isArray(state.chats[contact.id]) ? state.chats[contact.id] : (state.chats[contact.id]=[]);
+        const opening = String(person.openingMessage||'').trim().slice(0,500);
+        const importedOpening = history.find(message=>message?.source==='xos-context-opening');
+        if (opening && !history.some(message=>message?.from==='me') && (!history.length || importedOpening)) {
+          const nextMessage = {from:'them',text:opening,kind:'text',time:'剧情导入',source:'xos-context-opening'};
+          if (importedOpening) history[history.indexOf(importedOpening)] = nextMessage; else history.push(nextMessage);
+        }
+      }
+      // Preserve all user-authored platform content during refresh.
+      const incomingPosts = (Array.isArray(profile.socialPosts)?profile.socialPosts:[]).slice(0,40);
+      for (const post of incomingPosts) {
+        const author = String(post.author||'').trim().slice(0,48), body = String(post.text||'').trim().slice(0,800);
+        if (!author || !body) continue;
+        const key = makeImportKey('post',String(post.platform||'X').toLowerCase()+':'+author+':'+body);
+        if (state.xPosts.some(existing=>existing?.source==='xos-context'&&existing.sourceKey===key) || state.xPosts.some(existing=>String(existing?.user||'').trim()===author&&String(existing?.text||'').trim()===body)) continue;
+        state.xPosts.push({id:'ctxpost_'+key,user:author,avatar:author.slice(0,1),text:body,tag:String(post.platform||'').slice(0,24),likes:0,comments:[],liked:false,room:'main',time:'剧情导入',source:'xos-context',sourceKey:key});
+      }
+      state.xPosts = state.xPosts.slice(-200);
+      if (!state.selectedContact || !state.contacts.some(c=>c.id===state.selectedContact)) state.selectedContact = importedContactIds[0] || state.contacts[0]?.id || null;
+      state.importedProfile = {summary:String(profile.summary||'').slice(0,1000),userRole:String(profile.userRole||'').slice(0,500),charRole:String(profile.charRole||'').slice(0,500),characters:safeChars.map(x=>({name:x.name,relation:x.relation})),importedAt:nowTime(),importedContacts:importedContactIds.length,importedPosts:incomingPosts.length};
       persistState(); addNotification('上下文导入','识别完成',`已导入 ${safeChars.length} 位剧情人物。资料仅保存于当前聊天。`); renderScreen();
     } catch(error) {
       console.error(`[${EXT_ID}] story context import failed`,error);
