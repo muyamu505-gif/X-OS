@@ -32,7 +32,7 @@
 
 ## 版本
 
-当前版本：**1.1.35**
+当前版本：**1.1.36**
 
 扩展源文件：`index.js`、`style.css`、`manifest.json`。
 
@@ -186,3 +186,8 @@
 
 ### 1.1.35
 - Replace hard-coded user identity with `{{user}}` and main-character references with `{{char}}`; remove character-card-specific naming from default X platform content for cross-card reuse.
+
+### 1.1.36
+- Add an on-device system settings page for current SillyTavern context detection, context-scope toggles, and API configuration.
+- Store system/API settings separately from per-chat simulator data; API keys are not written to chat metadata.
+- Add an OpenAI-compatible API connectivity test; the SillyTavern generation bridge remains the next integration step.
