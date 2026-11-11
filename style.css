@@ -194,3 +194,7 @@ html #xphone-overlay #xphone-screen{background:#f6f8fa!important}
 
 /* 1.1.30: keyboard-safe phone viewport and inline device sizing */
 .xphone-overlay{height:100vh;height:100dvh;overflow:hidden;overscroll-behavior:contain;touch-action:manipulation}.xphone-shell{min-height:0;max-height:calc(100dvh - 24px);}.xphone-screen{min-height:0;overscroll-behavior:contain;touch-action:pan-y}.xphone-inline-screen{height:500px;max-height:none;overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y}.xp-inline-device{min-height:0}.xp-chat-compose input,.xp-chat-compose select,.xp-live-compose input,.xp-notes-page textarea{font-size:16px;}
+
+
+/* 1.1.31: Xiaohongshu interactions */
+.xp-red-tabs{display:flex;gap:0;align-items:center;border-bottom:1px solid #f0f0f0;margin:2px -2px 12px}.xp-red-tabs button{border:0;background:transparent;padding:9px 14px 10px;color:#92979e;font-size:12px;cursor:pointer}.xp-red-tabs button.active{color:#30343a;font-weight:750;border-bottom:2px solid #e75a65}.xp-red-author{display:flex;align-items:center;justify-content:space-between;gap:8px}.xp-red-author small{font-size:10px;color:#9a9fa6}.xp-red-actions{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:9px}.xp-red-actions button{border:0;background:transparent;padding:4px 0;color:#858b92;font-size:11px;cursor:pointer}.xp-red-actions button.is-liked,.xp-red-actions button.is-favorited{color:#e05261}.xp-red-comment{font-size:11px;line-height:1.5;color:#737a82;margin-top:6px}.xp-red-comment b{color:#454b52}
