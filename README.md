@@ -32,7 +32,7 @@
 
 ## 版本
 
-当前版本：**1.1.51**
+当前版本：**1.1.52**
 
 扩展源文件：`index.js`、`style.css`、`manifest.json`。
 
@@ -280,3 +280,8 @@
 - Hide visible vertical and horizontal scrollbars throughout the phone while preserving scrolling and touch gestures.
 - Restyle Notes, Calendar, and Wallet with iOS-inspired layouts; add month navigation and year/month-aware calendar events while keeping legacy date-only entries visible.
 - Redesign the in-simulator browser start page with a Safari-inspired address/search bar and favorites. External websites still open in the device browser and are rendered by that browser, not by X-OS.
+
+
+### 1.1.52
+- Add a bottom gesture-navigation pill to floating and inline phone views.
+- A single tap triggers Back; two quick taps return directly to the phone home screen.
