@@ -32,7 +32,7 @@
 
 ## 版本
 
-当前版本：**1.1.22**
+当前版本：**1.1.23**
 
 扩展源文件：`index.js`、`style.css`、`manifest.json`。
 
@@ -125,3 +125,8 @@
 
 ### 1.1.22
 - Add a dedicated confirmation step before clearing all messages in the currently open WeChat conversation.
+
+
+### 1.1.23
+- Improve WeChat search so it matches all messages in each conversation, not only the latest preview.
+- Show a clear empty state when no contact or conversation matches the search.
