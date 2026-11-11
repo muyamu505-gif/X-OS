@@ -32,10 +32,15 @@
 
 ## 版本
 
-当前版本：**1.1.85**
+当前版本：**1.1.86**
 
 扩展源文件：`index.js`、`style.css`、`manifest.json`。
 
+
+### 1.1.86
+- Add the configured timeout to SillyTavern `generateRaw` calls as a UI-level timeout guard, so a stalled host generation returns a visible failure instead of leaving the phone waiting indefinitely.
+- Prevent automatic retries for `/chat/completions` POST requests to avoid accidentally billing or generating duplicate responses after ambiguous network failures; retry is now explicitly enabled only for the idempotent `/models` GET request.
+- Clear stale WeChat typing indicators when the originating chat context changes or a generation fails, including group chats.
 
 ### 1.1.85
 - Fix a critical recursion bug in the shared generation adapter: SillyTavern mode now correctly calls the active chat context's `generateRaw` instead of recursively calling itself.
