@@ -56,12 +56,16 @@
 - Portaled the floating phone overlay to the document root to avoid host layout clipping.
 
 
-### 1.1.7
+### 1.1.8
 - Restored a persistent floating phone launcher with draggable placement, edge docking, and saved position.
 - Added a high-visibility top-layer launcher and retained extension settings/top-bar entry points.
 
 
-### 1.1.7
+### 1.1.8
 - Rebuilt the extension script from the last clean source to remove malformed appended code that prevented initialization.
 - Restored a draggable, edge-docking floating launcher with saved position and settings/top-bar fallback.
 - Added viewport-safe modal sizing and bottom-right drag resizing.
+
+
+### 1.1.8
+- Replaced the browser-native reset confirmation with an in-extension confirmation panel for a consistent mobile experience.
