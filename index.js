@@ -110,6 +110,30 @@
     const worldInfo = c?.chatMetadata?.world_info || c?.worldInfo || c?.world_info || null;
     return { characterName: getCurrentCharacterName(), messages: chat.length, hasCharacter: !!character, hasWorldbook: !!(book || worldInfo), hasGenerator: systemSettings.apiMode==='openai' ? !!(systemSettings.apiBase&&systemSettings.apiKey&&systemSettings.apiModel) : typeof c?.generateRaw === 'function' };
   }
+
+  function renderAiCenter() {
+    const info=getContextSummary();
+    const count=(state.importedProfile?.characters||[]).length;
+    const importedAt=state.importedProfile?.importedAt||'尚未同步';
+    return `<section class="xp-page xp-system-settings xp-ai-center">
+      <div class="xp-settings-heading"><strong>AI 中心</strong><small>模型测试 · 剧情同步 · 生成状态</small></div>
+      <div class="xp-settings-card"><div class="xp-settings-card-title">当前连接状态</div>
+        <div class="xp-settings-info"><span>当前角色卡</span><b>${escapeHtml(info.characterName)}</b></div>
+        <div class="xp-settings-info"><span>生成接口</span><b>${info.hasGenerator?'可用':'未连接 / 未配置'}</b></div>
+        <div class="xp-settings-info"><span>当前聊天记录</span><b>${info.messages} 条</b></div>
+        <div class="xp-api-status ${escapeHtml(apiRuntimeStatus.kind)}" data-api-status>${escapeHtml(apiRuntimeStatus.message||'等待测试')}</div>
+        <div class="xp-settings-actions"><button data-action="settings-test" ${!info.hasGenerator?'disabled':''}>立即测试模型生成</button><button data-action="settings-open-config">模型与 API 设置</button></div>
+      </div>
+      <div class="xp-settings-card"><div class="xp-settings-card-title">剧情同步</div>
+        <div class="xp-settings-info"><span>上次同步</span><b>${escapeHtml(importedAt)}</b></div>
+        <div class="xp-settings-info"><span>已识别人物</span><b>${count} 位</b></div>
+        <p class="xp-settings-note">读取当前角色卡、已启用的世界书和近期聊天记录，提取人物资料与剧情事实，供微信、直播间等功能调用。只保存到当前聊天，不修改角色卡原文。</p>
+        <div class="xp-settings-actions"><button data-action="context-import" ${!info.hasGenerator||!info.hasCharacter?'disabled':''}>${state.importedProfile?'重新识别并同步':'识别并同步当前剧情'}</button></div>
+      </div>
+      <div class="xp-settings-card"><div class="xp-settings-card-title">下一步怎么测试</div><p class="xp-settings-note">① 先测试模型生成；② 同步当前剧情；③ 打开微信测试联系人回复，或进入 X平台直播间发送弹幕，观察 AI 是否根据已导入人物资料回应。</p></div>
+    </section>`;
+  }
+
   function renderSettings() {
     const info = getContextSummary();
     return `<section class="xp-page xp-system-settings">
@@ -483,6 +507,7 @@
         ${appIcon('calendar', '日历', '日', '#e46b55')}
         ${appIcon('notes', '备忘录', '✎', '#71879a')}
         ${appIcon('settings', '设置', '⚙', '#83919e')}
+        ${appIcon('ai-center', 'AI中心', 'AI', '#527f9e')}
       </div>
       </div>`;
   }
@@ -794,8 +819,8 @@
   }
 
   function renderScreen() {
-    const titles = { home: '手机', notifications: '通知中心', wechat: '微信', 'wechat-new-friends':'新的朋友', 'wechat-add-friend':'添加朋友', 'wechat-moments': '朋友圈', 'wechat-favorites': '我的收藏', chat: '微信', weibo: '微博', 'weibo-detail': '微博详情', red: '小红书', xplatform: 'X平台', live: '直播间', wallet: '钱包', photos: '相册', browser: '浏览器', calendar: '日历', notes: '备忘录', settings: '设置' };
-    const renderers = { home: renderHome, notifications: renderNotifications, wechat: renderWechat, 'wechat-new-friends': renderWechatNewFriends, 'wechat-add-friend': renderWechatAddFriend, 'wechat-moments': renderWechatMoments, 'wechat-favorites': renderWechatFavorites, chat: renderChat, weibo: renderWeibo, 'weibo-detail': renderWeiboDetail, red: renderRed, 'x-profile': renderXProfile, 'red-detail': renderRedDetail, xplatform: renderXPlatform, live: renderLive, wallet: renderWallet, photos: renderPhotos, browser: renderBrowser, calendar: renderCalendar, notes: renderNotes, settings: renderSettings };
+    const titles = { home: '手机', 'ai-center':'AI 中心', notifications: '通知中心', wechat: '微信', 'wechat-new-friends':'新的朋友', 'wechat-add-friend':'添加朋友', 'wechat-moments': '朋友圈', 'wechat-favorites': '我的收藏', chat: '微信', weibo: '微博', 'weibo-detail': '微博详情', red: '小红书', xplatform: 'X平台', live: '直播间', wallet: '钱包', photos: '相册', browser: '浏览器', calendar: '日历', notes: '备忘录', settings: '设置' };
+    const renderers = { home: renderHome, 'ai-center': renderAiCenter, notifications: renderNotifications, wechat: renderWechat, 'wechat-new-friends': renderWechatNewFriends, 'wechat-add-friend': renderWechatAddFriend, 'wechat-moments': renderWechatMoments, 'wechat-favorites': renderWechatFavorites, chat: renderChat, weibo: renderWeibo, 'weibo-detail': renderWeiboDetail, red: renderRed, 'x-profile': renderXProfile, 'red-detail': renderRedDetail, xplatform: renderXPlatform, live: renderLive, wallet: renderWallet, photos: renderPhotos, browser: renderBrowser, calendar: renderCalendar, notes: renderNotes, settings: renderSettings };
     const renderer = renderers[state.page] || renderHome;
     if (phoneScreen && overlay) {
       phoneScreen.innerHTML = renderer();
@@ -814,9 +839,10 @@
 
   function handleClick(event) {
     if (handleGestureNavigation(event)) return;
-    const settingAction = event.target.closest('[data-action^="settings-"]');
+    const settingAction = event.target.closest('[data-action="context-import"],[data-action^="settings-"]');
     if (settingAction) {
       if (settingAction.dataset.action === 'context-import') { importCurrentStoryContext(); return; }
+      if (settingAction.dataset.action === 'settings-open-config') { setPage('settings','settings'); return; }
       if (settingAction.dataset.action === 'settings-save') { saveSystemSettings(); addNotification('设置','保存成功','X-OS 系统设置已保存在本机。'); renderScreen(); return; }
       if (settingAction.dataset.action === 'settings-test') { testApiConnection(); return; }
       if (settingAction.dataset.action === 'settings-models') { fetchApiModels(); return; }
