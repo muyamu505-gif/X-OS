@@ -158,3 +158,7 @@ html #xphone-overlay #xphone-screen{background:#f6f8fa!important}
 /* X-OS 1.1.22 WeChat conversation clearing */
 .xp-chat-clear{margin-left:auto!important;flex:0 0 auto!important;width:auto!important;height:29px!important;padding:0 9px!important;border:1px solid #e9edf0!important;border-radius:9px!important;background:#fff!important;color:#89939c!important;font-size:10px!important}
 .xp-dialog-confirm-note{padding:12px;border-radius:10px;background:#f7f8fa;color:#697580;font-size:11px;line-height:1.6}
+
+
+/* X-OS 1.1.23 WeChat search empty state */
+.xp-wechat [data-contact-empty][hidden]{display:none!important}
