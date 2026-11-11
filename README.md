@@ -32,7 +32,7 @@
 
 ## 版本
 
-当前版本：**1.1.33**
+当前版本：**1.1.34**
 
 扩展源文件：`index.js`、`style.css`、`manifest.json`。
 
@@ -178,3 +178,7 @@
 
 ### 1.1.33
 - Expand Weibo with recommendation/following/mine feeds, local creator follow state, a personal profile summary, structured local comments, and functional repost records.
+
+
+### 1.1.34
+- Expand X platform with recommendation/following/category feeds, local dynamic publishing, likes, comments, creator following, multiple live-room entries, and a local profile summary.
