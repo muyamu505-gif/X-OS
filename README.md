@@ -32,10 +32,13 @@
 
 ## 版本
 
-当前版本：**1.1.77**
+当前版本：**1.1.78**
 
 扩展源文件：`index.js`、`style.css`、`manifest.json`。
 
+
+### 1.1.78
+- Story-imported incoming and outgoing WeChat friend requests now create matching notification-center entries, in addition to appearing in the Friends Requests inbox.
 
 ### 1.1.77
 - Extract explicitly narrated incoming one-to-one WeChat messages from the active story context and import them only into existing accepted-friend conversations; no unsolicited NPC messages are invented and unaccepted characters never gain a chat.
