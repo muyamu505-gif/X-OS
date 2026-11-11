@@ -1606,20 +1606,42 @@
     } catch (error) { console.warn(`[${EXT_ID}] external browser launch failed`, error); addNotification('浏览器','无法打开外部浏览器','请检查 Android WebView 是否允许打开外部链接'); persistState(); }
   }
 
+  function readApiTextValue(value){
+    if(typeof value==='string')return value;
+    if(typeof value==='number')return String(value);
+    if(Array.isArray(value))return value.map(readApiTextValue).filter(Boolean).join('');
+    if(value&&typeof value==='object'){
+      for(const key of ['text','content','value','output_text']){const found=readApiTextValue(value[key]);if(found)return found;}
+    }
+    return '';
+  }
   function extractApiText(payload){
-    const content=payload?.choices?.[0]?.message?.content;
-    if(typeof content==='string')return content;
-    if(Array.isArray(content))return content.map(part=>typeof part==='string'?part:String(part?.text||part?.content||'')).join('');
-    const legacy=payload?.choices?.[0]?.text;
-    if(typeof legacy==='string')return legacy;
-    if(typeof payload?.output_text==='string')return payload.output_text;
-    const output=Array.isArray(payload?.output)?payload.output:[];
-    const chunks=output.flatMap(item=>Array.isArray(item?.content)?item.content:[]);
-    const text=chunks.map(part=>String(part?.text||part?.content||'')).filter(Boolean).join('');
-    if(text)return text;
-    const reason=payload?.error?.message||payload?.message;
+    const roots=[payload,payload?.data,payload?.result,payload?.response].filter(Boolean);
+    for(const root of roots){
+      const choice=Array.isArray(root?.choices)?root.choices[0]:null;
+      const message=choice?.message||choice?.delta||{};
+      const candidates=[
+        message.content,message.output_text,message.text,
+        choice?.text,root?.output_text,root?.text,root?.content
+      ];
+      for(const candidate of candidates){const found=readApiTextValue(candidate);if(found.trim())return found;}
+      const output=Array.isArray(root?.output)?root.output:[];
+      const outputText=output.map(item=>readApiTextValue(item?.content??item?.text??item?.output_text)).filter(Boolean).join('');
+      if(outputText.trim())return outputText;
+      const dataOutput=Array.isArray(root?.data?.output)?root.data.output:[];
+      const nestedText=dataOutput.map(item=>readApiTextValue(item?.content??item?.text)).filter(Boolean).join('');
+      if(nestedText.trim())return nestedText;
+    }
+    const reason=payload?.error?.message||payload?.message||payload?.detail;
     if(reason)throw new Error(String(reason).slice(0,240));
-    throw new Error('接口已返回数据，但响应中没有识别到文本字段（choices[0].message.content / choices[0].text / output_text）');
+    const choice=payload?.choices?.[0]||payload?.data?.choices?.[0]||payload?.result?.choices?.[0];
+    const message=choice?.message||{};
+    const finish=choice?.finish_reason||'未知';
+    const keys=payload&&typeof payload==='object'?Object.keys(payload).slice(0,12).join(', '):typeof payload;
+    const refusal=readApiTextValue(message.refusal);
+    if(refusal)throw new Error('模型拒绝生成：'+refusal.slice(0,180));
+    if(message.tool_calls?.length)throw new Error('模型只返回了工具调用，没有返回文本；请换用支持文本输出的模型（finish_reason：'+finish+'）');
+    throw new Error('API 已响应，但没有可用文本。响应字段：'+(keys||'空对象')+'；finish_reason：'+finish+'。请检查模型是否输出被截断、拒答或仅返回推理内容。');
   }
   function normalizeApiBase(){let base=String(systemSettings.apiBase||'').trim().replace(/\/+$/,'');if(!base)throw new Error('请填写 API 地址');base=base.replace(/\/(chat\/completions|completions|models)$/i,'');return base.replace(/\/+$/,'');}
   function setApiRuntimeStatus(kind,message){apiRuntimeStatus={kind,message:String(message||'').slice(0,260)};const node=document.querySelector('[data-api-status]');if(node){node.className='xp-api-status '+kind;node.textContent=apiRuntimeStatus.message;}}
