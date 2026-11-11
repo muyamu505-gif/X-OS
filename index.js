@@ -1268,10 +1268,10 @@
   async function resolveOutgoingFriendRequest(request, person) {
     const context=currentContext(),chatIdAtStart=context?.chatId,metadataAtStart=context?.chatMetadata;
     if(!canGenerateText()){persistState();return;}
-    const character=context.characters?.[context.characterId]||null;
+    const character=context?.characters?.[context?.characterId]||null;
     const profile=(state.importedProfile?.characters||[]).find(x=>x.name===person.name)||{};
     const details=['人物身份：'+String(person.storyDescription||profile.description||''),'人物性格：'+String(person.storyPersonality||profile.personality||''),'说话风格：'+String(person.storyVoice||profile.voice||''),'与用户关系：'+String(person.storyRelation||profile.relation||''),'关键经历与当前状态：'+String(person.storyNotes||profile.notes||'')].join('\n');
-    const history=(Array.isArray(context.chat)?context.chat.slice(-16):[]).map(m=>(m.is_user?'用户':m.name||character?.name||'角色')+'：'+String(m.mes||m.message||'').slice(0,1200)).join('\n');
+    const history=(Array.isArray(context?.chat)?context.chat.slice(-16):[]).map(m=>(m.is_user?'用户':m.name||character?.name||'角色')+'：'+String(m.mes||m.message||'').slice(0,1200)).join('\n');
     const prompt=['当前微信中，用户向 '+person.name+' 发送了一条好友申请。','验证消息：'+request.message,details,'当前角色卡：'+String(character?.name||'')+'\n'+String(character?.description||character?.data?.description||'')+'\n'+String(character?.personality||character?.data?.personality||''),'最近剧情：\n'+history,'请只根据人物性格、与用户的关系和当前剧情，判断对方是否愿意通过好友申请。不要默认接受，也不要为了推进剧情默认拒绝。若资料不足，优先保持 pending（decision="pending"）。若明确接受/拒绝，给出一句符合角色语气的微信回复。只输出 JSON：{"decision":"accepted|rejected|pending","reply":"..."}。'].join('\n\n');
     try{
       const result=await generateText({prompt:prompt,systemPrompt:'你是微信好友申请处理器。只根据给出的角色资料和剧情作出克制判断，不编造人物经历。只能输出 JSON，decision 只能是 accepted、rejected 或 pending。'});
@@ -1299,7 +1299,7 @@
     if(contact.isGroup){generateWechatGroupReply(contactId,userText,chatIdAtSend);return;}
     if(!canGenerateText()){addNotification('微信','暂时无法自动回复','请在系统设置中配置可用的酒馆接口或独立 API；消息已发送并保存。');renderScreen();persistState();return;}
     state.chatTypingContact=contactId;renderScreen();persistState();
-    const character=context.characters&&context.characters[context.characterId]||null;
+    const character=context?.characters&&context.characters[context.characterId]||null;
     const cardName=String(character&&character.name||'').trim();
     const isMainCharacter=contact.name==='{{char}}'||(cardName&&contact.name===cardName);
     const npcProfile=((state.importedProfile&&state.importedProfile.characters)||[]).find(x=>x.name===contact.name)||{};
@@ -1428,8 +1428,8 @@
     const context = currentContext();
     if (!systemSettings.contextEnabled) { addNotification('上下文导入','上下文识别已关闭','请先在设置中开启上下文识别。'); renderScreen(); return; }
     if (!canGenerateText()) { addNotification('上下文导入','生成接口不可用','请检查系统设置中的酒馆接口或独立 API 配置。'); renderScreen(); return; }
-    const character = context.characters?.[context.characterId];
-    if (!character) { addNotification('上下文导入','未选择角色卡','请先打开一张角色卡并进入对应聊天。'); renderScreen(); return; }
+    const character = context?.characters?.[context?.characterId];
+    if (!context || !character) { addNotification('上下文导入','未选择角色卡','请先打开一张角色卡并进入对应聊天。'); renderScreen(); return; }
     const chatIdAtStart = context.chatId, metadataAtStart = context.chatMetadata;
     const button = document.querySelector('[data-action="context-import"],[data-action="wechat-friend-refresh"]');
     if (button) { button.disabled = true; button.textContent = '正在识别当前剧情…'; }
