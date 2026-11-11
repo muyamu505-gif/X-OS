@@ -49,3 +49,8 @@
 
 ### 1.1.4
 - Fixed inline phone insertion inside message text flow and constrained its layout to a centered, self-contained device.
+
+
+### 1.1.5
+- Rebuilt floating phone viewport sizing with explicit pixel dimensions for Android WebViews.
+- Portaled the floating phone overlay to the document root to avoid host layout clipping.
