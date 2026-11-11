@@ -32,7 +32,7 @@
 
 ## 版本
 
-当前版本：**1.1.25**
+当前版本：**1.1.26**
 
 扩展源文件：`index.js`、`style.css`、`manifest.json`。
 
@@ -138,3 +138,7 @@
 
 ### 1.1.25
 - Escape saved social-post style and counter fields before rendering, and tolerate incomplete author data in restored Weibo posts.
+
+
+### 1.1.26
+- Add a home-screen shortcut for Notes so the existing memo editor and autosave feature are directly accessible.
