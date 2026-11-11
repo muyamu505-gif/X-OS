@@ -124,3 +124,59 @@
 @media(max-width:520px){
  #xphone-overlay>.xphone-shell{width:min(320px,calc(100vw - 32px));height:min(620px,calc(100dvh - 48px))}
 }
+
+
+/* X-OS 1.1.4: inline phone belongs to the message text flow, not the message shell. */
+#chat .mes .mes_text .xphone-inline-host{
+  display:block!important;
+  position:relative!important;
+  float:none!important;
+  clear:both!important;
+  box-sizing:border-box!important;
+  width:100%!important;
+  max-width:360px!important;
+  margin:12px auto 10px!important;
+  padding:0!important;
+  background:transparent!important;
+  overflow:visible!important;
+}
+#chat .mes .mes_text .xphone-inline-host[hidden]{display:none!important}
+#chat .mes .mes_text .xp-inline-device{
+  position:relative!important;
+  display:flex!important;
+  flex-direction:column!important;
+  box-sizing:border-box!important;
+  width:100%!important;
+  max-width:360px!important;
+  height:600px!important;
+  max-height:72vh!important;
+  min-height:420px!important;
+  margin:0 auto!important;
+  padding:0!important;
+  overflow:hidden!important;
+  border:1px solid #aeb6bf!important;
+  border-radius:22px!important;
+  background:#f8f9fb!important;
+  box-shadow:0 4px 14px rgba(0,0,0,.10)!important;
+}
+#chat .mes .mes_text .xp-inline-status,
+#chat .mes .mes_text .xp-inline-toolbar,
+#chat .mes .mes_text .xp-inline-nav{flex:none!important;box-sizing:border-box!important}
+#chat .mes .mes_text .xphone-inline-screen{
+  display:block!important;
+  flex:1 1 auto!important;
+  width:100%!important;
+  height:auto!important;
+  min-height:0!important;
+  max-height:none!important;
+  box-sizing:border-box!important;
+  overflow:auto!important;
+  background:#f7f8fa!important;
+}
+#chat .mes .mes_text .xphone-inline-screen .xp-wallpaper,
+#chat .mes .mes_text .xphone-inline-screen .xp-page{min-height:100%!important;box-sizing:border-box!important}
+@media(max-width:520px){
+  #chat .mes .mes_text .xphone-inline-host,
+  #chat .mes .mes_text .xp-inline-device{max-width:min(340px,100%)!important}
+  #chat .mes .mes_text .xp-inline-device{height:min(600px,72vh)!important;min-height:400px!important}
+}
