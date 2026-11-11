@@ -55,3 +55,9 @@ html #xphone-floating-entry .xphone-fab-mark{display:grid!important;place-items:
 html #xphone-floating-entry small{display:block!important;margin-top:2px!important;font-size:9px!important;line-height:11px!important;color:#fff!important}
 html #xphone-topbar-entry{display:inline-flex;align-items:center;gap:6px;padding:7px 10px;cursor:pointer}
 html #xphone-overlay .xphone-resize-handle{position:absolute!important;right:0!important;bottom:0!important;width:30px!important;height:30px!important;z-index:10!important;cursor:nwse-resize!important;touch-action:none!important;background:linear-gradient(135deg,transparent 0 42%,#778493 43% 49%,transparent 50% 58%,#778493 59% 65%,transparent 66%)!important}
+
+/* Settings reset confirmation — inline and mobile-friendly */
+#xphone-settings .xphone-reset-confirm{margin:10px 0;padding:12px;border:1px solid var(--xp-border,#d9dee5);border-radius:12px;background:rgba(120,135,150,.08)}
+#xphone-settings .xphone-reset-confirm[hidden]{display:none!important}
+#xphone-settings .xphone-reset-confirm p{margin:0 0 10px;font-size:13px;line-height:1.5}
+#xphone-settings #xphone-reset-accept{border-color:#c96b70;color:#c04d56}
