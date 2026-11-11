@@ -32,7 +32,7 @@
 
 ## 版本
 
-当前版本：**1.1.41**
+当前版本：**1.1.42**
 
 扩展源文件：`index.js`、`style.css`、`manifest.json`。
 
@@ -220,3 +220,9 @@
 - Make story-context re-import merge-safe: retain manually created contacts, chat history, Moments, Weibo, Xiaohongshu, and X posts.
 - Refresh only X-OS-tagged imported records, preserve user edits and conversations, and avoid duplicate imported social posts.
 - Keep imported contacts and posts scoped to the active SillyTavern chat metadata.
+
+
+### 1.1.42
+- Route story-derived social posts to WeChat Moments, Weibo, Xiaohongshu, or X according to their content type instead of placing every post in X.
+- Keep platform-specific post structures and interaction fields compatible with each app.
+- Show per-platform import counts in the current-chat import summary.
