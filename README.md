@@ -32,7 +32,7 @@
 
 ## 版本
 
-当前版本：**1.1.46**
+当前版本：**1.1.47**
 
 扩展源文件：`index.js`、`style.css`、`manifest.json`。
 
@@ -250,3 +250,7 @@
 - Keep chat-specific X-OS data out of the global local-storage fallback, preventing story data from leaking when SillyTavern has no active chat context.
 - Scope locally simulated gift messages to the currently open livestream room.
 - Report the number of livestream messages actually imported after validation and deduplication.
+
+
+### 1.1.47
+- Remove fabricated default viewer and heat counts from the generic livestream room; unknown values remain explicitly unrecorded instead of displaying zero or sample numbers.
