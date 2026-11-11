@@ -32,10 +32,15 @@
 
 ## 版本
 
-当前版本：**1.1.68**
+当前版本：**1.1.69**
 
 扩展源文件：`index.js`、`style.css`、`manifest.json`。
 
+
+### 1.1.69
+- Add persistent keyword search to Weibo, Xiaohongshu, and X-platform feeds.
+- Add Weibo post favorites and a dedicated favorites feed.
+- Search results now remain applied when switching between social feed tabs.
 
 ### 1.1.68
 - Rename the extension presentation to X-OS Phone System instead of a simulator.
